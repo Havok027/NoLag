@@ -1,3 +1,11 @@
+## v0.5.1
+
+- Corrige a interface cortada na lateral: o conteúdo agora usa as margens padrão do menu.
+- Gráfico ao vivo: uma linha por rota (direta e relays) com o ping dos últimos instantes e a etiqueta MELHOR na rota mais rápida. O histórico fica no plugin e não some ao fechar o menu.
+- Qualidade da conexão (Ótima, Regular ou Ruim) no Painel.
+- Ajuda em linguagem simples para cada opção, com recomendação. O botão Y (ou o botão Ajuda na tela) mostra e oculta; o estado fica salvo.
+- Testes novos para o histórico do gráfico, a ajuda e os textos nos 3 idiomas.
+
 ## v0.5.0
 
 - Painel no início, no estilo de cartões: estado, jogo, servidor, rota em uso, ping atual, jitter e perda ao vivo.

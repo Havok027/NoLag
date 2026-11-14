@@ -13,7 +13,8 @@ import decky
 
 LANGS = ("pt", "en", "es")
 DEFAULTS = {"language": "pt", "enabled": False, "profile": "balanced", "collapsed": {}}
-SECTIONS = ("diag", "routes", "relays", "settings")
+SECTIONS = ("diag", "routes", "relays", "settings", "chart", "help")
+HIST_POINTS = 60
 PROFILES = {
     "stable": {"margin": 10.0, "max_loss": 20.0},
     "balanced": {"margin": 5.0, "max_loss": 30.0},
@@ -329,6 +330,13 @@ def sniff(ports, seconds, stats=None):
     return counts
 
 
+def push_sample(series, key, metrics):
+    """Guarda o ping médio (ou None se perdeu tudo) da rota para o gráfico."""
+    values = series.setdefault(key, deque(maxlen=HIST_POINTS))
+    avg = metrics.get("avg") if isinstance(metrics, dict) else None
+    values.append(avg)
+
+
 def merge_counts(history):
     total = {}
     for counts in history:
@@ -510,6 +518,7 @@ class Plugin:
             "detail": detail,
             "notice": notice,
             "diag": {"pids": 0, "ports": 0, "seen": 0, "top": []},
+            "history": {},
         }
 
     def _fail(self, error, detail=""):
@@ -573,6 +582,7 @@ class Plugin:
                 return self._new_status(phase, notice=notice, detail=detail, relays=rows, **kw)
 
             history = deque(maxlen=HISTORY)
+            series = {}
             target, active, game = None, "direct", ""
             while True:
                 pids = await asyncio.to_thread(find_game_pids)
@@ -601,6 +611,7 @@ class Plugin:
                     if target:
                         await apply_route(target, None)
                     target, active = new_target, "direct"
+                    series.clear()
                     for _i, row in ready:
                         row["metrics"], row["score"] = None, None
                 if not target:
@@ -613,6 +624,9 @@ class Plugin:
                     *[ping_target(target, IFACE.format(i)) for i, _row in ready]
                 )
                 direct = results[0]
+                push_sample(series, "direct", direct)
+                for (i, _row), m in zip(ready, results[1:]):
+                    push_sample(series, IFACE.format(i), m)
                 scores = {}
                 for (i, row), m in zip(ready, results[1:]):
                     row["metrics"] = m
@@ -628,6 +642,7 @@ class Plugin:
                 self.status["direct"] = direct
                 self.status["direct_score"] = dscore
                 self.status["diag"] = diag
+                self.status["history"] = {k: list(v) for k, v in series.items()}
                 await asyncio.sleep(INTERVAL)
         except Exception:
             decky.logger.exception("NoLag: falha no monitor")

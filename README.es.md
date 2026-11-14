@@ -9,6 +9,7 @@ Plugin para Decky Loader (Steam Deck, Legion Go y similares con SteamOS) que eli
 Activa la **Ruta automática** y abre el juego. Nada más: el plugin detecta el servidor solo y la **Sensibilidad** viene en Equilibrado.
 
 - El **Panel** muestra ping, jitter y pérdida en vivo, la ruta en uso y, en **Diagnóstico**, lo que el plugin ve del juego. Cambia de pestaña con toque, A o L1/R1; las flechas contraen las secciones.
+- El **Panel** también muestra la **Calidad** de la conexión y un **gráfico en vivo** con una línea por ruta. El botón **Y** muestra u oculta la ayuda de cada opción.
 - Sin relay, el plugin solo monitorea ping, jitter y pérdida hasta el servidor del juego.
 - Con relay, también prueba los caminos alternativos y usa el mejor.
 
