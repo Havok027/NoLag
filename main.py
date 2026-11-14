@@ -12,7 +12,12 @@ from collections import deque
 import decky
 
 LANGS = ("pt", "en", "es")
-DEFAULTS = {"language": "pt", "enabled": False}
+DEFAULTS = {"language": "pt", "enabled": False, "profile": "balanced"}
+PROFILES = {
+    "stable": {"margin": 10.0, "max_loss": 20.0},
+    "balanced": {"margin": 5.0, "max_loss": 30.0},
+    "aggressive": {"margin": 2.0, "max_loss": 40.0},
+}
 
 MAX_RELAYS = 4
 IFACE = "nolag{}"
@@ -39,6 +44,8 @@ def sanitize_settings(raw):
             data["language"] = lang
         if isinstance(raw.get("enabled"), bool):
             data["enabled"] = raw["enabled"]
+        if raw.get("profile") in PROFILES:
+            data["profile"] = raw["profile"]
     return data
 
 
@@ -123,7 +130,7 @@ def parse_relay_code(code):
     return (relay, "") if relay else (None, "bad_code")
 
 
-def load_relays():
+def load_stored_relays():
     try:
         with open(_path("relays.json"), "r", encoding="utf-8") as f:
             raw = json.load(f)
@@ -133,16 +140,44 @@ def load_relays():
     for item in raw if isinstance(raw, list) else []:
         relay = clean_relay(item)
         if relay and all(relay["name"] != r["name"] for r in out):
+            out.append(dict(relay, builtin=False))
+    return out[:MAX_RELAYS]
+
+
+def load_file_relays():
+    """Relays pré-configurados: linhas 'nolag1:...' em relay-code.txt (pasta do plugin ou das configurações)."""
+    out = []
+    folders = (getattr(decky, "DECKY_PLUGIN_DIR", ""), decky.DECKY_PLUGIN_SETTINGS_DIR)
+    for folder in folders:
+        if not folder:
+            continue
+        try:
+            with open(os.path.join(folder, "relay-code.txt"), "r", encoding="utf-8") as f:
+                lines = f.read().splitlines()
+        except OSError:
+            continue
+        for line in lines:
+            relay, _err = parse_relay_code(line)
+            if relay and all(relay["name"] != r["name"] for r in out):
+                out.append(dict(relay, builtin=True))
+    return out
+
+
+def load_relays():
+    out = load_file_relays()
+    for relay in load_stored_relays():
+        if all(relay["name"] != r["name"] for r in out):
             out.append(relay)
     return out[:MAX_RELAYS]
 
 
 def save_relays(relays):
-    _write_private(_path("relays.json"), json.dumps(relays, indent=2))
+    keep = [{k: v for k, v in r.items() if k != "builtin"} for r in relays]
+    _write_private(_path("relays.json"), json.dumps(keep, indent=2))
 
 
 def public_relays(relays):
-    return [{"name": r["name"], "endpoint": r["endpoint"]} for r in relays]
+    return [{"name": r["name"], "endpoint": r["endpoint"], "builtin": r.get("builtin", False)} for r in relays]
 
 
 def render_wg_conf(relay):
@@ -317,8 +352,8 @@ def parse_ping(text):
     return {"avg": float(r.group(2)), "jitter": float(r.group(4)), "loss": loss}
 
 
-def score(m):
-    if not m or m["avg"] is None or m["loss"] >= MAX_LOSS:
+def score(m, max_loss=MAX_LOSS):
+    if not m or m["avg"] is None or m["loss"] >= max_loss:
         return None
     return m["avg"] + 2 * m["jitter"] + 10 * m["loss"]
 
@@ -453,7 +488,7 @@ class Plugin:
         self.task = None
         self.status = self._new_status("off")
 
-    def _new_status(self, phase, error="", detail="", game="", target=""):
+    def _new_status(self, phase, error="", detail="", game="", target="", notice="", relays=None):
         return {
             "phase": phase,
             "active": "direct",
@@ -461,9 +496,10 @@ class Plugin:
             "target": target,
             "direct": None,
             "direct_score": None,
-            "relays": [],
+            "relays": relays or [],
             "error": error,
             "detail": detail,
+            "notice": notice,
         }
 
     def _fail(self, error, detail=""):
@@ -492,33 +528,40 @@ class Plugin:
             self._start()
 
     async def _monitor(self):
+        notice, detail = "", ""
         try:
-            missing = [t for t in TOOLS if not shutil.which(t)]
-            if missing:
-                return self._fail("tools_missing", ", ".join(missing))
+            if not shutil.which("ping"):
+                return self._fail("tools_missing", "ping")
             relays = load_relays()
-            if not relays:
-                return self._fail("no_relays")
-            await teardown()
+            if relays:
+                missing = [t for t in TOOLS if not shutil.which(t)]
+                if missing:
+                    notice, detail, relays = "tools_missing", ", ".join(missing), []
+            else:
+                notice = "no_relays"
             rows, ready = [], []
-            for index, relay in enumerate(relays):
-                ok = await setup_relay(index, relay)
-                row = {
-                    "name": relay["name"],
-                    "iface": IFACE.format(index),
-                    "endpoint": relay["endpoint"],
-                    "valid": ok,
-                    "error": "" if ok else "setup_failed",
-                    "metrics": None,
-                    "score": None,
-                }
-                rows.append(row)
-                if ok:
-                    ready.append((index, row))
-            if not ready:
-                self.status = self._new_status("error", "setup_failed")
-                self.status["relays"] = rows
-                return
+            if relays:
+                await teardown()
+                for index, relay in enumerate(relays):
+                    ok = await setup_relay(index, relay)
+                    row = {
+                        "name": relay["name"],
+                        "iface": IFACE.format(index),
+                        "endpoint": relay["endpoint"],
+                        "valid": ok,
+                        "error": "" if ok else "setup_failed",
+                        "metrics": None,
+                        "score": None,
+                    }
+                    rows.append(row)
+                    if ok:
+                        ready.append((index, row))
+                if not ready:
+                    notice = "setup_failed"
+
+            def st(phase, **kw):
+                return self._new_status(phase, notice=notice, detail=detail, relays=rows, **kw)
+
             history = deque(maxlen=HISTORY)
             target, active, game = None, "direct", ""
             while True:
@@ -528,8 +571,7 @@ class Plugin:
                         await apply_route(target, None)
                     target, active, game = None, "direct", ""
                     history.clear()
-                    self.status = self._new_status("waiting")
-                    self.status["relays"] = rows
+                    self.status = st("waiting")
                     await asyncio.sleep(3)
                     continue
                 ports, name = await asyncio.to_thread(game_ports, pids)
@@ -548,9 +590,9 @@ class Plugin:
                     for _i, row in ready:
                         row["metrics"], row["score"] = None, None
                 if not target:
-                    self.status = self._new_status("waiting", game=game)
-                    self.status["relays"] = rows
+                    self.status = st("waiting", game=game)
                     continue
+                prof = PROFILES[_load()["profile"]]
                 results = await asyncio.gather(
                     ping_target(target),
                     *[ping_target(target, IFACE.format(i)) for i, _row in ready]
@@ -559,24 +601,17 @@ class Plugin:
                 scores = {}
                 for (i, row), m in zip(ready, results[1:]):
                     row["metrics"] = m
-                    row["score"] = score(m)
+                    row["score"] = score(m, prof["max_loss"])
                     scores[IFACE.format(i)] = row["score"]
-                dscore = score(direct)
-                new = choose(dscore, scores, active)
+                dscore = score(direct, prof["max_loss"])
+                new = choose(dscore, scores, active, prof["margin"])
                 if new != active:
                     index = None if new == "direct" else int(new[len("nolag"):])
                     active = new if await apply_route(target, index) else "direct"
-                self.status = {
-                    "phase": "running",
-                    "active": active,
-                    "game": game,
-                    "target": target,
-                    "direct": direct,
-                    "direct_score": dscore,
-                    "relays": rows,
-                    "error": "",
-                    "detail": "",
-                }
+                self.status = st("running", game=game, target=target)
+                self.status["active"] = active
+                self.status["direct"] = direct
+                self.status["direct_score"] = dscore
                 await asyncio.sleep(INTERVAL)
         except Exception:
             decky.logger.exception("NoLag: falha no monitor")
@@ -589,8 +624,10 @@ class Plugin:
 
     async def set_settings(self, patch):
         data = _load()
-        if isinstance(patch, dict) and "language" in patch:
-            data["language"] = patch["language"]
+        if isinstance(patch, dict):
+            for key in ("language", "profile"):
+                if key in patch:
+                    data[key] = patch[key]
         data = sanitize_settings(data)
         _save(data)
         return data
@@ -613,22 +650,20 @@ class Plugin:
 
     async def add_relay(self, code):
         relay, err = parse_relay_code(code)
-        relays = load_relays()
         if err:
-            return {"ok": False, "error": err, "relays": public_relays(relays)}
-        others = [r for r in relays if r["name"] != relay["name"]]
-        if len(others) >= MAX_RELAYS:
-            return {"ok": False, "error": "too_many", "relays": public_relays(relays)}
-        others.append(relay)
-        save_relays(others)
+            return {"ok": False, "error": err, "relays": public_relays(load_relays())}
+        if len([r for r in load_relays() if r["name"] != relay["name"]]) >= MAX_RELAYS:
+            return {"ok": False, "error": "too_many", "relays": public_relays(load_relays())}
+        stored = [r for r in load_stored_relays() if r["name"] != relay["name"]]
+        stored.append(relay)
+        save_relays(stored)
         await self._restart()
-        return {"ok": True, "error": "", "relays": public_relays(others)}
+        return {"ok": True, "error": "", "relays": public_relays(load_relays())}
 
     async def remove_relay(self, name):
-        relays = [r for r in load_relays() if r["name"] != name]
-        save_relays(relays)
+        save_relays([r for r in load_stored_relays() if r["name"] != name])
         await self._restart()
-        return public_relays(relays)
+        return public_relays(load_relays())
 
     async def _main(self):
         await teardown()

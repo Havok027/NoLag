@@ -6,18 +6,23 @@ Plugin para Decky Loader (Steam Deck, Legion Go y similares con SteamOS) que eli
 
 ## Cómo usar
 
+Activa la **Ruta automática** y abre el juego. Nada más: el plugin detecta el servidor solo y la **Sensibilidad** viene en Equilibrado.
+
+- Sin relay, el plugin solo monitorea ping, jitter y pérdida hasta el servidor del juego.
+- Con relay, también prueba los caminos alternativos y usa el mejor.
+
+## Relays (opcional)
+
 1. En un servidor Linux gratuito (por ejemplo, Oracle Cloud Always Free, Ubuntu), ejecuta `sudo bash relay-setup.sh` (archivo de este repositorio). Instala WireGuard e imprime un código. En Oracle, abre también el puerto UDP 51820 en la Security List.
-2. En el plugin, pega el código en **Relays**. El plugin crea y guarda los archivos por sí solo (hasta 4 relays).
-3. Activa la **Ruta automática** y abre el juego.
+2. Preconfigurado: pon el código en una línea del archivo `relay-code.txt` en la raíz del repositorio. El build incluye el archivo en la release y el plugin lo lee solo. Ojo: el código contiene una clave privada; si el repositorio es público, cualquiera puede usar tu relay.
+3. Alternativa: pega el código en **Relays** (hasta 4 relays).
 
 ## Cómo funciona
 
-- El plugin encuentra el juego abierto por Steam y observa (solo lectura) a qué IP envía datos. No hay que escribir nada.
-- Mide ping, jitter y pérdida por la ruta directa y por cada relay, y desvía solo el tráfico hacia la IP del servidor por el mejor camino.
-- Si un relay empeora, el tráfico vuelve a la ruta directa. Al cerrar el juego, apagar o descargar el plugin, todo se elimina.
+- El plugin encuentra el juego abierto por Steam y observa (solo lectura) a qué IP envía datos.
+- Desvía solo el tráfico hacia la IP del servidor por el mejor camino. Si un relay empeora, vuelve a la ruta directa. Al cerrar el juego, apagar o descargar el plugin, todo se elimina.
 - Las direcciones privadas nunca se desvían.
-
-Usa `ip`, `wg`, `iptables` y `ping`, que el plugin comprueba al activarse (sin wg-quick).
+- Con relays, usa `ip`, `wg`, `iptables` y `ping`.
 
 ## Idiomas
 

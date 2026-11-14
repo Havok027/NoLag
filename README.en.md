@@ -6,18 +6,23 @@ Decky Loader plugin (Steam Deck, Legion Go and similar SteamOS devices) that aut
 
 ## How to use
 
+Turn on **Automatic route** and open the game. That's it: the plugin detects the server by itself and **Sensitivity** comes preset to Balanced.
+
+- Without a relay, the plugin only monitors ping, jitter and loss to the game server.
+- With a relay, it also tests the alternative paths and uses the best one.
+
+## Relays (optional)
+
 1. On a free Linux server (for example, Oracle Cloud Always Free, Ubuntu), run `sudo bash relay-setup.sh` (file in this repository). It installs WireGuard and prints a code. On Oracle, also open UDP port 51820 in the Security List.
-2. In the plugin, paste the code under **Relays**. The plugin creates and stores the files by itself (up to 4 relays).
-3. Turn on **Automatic route** and open the game.
+2. Preconfigured: put the code on a line of the `relay-code.txt` file at the repository root. The build includes the file in the release and the plugin reads it by itself. Note: the code contains a private key; if the repository is public, anyone can use your relay.
+3. Alternative: paste the code under **Relays** (up to 4 relays).
 
 ## How it works
 
-- The plugin finds the game opened by Steam and watches (read-only) which IP it sends data to. Nothing to type.
-- It measures ping, jitter and loss through the direct route and through each relay, and reroutes only the traffic to the server IP through the best path.
-- If a relay gets worse, traffic goes back to the direct route. When the game closes, or the plugin is turned off or unloaded, everything is removed.
+- The plugin finds the game opened by Steam and watches (read-only) which IP it sends data to.
+- It reroutes only the traffic to the server IP through the best path. If a relay gets worse, it goes back to the direct route. When the game closes, or the plugin is turned off or unloaded, everything is removed.
 - Private addresses are never rerouted.
-
-Uses `ip`, `wg`, `iptables` and `ping`, which the plugin checks when turned on (no wg-quick).
+- With relays, it uses `ip`, `wg`, `iptables` and `ping`.
 
 ## Languages
 

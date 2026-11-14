@@ -1,3 +1,10 @@
+## v0.4.0
+
+- Sem relay, a rota automática não dá mais erro: o plugin só monitora ping, jitter e perda até o servidor do jogo.
+- Relays pré-configurados: o plugin lê o arquivo relay-code.txt incluído na release, sem digitar nada no aparelho.
+- Perfil de sensibilidade (Estável, Equilibrado, Agressivo) com Equilibrado pré-selecionado.
+- Avisos em vez de erros quando faltam ferramentas ou os relays não iniciam.
+
 ## v0.3.0
 
 - O servidor do jogo é detectado sozinho: o plugin acha o jogo aberto pelo Steam e observa para qual IP ele envia dados.

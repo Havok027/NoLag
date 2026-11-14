@@ -6,18 +6,23 @@ Plugin para o Decky Loader (Steam Deck, Legion Go e similares com SteamOS) que e
 
 ## Como usar
 
+Ligue a **Rota automática** e abra o jogo. Só isso: o plugin detecta o servidor sozinho e já vem com a **Sensibilidade** em Equilibrado.
+
+- Sem relay, o plugin só monitora ping, jitter e perda até o servidor do jogo.
+- Com relay, ele também testa os caminhos alternativos e usa o melhor.
+
+## Relays (opcional)
+
 1. Em um servidor Linux gratuito (por exemplo, Oracle Cloud Always Free, Ubuntu), rode `sudo bash relay-setup.sh` (arquivo deste repositório). Ele instala o WireGuard e imprime um código. Na Oracle, libere também a porta UDP 51820 na Security List.
-2. No plugin, cole o código em **Relays**. O plugin cria e guarda os arquivos sozinho (até 4 relays).
-3. Ligue a **Rota automática** e abra o jogo.
+2. Pré-configurado: coloque o código em uma linha do arquivo `relay-code.txt` na raiz do repositório. O build inclui o arquivo na release e o plugin lê sozinho. Atenção: o código contém uma chave privada; se o repositório for público, qualquer pessoa pode usar o seu relay.
+3. Alternativa: cole o código em **Relays** (até 4 relays).
 
 ## Como funciona
 
-- O plugin acha o jogo aberto pelo Steam e observa (só leitura) para qual IP ele envia dados. Não precisa digitar nada.
-- Mede ping, jitter e perda pela rota direta e por cada relay, e desvia só o tráfego para o IP do servidor pelo melhor caminho.
-- Se o relay piorar, o tráfego volta para a rota direta. Ao fechar o jogo, desligar ou descarregar o plugin, tudo é removido.
+- O plugin acha o jogo aberto pelo Steam e observa (só leitura) para qual IP ele envia dados.
+- Desvia só o tráfego para o IP do servidor pelo melhor caminho. Se o relay piorar, volta para a rota direta. Ao fechar o jogo, desligar ou descarregar o plugin, tudo é removido.
 - Endereços privados nunca são desviados.
-
-Usa `ip`, `wg`, `iptables` e `ping`, que o plugin confere ao ligar (nada de wg-quick).
+- Com relays, usa `ip`, `wg`, `iptables` e `ping`.
 
 ## Idiomas
 
