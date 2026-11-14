@@ -10,6 +10,7 @@ class PluginJsonTests(unittest.TestCase):
         with open(os.path.join(ROOT, "plugin.json"), "r", encoding="utf-8") as f:
             data = json.load(f)
         self.assertIn("_root", data.get("flags", []))
+        self.assertIn("root", data.get("flags", []))
         self.assertEqual(data.get("name"), "NoLag")
 
 
