@@ -580,7 +580,7 @@ class Plugin:
                     counts = await asyncio.to_thread(sniff, ports, SNIFF_SECONDS)
                 except OSError as exc:
                     decky.logger.exception("NoLag: não foi possível observar o tráfego")
-                    return self._fail("sniff_failed", exc.strerror or type(exc).__name__)
+                    return self._fail("sniff_failed", "%s (uid %d)" % (exc.strerror or type(exc).__name__, os.geteuid()))
                 history.append(counts)
                 new_target = pick_target(merge_counts(history), target)
                 if new_target != target:

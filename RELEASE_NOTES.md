@@ -1,3 +1,8 @@
+## v0.4.2
+
+- plugin.json passa a declarar as duas flags de root (_root e root), para o Decky Loader executar o backend como root em qualquer versão.
+- O erro de observação do tráfego mostra o usuário em que o backend está rodando (uid), para diagnóstico.
+
 ## v0.4.1
 
 - Corrige o erro "Não foi possível observar o tráfego do jogo": o plugin agora roda o backend como root (plugin.json), necessário para observar os pacotes UDP do jogo.
