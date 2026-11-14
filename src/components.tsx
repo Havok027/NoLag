@@ -99,6 +99,8 @@ export function Card(props: { badge?: string; tone?: BadgeTone; rows: [string, s
         background: "rgba(14, 50, 90, 0.75)",
         overflow: "hidden",
         marginBottom: 12,
+        boxSizing: "border-box",
+        width: "100%",
       }}
     >
       {props.badge ? (
@@ -131,8 +133,8 @@ export function Card(props: { badge?: string; tone?: BadgeTone; rows: [string, s
             fontSize: 14,
           }}
         >
-          <span style={{ opacity: 0.9 }}>{label}</span>
-          <span style={{ fontWeight: 600, textAlign: "right" }}>{value}</span>
+          <span style={{ opacity: 0.9, flexShrink: 0 }}>{label}</span>
+          <span style={{ fontWeight: 600, textAlign: "right", minWidth: 0, overflowWrap: "anywhere" }}>{value}</span>
         </div>
       ))}
     </div>
@@ -190,6 +192,133 @@ export function Footer({ text }: { text: string }) {
       }}
     >
       {text}
+    </div>
+  );
+}
+
+export function Help({ show, text }: { show: boolean; text: string }) {
+  if (!show) return null;
+  return (
+    <div
+      style={{
+        fontSize: 12,
+        lineHeight: 1.4,
+        opacity: 0.92,
+        padding: "6px 10px",
+        margin: "0 0 12px",
+        borderLeft: "3px solid #ffc857",
+        background: "rgba(255, 200, 87, 0.08)",
+        borderRadius: 4,
+        boxSizing: "border-box",
+      }}
+    >
+      {text}
+    </div>
+  );
+}
+
+export function HelpBar(props: { label: string; visible: boolean; onToggle: () => void }) {
+  const tap = useTap(props.onToggle);
+  return (
+    <Focusable
+      onActivate={tap}
+      onClick={tap}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 8,
+        padding: "6px 0",
+        marginBottom: 10,
+        borderRadius: 8,
+        border: "1px solid rgba(255, 200, 87, 0.6)",
+        fontSize: 13,
+        fontWeight: 600,
+        color: props.visible ? "#ffc857" : "inherit",
+      }}
+    >
+      <span
+        style={{
+          width: 20,
+          height: 20,
+          lineHeight: "20px",
+          borderRadius: 10,
+          textAlign: "center",
+          background: "#ffc857",
+          color: "#1b1b1b",
+          fontWeight: 800,
+          fontSize: 12,
+        }}
+      >
+        Y
+      </span>
+      {props.label}
+    </Focusable>
+  );
+}
+
+export interface ChartLine {
+  key: string;
+  label: string;
+  color: string;
+  values: (number | null)[];
+  avg: string;
+  best: boolean;
+}
+
+export function LineChart(props: { lines: ChartLine[]; emptyText: string; bestTag: string }) {
+  const W = 300;
+  const H = 110;
+  const PAD = 6;
+  const nums = props.lines.flatMap((l) => l.values.filter((v): v is number => v !== null));
+  if (!nums.length) {
+    return <div style={{ textAlign: "center", fontSize: 13, opacity: 0.8, padding: "14px 0" }}>{props.emptyText}</div>;
+  }
+  let lo = Math.min(...nums);
+  let hi = Math.max(...nums);
+  if (hi - lo < 10) {
+    const mid = (hi + lo) / 2;
+    lo = Math.max(0, mid - 5);
+    hi = mid + 5;
+  }
+  const n = Math.max(...props.lines.map((l) => l.values.length), 2);
+  const xAt = (i: number, len: number) => PAD + ((i + (n - len)) / (n - 1)) * (W - PAD * 2);
+  const yAt = (v: number) => H - PAD - ((v - lo) / (hi - lo)) * (H - PAD * 2);
+  const pathOf = (values: (number | null)[]) => {
+    let d = "";
+    let pen = false;
+    values.forEach((v, i) => {
+      if (v === null) {
+        pen = false;
+        return;
+      }
+      d += `${pen ? "L" : "M"}${xAt(i, values.length).toFixed(1)} ${yAt(v).toFixed(1)} `;
+      pen = true;
+    });
+    return d;
+  };
+  return (
+    <div style={{ marginBottom: 12 }}>
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ display: "block", background: "rgba(14, 50, 90, 0.5)", borderRadius: 8 }}>
+        {[0, 0.5, 1].map((f) => (
+          <line key={f} x1={PAD} x2={W - PAD} y1={PAD + f * (H - PAD * 2)} y2={PAD + f * (H - PAD * 2)} stroke="rgba(255,255,255,0.12)" strokeWidth={1} />
+        ))}
+        <text x={W - PAD} y={PAD + 9} fontSize={9} fill="rgba(255,255,255,0.7)" textAnchor="end">{`${hi.toFixed(0)} ms`}</text>
+        <text x={W - PAD} y={H - PAD - 2} fontSize={9} fill="rgba(255,255,255,0.7)" textAnchor="end">{`${lo.toFixed(0)} ms`}</text>
+        {props.lines.map((l) => (
+          <path key={l.key} d={pathOf(l.values)} fill="none" stroke={l.color} strokeWidth={l.best ? 3 : 2} strokeLinejoin="round" strokeLinecap="round" />
+        ))}
+      </svg>
+      <div style={{ marginTop: 8 }}>
+        {props.lines.map((l) => (
+          <div key={l.key} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, padding: "3px 2px" }}>
+            <span style={{ width: 18, height: 4, borderRadius: 2, background: l.color, flexShrink: 0 }} />
+            <span style={{ flex: 1, minWidth: 0, overflowWrap: "anywhere" }}>{l.label}</span>
+            {l.best && <span style={{ fontSize: 11, fontWeight: 800, color: "#3ddc84" }}>{props.bestTag}</span>}
+            <span style={{ fontWeight: 600 }}>{l.avg}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

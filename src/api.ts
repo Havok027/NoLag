@@ -45,6 +45,7 @@ export interface Status {
   detail: string;
   notice: string;
   diag: Diag;
+  history: Record<string, (number | null)[]>;
 }
 
 export interface Relay {

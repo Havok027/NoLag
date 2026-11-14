@@ -1,6 +1,8 @@
 import {
   ButtonItem,
   DropdownItem,
+  Focusable,
+  PanelSection,
   PanelSectionRow,
   TextField,
   ToggleField,
@@ -19,7 +21,7 @@ import {
   setRouteEnabled,
   setSettings,
 } from "./api";
-import { BadgeTone, Card, Collapsible, Footer, TAB_ORDER, TabBar, TabId } from "./components";
+import { BadgeTone, Card, ChartLine, Collapsible, Footer, Help, HelpBar, LineChart, TAB_ORDER, TabBar, TabId } from "./components";
 import { LANGS, LANG_NAMES, Lang, TEXTS, Texts, normalizeLang } from "./i18n";
 
 const DASH = "—";
@@ -103,6 +105,19 @@ function lossText(m: Metrics | null): string {
 }
 
 const DEFAULT_COLLAPSED: Record<string, boolean> = { diag: true };
+const COLORS = ["#4cc9f0", "#ffc857", "#f472b6", "#a78bfa", "#34d399"];
+
+function avgLast(values: (number | null)[]): number | null {
+  const nums = values.slice(-5).filter((v): v is number => v !== null);
+  return nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : null;
+}
+
+function qualityOf(t: Texts, m: Metrics | null): string {
+  if (!m || m.avg === null) return DASH;
+  if (m.loss >= 5 || m.avg > 150) return t.qualBad;
+  if (m.loss >= 1 || m.avg > 80 || (m.jitter ?? 0) > 15) return t.qualFair;
+  return t.qualGood;
+}
 
 export function Content() {
   const [lang, setLang] = useState<Lang>("pt");
@@ -167,6 +182,8 @@ export function Content() {
   const t = TEXTS[lang];
 
   const isCollapsed = (key: string) => collapsed[key] ?? DEFAULT_COLLAPSED[key] ?? false;
+  const helpOn = !isCollapsed("help");
+  const toggleHelp = () => toggleSection("help", helpOn);
 
   const toggleSection = (key: string, value: boolean) => {
     const next = { ...collapsed, [key]: value };
@@ -238,6 +255,7 @@ export function Content() {
     dashRows.push([t.pingNow, msText(live)]);
     dashRows.push([t.jitter, jitterText(live)]);
     dashRows.push([t.loss, lossText(live)]);
+    dashRows.push([t.quality, qualityOf(t, live)]);
   }
 
   const liveRows: [string, string][] = [];
@@ -249,6 +267,29 @@ export function Content() {
     );
   }
 
+  const chartLines: ChartLine[] = [];
+  if (status?.phase === "running" && status.history) {
+    const entries: { key: string; label: string; values: (number | null)[] }[] = [
+      { key: "direct", label: t.direct, values: status.history["direct"] ?? [] },
+      ...status.relays.map((r) => ({ key: r.iface, label: r.name, values: status.history[r.iface] ?? [] })),
+    ];
+    const avgs = entries.map((e) => avgLast(e.values));
+    const known = avgs.filter((a): a is number => a !== null);
+    const bestAvg = known.length ? Math.min(...known) : null;
+    entries.forEach((e, i) => {
+      const a = avgs[i];
+      chartLines.push({
+        key: e.key,
+        label: e.label,
+        color: COLORS[i % COLORS.length],
+        values: e.values,
+        avg: a === null ? DASH : `${a.toFixed(0)} ms`,
+        best: a !== null && bestAvg !== null && a === bestAvg && entries.length > 1,
+      });
+    });
+  }
+  const bestLine = chartLines.find((l) => l.best);
+
   const diag = status?.diag;
   const diagRows: [string, string][] = [
     [t.diagProcs, String(diag?.pids ?? 0)],
@@ -257,7 +298,11 @@ export function Content() {
     [t.diagTop, diag && diag.top.length ? diag.top.map(([ip, n]) => `${ip} (${n})`).join(", ") : DASH],
   ];
 
+  const yProps = { onSecondaryButton: toggleHelp, onSecondaryActionDescription: t.helpLegend };
+
   return (
+    <PanelSection>
+    <Focusable {...(yProps as object)} style={{ width: "100%", boxSizing: "border-box" }}>
     <div ref={root}>
       <TabBar
         labels={{ dash: t.tabDash, routes: t.tabRoutes, settings: t.settings }}
@@ -265,9 +310,12 @@ export function Content() {
         active={tab}
         onSelect={setTab}
       />
+      <HelpBar label={t.helpBtn} visible={helpOn} onToggle={toggleHelp} />
       {tab === "dash" && (
         <>
           <Card badge={badge.text} tone={badge.tone} rows={dashRows} />
+          <Help show={helpOn} text={t.hStatus} />
+          <Help show={helpOn} text={t.hPing} />
           <PanelSectionRow>
             <ToggleField
               label={t.enable}
@@ -276,13 +324,25 @@ export function Content() {
               onChange={changeEnabled}
             />
           </PanelSectionRow>
+          <Help show={helpOn} text={t.hEnable} />
           <Collapsible title={t.liveRoutes} collapsed={isCollapsed("routes")} onToggle={(v) => toggleSection("routes", v)}>
             <Card rows={liveRows.length ? liveRows : [[t.noLive, DASH]]} />
-            <div style={{ fontSize: 11, opacity: 0.7, textAlign: "center" }}>{t.metricsHint}</div>
+            <div style={{ fontSize: 11, opacity: 0.7, textAlign: "center", marginBottom: 8 }}>{t.metricsHint}</div>
+            <Help show={helpOn} text={t.hRoutes} />
+          </Collapsible>
+          <Collapsible title={t.chartTitle} collapsed={isCollapsed("chart")} onToggle={(v) => toggleSection("chart", v)}>
+            {bestLine && (
+              <div style={{ textAlign: "center", fontSize: 13, marginBottom: 8 }}>
+                {t.chartBest}: <b>{bestLine.label}</b> ({bestLine.avg})
+              </div>
+            )}
+            <LineChart lines={chartLines} emptyText={t.chartEmpty} bestTag={t.best} />
+            <Help show={helpOn} text={t.hChart} />
           </Collapsible>
           <Collapsible title={t.diagTitle} collapsed={isCollapsed("diag")} onToggle={(v) => toggleSection("diag", v)}>
             <Card rows={diagRows} />
-            <div style={{ fontSize: 11, opacity: 0.7, textAlign: "center" }}>{t.diagHint}</div>
+            <div style={{ fontSize: 11, opacity: 0.7, textAlign: "center", marginBottom: 8 }}>{t.diagHint}</div>
+            <Help show={helpOn} text={t.hDiag} />
           </Collapsible>
         </>
       )}
@@ -308,7 +368,9 @@ export function Content() {
               onChange={(opt) => changeProfile(opt.data as Profile)}
             />
           </PanelSectionRow>
+          <Help show={helpOn} text={t.hProfile} />
           <Collapsible title={t.relaysTitle} collapsed={isCollapsed("relays")} onToggle={(v) => toggleSection("relays", v)}>
+            <Help show={helpOn} text={t.hRelays} />
             {relays.length === 0 && <Card rows={[[t.relaysNone, DASH]]} />}
             {relays.map((r) => (
               <PanelSectionRow key={r.name}>
@@ -334,6 +396,7 @@ export function Content() {
                 onChange={(e) => changeCode(e.target.value)}
               />
             </PanelSectionRow>
+            <Help show={helpOn} text={t.hRelayCode} />
           </Collapsible>
         </>
       )}
@@ -348,9 +411,12 @@ export function Content() {
               onChange={(opt) => changeLanguage(normalizeLang(opt.data))}
             />
           </PanelSectionRow>
+          <Help show={helpOn} text={t.hLang} />
         </>
       )}
       <Footer text={t.createdBy} />
     </div>
+    </Focusable>
+    </PanelSection>
   );
 }

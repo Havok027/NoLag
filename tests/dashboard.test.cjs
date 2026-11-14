@@ -13,7 +13,9 @@ const read = (f) => {
 
 const NEW_KEYS = ["tabDash", "tabRoutes", "tabHint", "badgeActive", "badgeWaiting", "badgeOff", "badgeError",
   "badgeStarting", "pingNow", "jitter", "loss", "liveRoutes", "inUse", "noLive", "diagTitle", "diagProcs",
-  "diagPorts", "diagPackets", "diagTop", "diagHint", "relaysCount"];
+  "diagPorts", "diagPackets", "diagTop", "diagHint", "relaysCount", "chartTitle", "chartBest", "chartEmpty",
+  "best", "quality", "qualGood", "qualFair", "qualBad", "helpBtn", "helpLegend", "hStatus", "hPing", "hEnable",
+  "hRoutes", "hChart", "hDiag", "hProfile", "hRelays", "hRelayCode", "hLang"];
 
 test("textos do painel existem nos 3 idiomas", () => {
   const src = read("i18n.tsx");
@@ -32,4 +34,14 @@ test("painel mostra ping atual e rotas ao vivo", () => {
 test("seções recolhíveis salvam o estado", () => {
   const src = read("Content.tsx");
   assert.ok(src.includes("setSettings({ collapsed: next })"));
+});
+
+test("gráfico, ajuda e botão Y estão ligados", () => {
+  const src = read("Content.tsx");
+  assert.ok(src.includes("LineChart") && src.includes("t.chartTitle"));
+  assert.ok(src.includes("onSecondaryButton") && src.includes("toggleHelp"));
+  assert.ok(src.includes("<PanelSection>"));
+  for (const key of ["hStatus", "hPing", "hEnable", "hRoutes", "hChart", "hDiag", "hProfile", "hRelays", "hRelayCode", "hLang"]) {
+    assert.ok(src.includes("t." + key), key);
+  }
 });
