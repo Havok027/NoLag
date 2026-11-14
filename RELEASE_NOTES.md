@@ -1,3 +1,8 @@
+## v0.5.2
+
+- Botão Y passa a mostrar e ocultar a ajuda também pelo evento de botões do Steam (o mesmo caminho que já funciona para L1/R1).
+- Teste novo para a ligação do botão Y.
+
 ## v0.5.1
 
 - Corrige a interface cortada na lateral: o conteúdo agora usa as margens padrão do menu.
