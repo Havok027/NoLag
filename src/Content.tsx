@@ -63,7 +63,7 @@ function errorText(t: Texts, s: Status): string {
     case "tools_missing":
       return `${t.errToolsMissing}: ${s.detail}`;
     case "sniff_failed":
-      return t.errSniff;
+      return s.detail ? `${t.errSniff}: ${s.detail}` : t.errSniff;
     default:
       return t.errUnexpected;
   }
