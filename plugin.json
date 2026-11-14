@@ -1,0 +1,11 @@
+{
+  "name": "NoLag",
+  "author": "Havok",
+  "flags": [],
+  "api_version": 1,
+  "publish": {
+    "tags": ["network", "utility"],
+    "description": "Rotas de rede gratuitas e automáticas por jogo. / Free automatic network routes per game.",
+    "image": ""
+  }
+}
