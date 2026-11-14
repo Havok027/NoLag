@@ -15,6 +15,10 @@ export interface Texts {
   stateStarting: string;
   stateRunning: string;
   stateError: string;
+  waitGame: string;
+  waitTraffic: string;
+  game: string;
+  server: string;
   activeRoute: string;
   routeDirect: string;
   direct: string;
@@ -22,15 +26,20 @@ export interface Texts {
   route: string;
   enable: string;
   enableDesc: string;
-  target: string;
-  targetDesc: string;
-  errTargetInvalid: string;
+  relaysTitle: string;
+  relaysNone: string;
+  relayCode: string;
+  relayCodeDesc: string;
+  relayAdded: string;
+  relayBad: string;
+  relayLimit: string;
+  relayRemove: string;
+  relayInvalid: string;
   errToolsMissing: string;
-  errNoTarget: string;
   errNoRelays: string;
   errSetup: string;
+  errSniff: string;
   errUnexpected: string;
-  relayInvalid: string;
   settings: string;
   language: string;
   createdBy: string;
@@ -44,22 +53,31 @@ export const TEXTS: Record<Lang, Texts> = {
     stateStarting: "Iniciando",
     stateRunning: "Ativo",
     stateError: "Erro",
+    waitGame: "Aguardando jogo",
+    waitTraffic: "Aguardando tráfego do jogo",
+    game: "Jogo",
+    server: "Servidor",
     activeRoute: "Rota atual",
     routeDirect: "Direta",
     direct: "Direta",
     metricsHint: "ping · jitter · perda",
     route: "Rota",
     enable: "Rota automática",
-    enableDesc: "Escolhe sozinha o melhor caminho até o servidor do jogo",
-    target: "IP do servidor do jogo",
-    targetDesc: "Só o tráfego para este IP é desviado",
-    errTargetInvalid: "IP inválido ou privado",
+    enableDesc: "Detecta o servidor do jogo e escolhe o melhor caminho",
+    relaysTitle: "Relays",
+    relaysNone: "Nenhum relay",
+    relayCode: "Código do relay",
+    relayCodeDesc: "Cole o código gerado pelo relay-setup.sh",
+    relayAdded: "Relay adicionado",
+    relayBad: "Código inválido",
+    relayLimit: "Limite de 4 relays",
+    relayRemove: "Remover",
+    relayInvalid: "Falhou ao iniciar",
     errToolsMissing: "Faltam ferramentas",
-    errNoTarget: "Informe o IP do servidor",
-    errNoRelays: "Coloque os arquivos .conf do WireGuard em",
+    errNoRelays: "Adicione um relay em Relays",
     errSetup: "Nenhum relay funcionou",
+    errSniff: "Não foi possível observar o tráfego do jogo",
     errUnexpected: "Erro inesperado, veja o log",
-    relayInvalid: "Arquivo inválido",
     settings: "Config.",
     language: "Idioma",
     createdBy: "Criado por Havok",
@@ -71,22 +89,31 @@ export const TEXTS: Record<Lang, Texts> = {
     stateStarting: "Starting",
     stateRunning: "Active",
     stateError: "Error",
+    waitGame: "Waiting for a game",
+    waitTraffic: "Waiting for game traffic",
+    game: "Game",
+    server: "Server",
     activeRoute: "Current route",
     routeDirect: "Direct",
     direct: "Direct",
     metricsHint: "ping · jitter · loss",
     route: "Route",
     enable: "Automatic route",
-    enableDesc: "Picks the best path to the game server on its own",
-    target: "Game server IP",
-    targetDesc: "Only traffic to this IP is rerouted",
-    errTargetInvalid: "Invalid or private IP",
+    enableDesc: "Detects the game server and picks the best path",
+    relaysTitle: "Relays",
+    relaysNone: "No relays",
+    relayCode: "Relay code",
+    relayCodeDesc: "Paste the code printed by relay-setup.sh",
+    relayAdded: "Relay added",
+    relayBad: "Invalid code",
+    relayLimit: "Limit of 4 relays",
+    relayRemove: "Remove",
+    relayInvalid: "Failed to start",
     errToolsMissing: "Missing tools",
-    errNoTarget: "Enter the server IP",
-    errNoRelays: "Put the WireGuard .conf files in",
+    errNoRelays: "Add a relay under Relays",
     errSetup: "No relay worked",
+    errSniff: "Could not observe the game traffic",
     errUnexpected: "Unexpected error, check the log",
-    relayInvalid: "Invalid file",
     settings: "Settings",
     language: "Language",
     createdBy: "Created by Havok",
@@ -98,22 +125,31 @@ export const TEXTS: Record<Lang, Texts> = {
     stateStarting: "Iniciando",
     stateRunning: "Activo",
     stateError: "Error",
+    waitGame: "Esperando un juego",
+    waitTraffic: "Esperando tráfico del juego",
+    game: "Juego",
+    server: "Servidor",
     activeRoute: "Ruta actual",
     routeDirect: "Directa",
     direct: "Directa",
     metricsHint: "ping · jitter · pérdida",
     route: "Ruta",
     enable: "Ruta automática",
-    enableDesc: "Elige sola el mejor camino hasta el servidor del juego",
-    target: "IP del servidor del juego",
-    targetDesc: "Solo se desvía el tráfico hacia esta IP",
-    errTargetInvalid: "IP inválida o privada",
+    enableDesc: "Detecta el servidor del juego y elige el mejor camino",
+    relaysTitle: "Relays",
+    relaysNone: "Sin relays",
+    relayCode: "Código del relay",
+    relayCodeDesc: "Pega el código generado por relay-setup.sh",
+    relayAdded: "Relay añadido",
+    relayBad: "Código inválido",
+    relayLimit: "Límite de 4 relays",
+    relayRemove: "Quitar",
+    relayInvalid: "Falló al iniciar",
     errToolsMissing: "Faltan herramientas",
-    errNoTarget: "Indica la IP del servidor",
-    errNoRelays: "Pon los archivos .conf de WireGuard en",
+    errNoRelays: "Añade un relay en Relays",
     errSetup: "Ningún relay funcionó",
+    errSniff: "No se pudo observar el tráfico del juego",
     errUnexpected: "Error inesperado, revisa el log",
-    relayInvalid: "Archivo inválido",
     settings: "Config.",
     language: "Idioma",
     createdBy: "Creado por Havok",

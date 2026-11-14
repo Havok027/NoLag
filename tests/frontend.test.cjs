@@ -49,7 +49,7 @@ test("todo callable do api.ts existe no main.py", () => {
   const api = read("src/api.ts");
   const py = read("main.py");
   const names = [...api.matchAll(/callable<[^(]*\("(\w+)"\)/g)].map((m) => m[1]);
-  assert.ok(names.length >= 4);
+  assert.ok(names.length >= 7);
   for (const n of names) {
     assert.ok(new RegExp("async def " + n + "\\(").test(py), n + " ausente no main.py");
   }
@@ -64,4 +64,10 @@ test("READMEs nos 3 idiomas existem", () => {
 test("RELEASE_NOTES cita a versão atual", () => {
   const pkg = JSON.parse(read("package.json"));
   assert.ok(read("RELEASE_NOTES.md").includes("## v" + pkg.version));
+});
+
+test("relay-setup.sh existe e gera o código esperado pelo plugin", () => {
+  const sh = read("relay-setup.sh");
+  assert.ok(sh.includes("nolag1:"));
+  assert.ok(read("main.py").includes("nolag1:"));
 });

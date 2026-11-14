@@ -4,7 +4,6 @@ import type { Lang } from "./i18n";
 export interface Settings {
   language: Lang;
   enabled: boolean;
-  target: string;
 }
 
 export interface Metrics {
@@ -24,8 +23,10 @@ export interface RelayStatus {
 }
 
 export interface Status {
-  phase: "off" | "starting" | "running" | "error";
+  phase: "off" | "starting" | "waiting" | "running" | "error";
   active: string;
+  game: string;
+  target: string;
   direct: Metrics | null;
   direct_score: number | null;
   relays: RelayStatus[];
@@ -33,7 +34,21 @@ export interface Status {
   detail: string;
 }
 
+export interface Relay {
+  name: string;
+  endpoint: string;
+}
+
+export interface AddRelayResult {
+  ok: boolean;
+  error: string;
+  relays: Relay[];
+}
+
 export const getSettings = callable<[], Settings>("get_settings");
 export const setSettings = callable<[Partial<Settings>], Settings>("set_settings");
 export const setRouteEnabled = callable<[boolean], Status>("set_enabled");
 export const getStatus = callable<[], Status>("get_status");
+export const getRelays = callable<[], Relay[]>("get_relays");
+export const addRelay = callable<[string], AddRelayResult>("add_relay");
+export const removeRelay = callable<[string], Relay[]>("remove_relay");
