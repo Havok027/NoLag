@@ -1,12 +1,12 @@
 {
   "name": "nolag",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "NoLag: rotas de rede gratuitas e automáticas por jogo para o Decky Loader.",
   "type": "module",
   "scripts": {
     "build": "rollup -c",
     "watch": "rollup -c -w",
-    "test": "node --test tests/frontend.test.cjs"
+    "test": "node --test tests/frontend.test.cjs && python3 -m unittest discover -s tests -p 'test_*.py'"
   },
   "license": "BSD-3-Clause",
   "dependencies": {
