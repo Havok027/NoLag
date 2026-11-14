@@ -1,3 +1,7 @@
+## v0.1.2
+
+- Ajuste interno no processo de build.
+
 ## v0.1.1
 
 - Base do plugin NoLag para o Decky Loader.
