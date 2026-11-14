@@ -12,7 +12,8 @@ from collections import deque
 import decky
 
 LANGS = ("pt", "en", "es")
-DEFAULTS = {"language": "pt", "enabled": False, "profile": "balanced"}
+DEFAULTS = {"language": "pt", "enabled": False, "profile": "balanced", "collapsed": {}}
+SECTIONS = ("diag", "routes", "relays", "settings")
 PROFILES = {
     "stable": {"margin": 10.0, "max_loss": 20.0},
     "balanced": {"margin": 5.0, "max_loss": 30.0},
@@ -38,6 +39,7 @@ TOOLS = ("ip", "wg", "iptables", "ping")
 
 def sanitize_settings(raw):
     data = dict(DEFAULTS)
+    data["collapsed"] = {}
     if isinstance(raw, dict):
         lang = raw.get("language")
         if isinstance(lang, str) and lang in LANGS:
@@ -46,6 +48,9 @@ def sanitize_settings(raw):
             data["enabled"] = raw["enabled"]
         if raw.get("profile") in PROFILES:
             data["profile"] = raw["profile"]
+        col = raw.get("collapsed")
+        if isinstance(col, dict):
+            data["collapsed"] = {k: col[k] for k in SECTIONS if isinstance(col.get(k), bool)}
     return data
 
 
@@ -67,7 +72,7 @@ def _load():
         with open(_path("settings.json"), "r", encoding="utf-8") as f:
             return sanitize_settings(json.load(f))
     except Exception:
-        return dict(DEFAULTS)
+        return sanitize_settings(None)
 
 
 def _save(data):
@@ -293,7 +298,7 @@ def sanitize_target(value):
     return str(ip)
 
 
-def sniff(ports, seconds):
+def sniff(ports, seconds, stats=None):
     """Conta pacotes UDP enviados pelas portas do jogo, por IP de destino (só leitura)."""
     counts = {}
     if not ports:
@@ -310,7 +315,11 @@ def sniff(ports, seconds):
             if addr[2] != 4 or addr[0] == "lo":
                 continue
             pkt = parse_packet(data, addr[3])
-            if not pkt or pkt[0] not in ports or pkt[2] in (53, 123):
+            if not pkt or pkt[0] not in ports:
+                continue
+            if stats is not None:
+                stats["seen"] = stats.get("seen", 0) + 1
+            if pkt[2] in (53, 123):
                 continue
             dst = sanitize_target(pkt[1])
             if dst:
@@ -500,6 +509,7 @@ class Plugin:
             "error": error,
             "detail": detail,
             "notice": notice,
+            "diag": {"pids": 0, "ports": 0, "seen": 0, "top": []},
         }
 
     def _fail(self, error, detail=""):
@@ -577,12 +587,16 @@ class Plugin:
                 ports, name = await asyncio.to_thread(game_ports, pids)
                 game = name or game
                 try:
-                    counts = await asyncio.to_thread(sniff, ports, SNIFF_SECONDS)
+                    stats = {}
+                    counts = await asyncio.to_thread(sniff, ports, SNIFF_SECONDS, stats)
                 except OSError as exc:
                     decky.logger.exception("NoLag: não foi possível observar o tráfego")
                     return self._fail("sniff_failed", "%s (uid %d)" % (exc.strerror or type(exc).__name__, os.geteuid()))
                 history.append(counts)
-                new_target = pick_target(merge_counts(history), target)
+                total = merge_counts(history)
+                top = sorted(total.items(), key=lambda kv: -kv[1])[:3]
+                diag = {"pids": len(pids), "ports": len(ports), "seen": stats.get("seen", 0), "top": [[ip, n] for ip, n in top]}
+                new_target = pick_target(total, target)
                 if new_target != target:
                     if target:
                         await apply_route(target, None)
@@ -591,6 +605,7 @@ class Plugin:
                         row["metrics"], row["score"] = None, None
                 if not target:
                     self.status = st("waiting", game=game)
+                    self.status["diag"] = diag
                     continue
                 prof = PROFILES[_load()["profile"]]
                 results = await asyncio.gather(
@@ -612,6 +627,7 @@ class Plugin:
                 self.status["active"] = active
                 self.status["direct"] = direct
                 self.status["direct_score"] = dscore
+                self.status["diag"] = diag
                 await asyncio.sleep(INTERVAL)
         except Exception:
             decky.logger.exception("NoLag: falha no monitor")
@@ -625,7 +641,7 @@ class Plugin:
     async def set_settings(self, patch):
         data = _load()
         if isinstance(patch, dict):
-            for key in ("language", "profile"):
+            for key in ("language", "profile", "collapsed"):
                 if key in patch:
                     data[key] = patch[key]
         data = sanitize_settings(data)

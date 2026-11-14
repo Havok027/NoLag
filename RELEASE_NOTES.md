@@ -1,3 +1,13 @@
+## v0.5.0
+
+- Painel no início, no estilo de cartões: estado, jogo, servidor, rota em uso, ping atual, jitter e perda ao vivo.
+- Rotas ao vivo: ping, jitter e perda da rota direta e de cada relay, com a rota em uso marcada.
+- Abas Painel, Rotas e Config., trocadas por toque, botão A ou L1/R1.
+- Seções recolhíveis com seta; o estado fica salvo.
+- Diagnóstico: processos do jogo, portas UDP, pacotes vistos e destinos mais frequentes, para entender o "Aguardando tráfego do jogo".
+- Atualização do status a cada 2 segundos.
+- Testes novos para textos nos 3 idiomas, painel e seções recolhíveis.
+
 ## v0.4.2
 
 - plugin.json passa a declarar as duas flags de root (_root e root), para o Decky Loader executar o backend como root em qualquer versão.
