@@ -12,6 +12,7 @@ import unittest
 
 sys.modules["decky"] = types.SimpleNamespace(
     DECKY_PLUGIN_SETTINGS_DIR=tempfile.mkdtemp(),
+    DECKY_PLUGIN_DIR=tempfile.mkdtemp(),
     logger=logging.getLogger("nolag-test"),
 )
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
@@ -60,8 +61,10 @@ class SettingsTests(unittest.TestCase):
     def test_sanitize_defaults_and_types(self):
         self.assertEqual(main.sanitize_settings(None), main.DEFAULTS)
         d = main.sanitize_settings({"language": "xx", "enabled": "yes", "target": "1.1.1.1"})
-        self.assertEqual(d, {"language": "pt", "enabled": False})
-        self.assertEqual(main.sanitize_settings({"language": "en", "enabled": True}), {"language": "en", "enabled": True})
+        self.assertEqual(d, {"language": "pt", "enabled": False, "profile": "balanced"})
+        ok = main.sanitize_settings({"language": "en", "enabled": True, "profile": "stable"})
+        self.assertEqual(ok, {"language": "en", "enabled": True, "profile": "stable"})
+        self.assertEqual(main.sanitize_settings({"profile": "x; rm"})["profile"], "balanced")
 
     def test_target_only_public_unicast(self):
         self.assertEqual(main.sanitize_target("8.8.8.8"), "8.8.8.8")
@@ -98,6 +101,56 @@ class RelayTests(unittest.TestCase):
         self.assertNotIn("private_key", main.public_relays(main.load_relays())[0])
 
 
+class PresetRelayTests(unittest.TestCase):
+    def setUp(self):
+        self.path = os.path.join(main.decky.DECKY_PLUGIN_DIR, "relay-code.txt")
+        main.save_relays([])
+
+    def tearDown(self):
+        if os.path.exists(self.path):
+            os.remove(self.path)
+
+    def test_file_relays_are_builtin_and_deduped(self):
+        with open(self.path, "w") as f:
+            f.write("lixo\n" + make_code() + "\n" + make_code(n="Segundo") + "\n" + make_code(e="192.168.0.1:1", n="Ruim") + "\n")
+        main.save_relays([RELAY, dict(RELAY, name="Manual")])
+        relays = main.load_relays()
+        self.assertEqual([r["name"] for r in relays], ["Oracle SP", "Segundo", "Manual"])
+        self.assertEqual([r["builtin"] for r in relays], [True, True, False])
+        self.assertEqual([r["builtin"] for r in main.public_relays(relays)], [True, True, False])
+        main.save_relays([r for r in main.load_stored_relays() if r["name"] != "Manual"])
+        self.assertEqual([r["name"] for r in main.load_stored_relays()], ["Oracle SP"])
+
+    def test_add_relay_respects_limit(self):
+        with open(self.path, "w") as f:
+            f.write("\n".join(make_code(n="F%d" % i) for i in range(4)))
+        res = asyncio.run(main.Plugin().add_relay(make_code(n="Quinto")))
+        self.assertEqual((res["ok"], res["error"]), (False, "too_many"))
+
+
+class MonitorTests(unittest.TestCase):
+    def test_no_relays_is_a_notice_not_an_error(self):
+        plugin = main.Plugin()
+        saved = (main.load_relays, main.find_game_pids, main.run, main.asyncio.sleep, main.shutil.which)
+
+        async def stop(_t):
+            raise asyncio.CancelledError()
+
+        main.load_relays = lambda: []
+        main.find_game_pids = lambda: []
+        main.run = Recorder()
+        main.asyncio.sleep = stop
+        main.shutil.which = lambda name: "/usr/bin/" + name
+        try:
+            with self.assertRaises(asyncio.CancelledError):
+                asyncio.run(plugin._monitor())
+        finally:
+            main.load_relays, main.find_game_pids, main.run, main.asyncio.sleep, main.shutil.which = saved
+        self.assertEqual(plugin.status["phase"], "waiting")
+        self.assertEqual(plugin.status["notice"], "no_relays")
+        self.assertEqual(plugin.status["error"], "")
+
+
 class DetectionTests(unittest.TestCase):
     def test_parse_udp_table(self):
         text = (
@@ -132,6 +185,8 @@ class MetricsTests(unittest.TestCase):
         self.assertAlmostEqual(main.score({"avg": 20.0, "jitter": 2.0, "loss": 0.0}), 24.0)
         self.assertIsNone(main.score({"avg": 20.0, "jitter": 2.0, "loss": 40.0}))
         self.assertIsNone(main.score(None))
+        self.assertIsNotNone(main.score({"avg": 20.0, "jitter": 2.0, "loss": 25.0}, 30.0))
+        self.assertIsNone(main.score({"avg": 20.0, "jitter": 2.0, "loss": 25.0}, 20.0))
 
     def test_choose(self):
         self.assertEqual(main.choose(50.0, {"a": 30.0}, "direct"), "a")

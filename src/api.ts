@@ -1,9 +1,12 @@
 import { callable } from "@decky/api";
 import type { Lang } from "./i18n";
 
+export type Profile = "stable" | "balanced" | "aggressive";
+
 export interface Settings {
   language: Lang;
   enabled: boolean;
+  profile: Profile;
 }
 
 export interface Metrics {
@@ -32,11 +35,13 @@ export interface Status {
   relays: RelayStatus[];
   error: string;
   detail: string;
+  notice: string;
 }
 
 export interface Relay {
   name: string;
   endpoint: string;
+  builtin: boolean;
 }
 
 export interface AddRelayResult {

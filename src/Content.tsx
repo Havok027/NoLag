@@ -9,6 +9,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import {
   Metrics,
+  Profile,
   Relay,
   Status,
   addRelay,
@@ -44,14 +45,23 @@ function stateText(t: Texts, s: Status | null): string {
   }
 }
 
+function noticeText(t: Texts, s: Status): string {
+  switch (s.notice) {
+    case "no_relays":
+      return t.noticeNoRelays;
+    case "tools_missing":
+      return `${t.noticeTools}: ${s.detail}`;
+    case "setup_failed":
+      return t.noticeSetup;
+    default:
+      return "";
+  }
+}
+
 function errorText(t: Texts, s: Status): string {
   switch (s.error) {
     case "tools_missing":
       return `${t.errToolsMissing}: ${s.detail}`;
-    case "no_relays":
-      return t.errNoRelays;
-    case "setup_failed":
-      return t.errSetup;
     case "sniff_failed":
       return t.errSniff;
     default:
@@ -73,6 +83,7 @@ function Row({ label, value }: { label: string; value: string }) {
 export function Content() {
   const [lang, setLang] = useState<Lang>("pt");
   const [enabled, setEnabled] = useState(false);
+  const [profile, setProfile] = useState<Profile>("balanced");
   const [status, setStatus] = useState<Status | null>(null);
   const [relays, setRelays] = useState<Relay[]>([]);
   const [code, setCode] = useState("");
@@ -84,6 +95,7 @@ export function Content() {
       .then((s) => {
         setLang(normalizeLang(s?.language));
         setEnabled(s?.enabled === true);
+        setProfile(s?.profile ?? "balanced");
       })
       .catch(() => {});
     getRelays()
@@ -123,6 +135,11 @@ export function Content() {
       .catch(() => {});
   };
 
+  const changeProfile = (value: Profile) => {
+    setProfile(value);
+    setSettings({ profile: value }).catch(() => {});
+  };
+
   const changeCode = (value: string) => {
     setCode(value);
     setRelayMsg("");
@@ -159,6 +176,9 @@ export function Content() {
       <PanelSection title={t.status}>
         <Row label={t.state} value={stateText(t, status)} />
         {status?.phase === "error" && <Row label={t.stateError} value={errorText(t, status)} />}
+        {status?.notice && status.phase !== "off" ? (
+          <Row label={t.notice} value={noticeText(t, status)} />
+        ) : null}
         {status?.game ? <Row label={t.game} value={status.game} /> : null}
         {status?.phase === "running" && (
           <>
@@ -185,19 +205,36 @@ export function Content() {
             onChange={changeEnabled}
           />
         </PanelSectionRow>
+        <PanelSectionRow>
+          <DropdownItem
+            label={t.profile}
+            description={t.profileDesc}
+            rgOptions={[
+              { data: "stable", label: t.profileStable },
+              { data: "balanced", label: t.profileBalanced },
+              { data: "aggressive", label: t.profileAggressive },
+            ]}
+            selectedOption={profile}
+            onChange={(opt) => changeProfile(opt.data as Profile)}
+          />
+        </PanelSectionRow>
       </PanelSection>
       <PanelSection title={t.relaysTitle}>
         {relays.length === 0 && <Row label={t.relaysNone} value="" />}
         {relays.map((r) => (
           <PanelSectionRow key={r.name}>
-            <ButtonItem
-              layout="inline"
-              label={r.name}
-              description={r.endpoint}
-              onClick={() => dropRelay(r.name)}
-            >
-              {t.relayRemove}
-            </ButtonItem>
+            {r.builtin ? (
+              <Row label={r.name} value={t.relayBuiltin} />
+            ) : (
+              <ButtonItem
+                layout="inline"
+                label={r.name}
+                description={r.endpoint}
+                onClick={() => dropRelay(r.name)}
+              >
+                {t.relayRemove}
+              </ButtonItem>
+            )}
           </PanelSectionRow>
         ))}
         <PanelSectionRow>
