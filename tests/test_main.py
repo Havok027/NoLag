@@ -61,9 +61,9 @@ class SettingsTests(unittest.TestCase):
     def test_sanitize_defaults_and_types(self):
         self.assertEqual(main.sanitize_settings(None), main.DEFAULTS)
         d = main.sanitize_settings({"language": "xx", "enabled": "yes", "target": "1.1.1.1"})
-        self.assertEqual(d, {"language": "pt", "enabled": False, "profile": "balanced", "collapsed": {}})
+        self.assertEqual(d, {"language": "pt", "enabled": False, "profile": "balanced", "collapsed": {}, "games": {}})
         ok = main.sanitize_settings({"language": "en", "enabled": True, "profile": "stable"})
-        self.assertEqual(ok, {"language": "en", "enabled": True, "profile": "stable", "collapsed": {}})
+        self.assertEqual(ok, {"language": "en", "enabled": True, "profile": "stable", "collapsed": {}, "games": {}})
         self.assertEqual(main.sanitize_settings({"profile": "x; rm"})["profile"], "balanced")
 
     def test_target_only_public_unicast(self):
@@ -212,7 +212,7 @@ class NetworkTests(unittest.TestCase):
         try:
             self.assertTrue(asyncio.run(main.apply_route("8.8.8.8", 1)))
             self.assertEqual(rec.calls[0], ["ip", "rule", "del", "pref", "800"])
-            self.assertEqual(rec.calls[1], ["ip", "rule", "add", "to", "8.8.8.8/32", "lookup", "51801", "pref", "800"])
+            self.assertEqual(rec.calls[1], ["ip", "rule", "add", "to", "8.8.8.8/32", "ipproto", "udp", "lookup", "51801", "pref", "800"])
             rec.calls.clear()
             self.assertTrue(asyncio.run(main.apply_route("", None)))
             self.assertEqual(rec.calls, [["ip", "rule", "del", "pref", "800"]])

@@ -92,6 +92,15 @@ export interface Texts {
   hRelays: string;
   hRelayCode: string;
   hLang: string;
+  gamesTitle: string;
+  gamesNone: string;
+  gameProfile: string;
+  gameSavedAuto: string;
+  gameSavedManual: string;
+  gameNotSaved: string;
+  gameDelete: string;
+  hGames: string;
+  noticeEnroll: string;
 }
 
 export const TEXTS: Record<Lang, Texts> = {
@@ -116,7 +125,7 @@ export const TEXTS: Record<Lang, Texts> = {
     noticeSetup: "Relays não iniciaram, só monitorando",
     route: "Rota",
     enable: "Rota automática",
-    enableDesc: "Detecta o servidor do jogo e escolhe o melhor caminho",
+    enableDesc: "Liga o NoLag neste jogo. Ele desliga sozinho ao sair.",
     profile: "Sensibilidade",
     profileDesc: "Quanto de ganho é preciso para trocar de rota",
     profileStable: "Estável",
@@ -171,14 +180,23 @@ export const TEXTS: Record<Lang, Texts> = {
     helpLegend: "Ajuda",
     hStatus: "Mostra o que o NoLag está fazendo agora. Verde: funcionando. Amarelo: esperando você abrir um jogo e entrar em uma partida.",
     hPing: "Ping é o tempo de resposta até o servidor do jogo: quanto menor, melhor. Jitter é a oscilação do ping: quanto menor, mais estável. Perda é a parte dos dados que se perde: o ideal é 0%. Qualidade resume tudo em Ótima, Regular ou Ruim.",
-    hEnable: "Deixe LIGADO. O NoLag acha o jogo e o servidor sozinho. Desligado, ele não mede nem altera nada na sua rede.",
+    hEnable: "Ligue a chave uma vez dentro do jogo. O NoLag acha o servidor sozinho, salva o perfil e, nas próximas vezes, liga sozinho ao abrir o jogo. Ao sair do jogo, ele desliga e remove tudo da rede.",
     hRoutes: "Compara o caminho direto da sua internet com os relays (caminhos alternativos), se você tiver. A rota marcada como em uso é a que o jogo está usando agora.",
     hChart: "Cada linha é uma rota e o eixo mostra o ping em ms. Linha mais baixa = ping menor = melhor. A etiqueta MELHOR marca a rota mais rápida nos últimos instantes.",
     hDiag: "Use só se algo não funcionar. Mostra o que o plugin enxerga do jogo. Durante uma partida, os pacotes UDP vistos devem aumentar.",
     hProfile: "Define o quanto uma rota precisa ser melhor para o plugin trocar. Estável: troca pouco, só com ganho grande. Equilibrado: recomendado para a maioria. Agressivo: troca com ganho pequeno, então pode trocar mais vezes.",
-    hRelays: "Relay é um servidor seu que serve de caminho alternativo. É opcional: sem relay, o NoLag só mede a sua conexão.",
-    hRelayCode: "Cole aqui o código gerado pelo relay-setup.sh. Só é preciso se você criou um relay.",
+    hRelays: "Relay é um servidor que serve de caminho alternativo. Os relays do NoLag são cadastrados sozinhos quando você liga a chave: você não precisa fazer nada aqui. Esta área é só para quem tem um relay próprio.",
+    hRelayCode: "Só para relay próprio: cole aqui o código que o seu relay gerou.",
     hLang: "Idioma da interface do plugin.",
+    gamesTitle: "Perfis de jogos",
+    gamesNone: "Nenhum jogo salvo ainda",
+    gameProfile: "Perfil do jogo",
+    gameSavedAuto: "Salvo: liga sozinho",
+    gameSavedManual: "Salvo: ligar à mão",
+    gameNotSaved: "Ainda não salvo",
+    gameDelete: "Excluir",
+    hGames: "Ao ligar a chave dentro de um jogo, o NoLag salva um perfil dele e passa a ligar sozinho sempre que você abrir esse jogo. Aqui você pode desativar o início automático de um jogo ou excluir o perfil.",
+    noticeEnroll: "Não foi possível registrar no relay; só monitorando o ping",
   },
   en: {
     status: "Status",
@@ -201,7 +219,7 @@ export const TEXTS: Record<Lang, Texts> = {
     noticeSetup: "Relays did not start, only monitoring",
     route: "Route",
     enable: "Automatic route",
-    enableDesc: "Detects the game server and picks the best path",
+    enableDesc: "Turns NoLag on for this game. It turns off by itself when you leave.",
     profile: "Sensitivity",
     profileDesc: "How much gain is needed to switch route",
     profileStable: "Stable",
@@ -256,14 +274,23 @@ export const TEXTS: Record<Lang, Texts> = {
     helpLegend: "Help",
     hStatus: "Shows what NoLag is doing right now. Green: working. Yellow: waiting for you to open a game and join a match.",
     hPing: "Ping is the response time to the game server: lower is better. Jitter is how much the ping wobbles: lower is steadier. Loss is the share of data that gets lost: ideally 0%. Quality sums it all up as Great, Fair or Poor.",
-    hEnable: "Leave it ON. NoLag finds the game and the server by itself. When off, it measures and changes nothing on your network.",
+    hEnable: "Turn the switch on once inside the game. NoLag finds the server by itself, saves the profile and, next time, turns on by itself when you open the game. When you leave the game, it turns off and removes everything from the network.",
     hRoutes: "Compares your direct internet path with relays (alternative paths), if you have any. The route marked in use is the one the game is using now.",
     hChart: "Each line is a route and the axis shows ping in ms. Lower line = lower ping = better. The BEST tag marks the fastest route lately.",
     hDiag: "Use only if something does not work. It shows what the plugin sees from the game. During a match, the UDP packets seen should go up.",
     hProfile: "Sets how much better a route must be before the plugin switches. Stable: switches rarely, only for a big gain. Balanced: recommended for most people. Aggressive: switches for a small gain, so it may switch more often.",
-    hRelays: "A relay is a server of your own that works as an alternative path. It is optional: without a relay, NoLag only measures your connection.",
-    hRelayCode: "Paste the code generated by relay-setup.sh here. Only needed if you created a relay.",
+    hRelays: "A relay is a server that works as an alternative path. NoLag relays are registered by themselves when you turn the switch on: you do not need to do anything here. This area is only for people with their own relay.",
+    hRelayCode: "Only for your own relay: paste the code your relay generated.",
     hLang: "Plugin interface language.",
+    gamesTitle: "Game profiles",
+    gamesNone: "No saved game yet",
+    gameProfile: "Game profile",
+    gameSavedAuto: "Saved: starts by itself",
+    gameSavedManual: "Saved: manual start",
+    gameNotSaved: "Not saved yet",
+    gameDelete: "Delete",
+    hGames: "When you turn the switch on inside a game, NoLag saves a profile for it and turns on by itself every time you open that game. Here you can disable auto start for a game or delete its profile.",
+    noticeEnroll: "Could not register with the relay; only monitoring ping",
   },
   es: {
     status: "Estado",
@@ -286,7 +313,7 @@ export const TEXTS: Record<Lang, Texts> = {
     noticeSetup: "Los relays no iniciaron, solo monitoreando",
     route: "Ruta",
     enable: "Ruta automática",
-    enableDesc: "Detecta el servidor del juego y elige el mejor camino",
+    enableDesc: "Activa NoLag en este juego. Se apaga solo al salir.",
     profile: "Sensibilidad",
     profileDesc: "Cuánta mejora hace falta para cambiar de ruta",
     profileStable: "Estable",
@@ -341,14 +368,23 @@ export const TEXTS: Record<Lang, Texts> = {
     helpLegend: "Ayuda",
     hStatus: "Muestra lo que NoLag está haciendo ahora. Verde: funcionando. Amarillo: esperando que abras un juego y entres en una partida.",
     hPing: "Ping es el tiempo de respuesta hasta el servidor del juego: cuanto menor, mejor. Jitter es la oscilación del ping: cuanto menor, más estable. Pérdida es la parte de los datos que se pierde: lo ideal es 0%. Calidad lo resume en Óptima, Regular o Mala.",
-    hEnable: "Déjalo ACTIVADO. NoLag encuentra el juego y el servidor solo. Apagado, no mide ni cambia nada en tu red.",
+    hEnable: "Activa el interruptor una vez dentro del juego. NoLag encuentra el servidor solo, guarda el perfil y la próxima vez se activa solo al abrir el juego. Al salir del juego, se apaga y quita todo de la red.",
     hRoutes: "Compara el camino directo de tu internet con los relays (caminos alternativos), si tienes. La ruta marcada en uso es la que el juego usa ahora.",
     hChart: "Cada línea es una ruta y el eje muestra el ping en ms. Línea más baja = menos ping = mejor. La etiqueta MEJOR marca la ruta más rápida últimamente.",
     hDiag: "Úsalo solo si algo no funciona. Muestra lo que el plugin ve del juego. Durante una partida, los paquetes UDP vistos deben aumentar.",
     hProfile: "Define cuánto mejor debe ser una ruta para que el plugin cambie. Estable: cambia poco, solo con gran mejora. Equilibrado: recomendado para la mayoría. Agresivo: cambia con poca mejora, así que puede cambiar más veces.",
-    hRelays: "Un relay es un servidor tuyo que sirve de camino alternativo. Es opcional: sin relay, NoLag solo mide tu conexión.",
-    hRelayCode: "Pega aquí el código generado por relay-setup.sh. Solo hace falta si creaste un relay.",
+    hRelays: "Un relay es un servidor que sirve de camino alternativo. Los relays de NoLag se registran solos al activar el interruptor: no tienes que hacer nada aquí. Esta área es solo para quien tiene un relay propio.",
+    hRelayCode: "Solo para relay propio: pega aquí el código que generó tu relay.",
     hLang: "Idioma de la interfaz del plugin.",
+    gamesTitle: "Perfiles de juegos",
+    gamesNone: "Aún no hay juegos guardados",
+    gameProfile: "Perfil del juego",
+    gameSavedAuto: "Guardado: se activa solo",
+    gameSavedManual: "Guardado: inicio manual",
+    gameNotSaved: "Aún no guardado",
+    gameDelete: "Eliminar",
+    hGames: "Al activar el interruptor dentro de un juego, NoLag guarda un perfil y se activa solo cada vez que abres ese juego. Aquí puedes desactivar el inicio automático de un juego o eliminar su perfil.",
+    noticeEnroll: "No se pudo registrar en el relay; solo monitoreando el ping",
   },
 };
 

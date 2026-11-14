@@ -15,7 +15,8 @@ const NEW_KEYS = ["tabDash", "tabRoutes", "tabHint", "badgeActive", "badgeWaitin
   "badgeStarting", "pingNow", "jitter", "loss", "liveRoutes", "inUse", "noLive", "diagTitle", "diagProcs",
   "diagPorts", "diagPackets", "diagTop", "diagHint", "relaysCount", "chartTitle", "chartBest", "chartEmpty",
   "best", "quality", "qualGood", "qualFair", "qualBad", "helpBtn", "helpLegend", "hStatus", "hPing", "hEnable",
-  "hRoutes", "hChart", "hDiag", "hProfile", "hRelays", "hRelayCode", "hLang"];
+  "hRoutes", "hChart", "hDiag", "hProfile", "hRelays", "hRelayCode", "hLang", "gamesTitle", "gamesNone",
+  "gameProfile", "gameSavedAuto", "gameSavedManual", "gameNotSaved", "gameDelete", "hGames"];
 
 test("textos do painel existem nos 3 idiomas", () => {
   const src = read("i18n.tsx");
@@ -45,4 +46,12 @@ test("gráfico, ajuda e botão Y estão ligados", () => {
   for (const key of ["hStatus", "hPing", "hEnable", "hRoutes", "hChart", "hDiag", "hProfile", "hRelays", "hRelayCode", "hLang"]) {
     assert.ok(src.includes("t." + key), key);
   }
+});
+
+test("perfis por jogo e chave sincronizada com o backend", () => {
+  const src = read("Content.tsx");
+  assert.ok(src.includes("setGameAuto") && src.includes("deleteGame") && src.includes("t.gamesTitle"));
+  assert.ok(src.includes("enabledNow") && src.includes("status.phase !== \"off\""));
+  const api = read("api.ts");
+  assert.ok(api.includes("set_game_auto") && api.includes("delete_game") && api.includes("appid"));
 });

@@ -18,6 +18,9 @@ import {
   getSettings,
   getStatus,
   removeRelay,
+  setGameAuto,
+  deleteGame,
+  GameProfile,
   setRouteEnabled,
   setSettings,
 } from "./api";
@@ -55,6 +58,8 @@ function noticeText(t: Texts, s: Status): string {
       return `${t.noticeTools}: ${s.detail}`;
     case "setup_failed":
       return t.noticeSetup;
+    case "enroll_failed":
+      return t.noticeEnroll;
     default:
       return "";
   }
@@ -104,7 +109,7 @@ function lossText(m: Metrics | null): string {
   return m ? `${m.loss.toFixed(0)}%` : DASH;
 }
 
-const DEFAULT_COLLAPSED: Record<string, boolean> = { diag: true };
+const DEFAULT_COLLAPSED: Record<string, boolean> = { diag: true, relays: true };
 const COLORS = ["#4cc9f0", "#ffc857", "#f472b6", "#a78bfa", "#34d399"];
 
 function avgLast(values: (number | null)[]): number | null {
@@ -127,6 +132,7 @@ export function Content() {
   const [tab, setTab] = useState<TabId>("dash");
   const [status, setStatus] = useState<Status | null>(null);
   const [relays, setRelays] = useState<Relay[]>([]);
+  const [games, setGames] = useState<Record<string, GameProfile>>({});
   const [code, setCode] = useState("");
   const [relayMsg, setRelayMsg] = useState("");
   const timer = useRef<number | undefined>(undefined);
@@ -149,6 +155,7 @@ export function Content() {
         setEnabled(s?.enabled === true);
         setProfile(s?.profile ?? "balanced");
         setCollapsed(s?.collapsed ?? {});
+        setGames(s?.games ?? {});
       })
       .catch(() => {});
     getRelays()
@@ -171,6 +178,16 @@ export function Content() {
       window.clearInterval(id);
     };
   }, []);
+
+  // O backend liga e desliga sozinho (jogo com perfil automático, saída do jogo): atualiza os perfis salvos.
+  useEffect(() => {
+    getSettings()
+      .then((s) => {
+        setGames(s?.games ?? {});
+        setProfile(s?.profile ?? "balanced");
+      })
+      .catch(() => {});
+  }, [status?.appid, status?.phase]);
 
   // L1/R1 troca de aba. Toque e botão A nas abas sempre funcionam.
   useEffect(() => {
@@ -222,7 +239,24 @@ export function Content() {
 
   const changeProfile = (value: Profile) => {
     setProfile(value);
-    setSettings({ profile: value }).catch(() => {});
+    setSettings({ profile: value })
+      .then((s) => {
+        setGames(s?.games ?? {});
+        setProfile(s?.profile ?? "balanced");
+      })
+      .catch(() => {});
+  };
+
+  const changeGameAuto = (appid: string, value: boolean) => {
+    setGameAuto(appid, value)
+      .then((s) => setGames(s?.games ?? {}))
+      .catch(() => {});
+  };
+
+  const dropGame = (appid: string) => {
+    deleteGame(appid)
+      .then((s) => setGames(s?.games ?? {}))
+      .catch(() => {});
   };
 
   const changeCode = (value: string) => {
@@ -257,13 +291,21 @@ export function Content() {
       : t.routeDirect;
   const live = activeMetrics(status);
   const badge = badgeOf(t, status);
-  const profileName =
-    profile === "stable" ? t.profileStable : profile === "aggressive" ? t.profileAggressive : t.profileBalanced;
+  const gameProf = status?.appid ? games[status.appid] : undefined;
+  const shownProfile: Profile = gameProf?.profile ?? profile;
+  const profileLabel = (p: Profile) =>
+    p === "stable" ? t.profileStable : p === "aggressive" ? t.profileAggressive : t.profileBalanced;
+  const profileName = profileLabel(shownProfile);
+  // Quem manda é o backend: ele liga sozinho (perfil automático) e desliga ao sair do jogo.
+  const enabledNow = status ? status.phase !== "off" : enabled;
 
   const dashRows: [string, string][] = [[t.state, stateText(t, status)]];
   if (status?.phase === "error") dashRows.push([t.stateError, errorText(t, status)]);
   if (status?.notice && status.phase !== "off") dashRows.push([t.notice, noticeText(t, status)]);
   if (status?.game) dashRows.push([t.game, status.game]);
+  if (status?.appid) {
+    dashRows.push([t.gameProfile, gameProf ? (gameProf.auto ? t.gameSavedAuto : t.gameSavedManual) : t.gameNotSaved]);
+  }
   if (status?.phase === "running") {
     dashRows.push([t.server, status.target]);
     dashRows.push([t.activeRoute, active]);
@@ -335,7 +377,7 @@ export function Content() {
             <ToggleField
               label={t.enable}
               description={t.enableDesc}
-              checked={enabled}
+              checked={enabledNow}
               onChange={changeEnabled}
             />
           </PanelSectionRow>
@@ -379,11 +421,32 @@ export function Content() {
                 { data: "balanced", label: t.profileBalanced },
                 { data: "aggressive", label: t.profileAggressive },
               ]}
-              selectedOption={profile}
+              selectedOption={shownProfile}
               onChange={(opt) => changeProfile(opt.data as Profile)}
             />
           </PanelSectionRow>
           <Help show={helpOn} text={t.hProfile} />
+          <Collapsible title={t.gamesTitle} collapsed={isCollapsed("games")} onToggle={(v) => toggleSection("games", v)}>
+            <Help show={helpOn} text={t.hGames} />
+            {Object.keys(games).length === 0 && <Card rows={[[t.gamesNone, DASH]]} />}
+            {Object.entries(games).map(([appid, g]) => (
+              <div key={appid}>
+                <PanelSectionRow>
+                  <ToggleField
+                    label={g.name}
+                    description={`${profileLabel(g.profile)} · ${t.gameSavedAuto}`}
+                    checked={g.auto}
+                    onChange={(v) => changeGameAuto(appid, v)}
+                  />
+                </PanelSectionRow>
+                <PanelSectionRow>
+                  <ButtonItem layout="inline" label={g.name} onClick={() => dropGame(appid)}>
+                    {t.gameDelete}
+                  </ButtonItem>
+                </PanelSectionRow>
+              </div>
+            ))}
+          </Collapsible>
           <Collapsible title={t.relaysTitle} collapsed={isCollapsed("relays")} onToggle={(v) => toggleSection("relays", v)}>
             <Help show={helpOn} text={t.hRelays} />
             {relays.length === 0 && <Card rows={[[t.relaysNone, DASH]]} />}
