@@ -1,3 +1,12 @@
+## v0.3.0
+
+- O servidor do jogo é detectado sozinho: o plugin acha o jogo aberto pelo Steam e observa para qual IP ele envia dados.
+- O IP do servidor não precisa mais ser digitado.
+- Relays gerenciados pelo plugin: basta colar um código (gerado por relay-setup.sh) e os arquivos são criados e guardados pelo plugin.
+- Não exige mais o wg-quick; usa só ip, wg, iptables e ping.
+- Quando o jogo fecha, a rota volta ao normal.
+- Testes de detecção, relays e rotas.
+
 ## v0.2.0
 
 - Rota automática com chave ativar/desativar.

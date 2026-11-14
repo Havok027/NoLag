@@ -1,0 +1,54 @@
+import { callable } from "@decky/api";
+import type { Lang } from "./i18n";
+
+export interface Settings {
+  language: Lang;
+  enabled: boolean;
+}
+
+export interface Metrics {
+  avg: number | null;
+  jitter: number | null;
+  loss: number;
+}
+
+export interface RelayStatus {
+  name: string;
+  iface: string;
+  endpoint: string;
+  valid: boolean;
+  error: string;
+  metrics: Metrics | null;
+  score: number | null;
+}
+
+export interface Status {
+  phase: "off" | "starting" | "waiting" | "running" | "error";
+  active: string;
+  game: string;
+  target: string;
+  direct: Metrics | null;
+  direct_score: number | null;
+  relays: RelayStatus[];
+  error: string;
+  detail: string;
+}
+
+export interface Relay {
+  name: string;
+  endpoint: string;
+}
+
+export interface AddRelayResult {
+  ok: boolean;
+  error: string;
+  relays: Relay[];
+}
+
+export const getSettings = callable<[], Settings>("get_settings");
+export const setSettings = callable<[Partial<Settings>], Settings>("set_settings");
+export const setRouteEnabled = callable<[boolean], Status>("set_enabled");
+export const getStatus = callable<[], Status>("get_status");
+export const getRelays = callable<[], Relay[]>("get_relays");
+export const addRelay = callable<[string], AddRelayResult>("add_relay");
+export const removeRelay = callable<[string], Relay[]>("remove_relay");
