@@ -1,3 +1,9 @@
+## v0.4.1
+
+- Corrige o erro "Não foi possível observar o tráfego do jogo": o plugin agora roda o backend como root (plugin.json), necessário para observar os pacotes UDP do jogo.
+- O motivo do erro passa a aparecer na tela junto da mensagem.
+- Teste que garante a flag root no plugin.json.
+
 ## v0.4.0
 
 - Sem relay, a rota automática não dá mais erro: o plugin só monitora ping, jitter e perda até o servidor do jogo.

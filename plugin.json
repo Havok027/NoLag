@@ -1,16 +1,11 @@
 {
   "name": "NoLag",
   "author": "Havok",
-  "flags": [
-    "_root"
-  ],
+  "flags": ["_root"],
   "api_version": 1,
   "publish": {
-    "tags": [
-      "network",
-      "utility"
-    ],
-    "description": "Rotas de rede gratuitas e automáticas por jogo. / Free automatic network routes per game.",
-    "image": ""
+    "tags": ["network", "ping", "latency"],
+    "description": "Reduz o ping de forma gratuita e automática, sem digitar IP.",
+    "image": "https://opengraph.githubassets.com/1/SteamDeckHomebrew/decky-plugin-template"
   }
 }
