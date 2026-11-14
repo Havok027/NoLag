@@ -61,9 +61,9 @@ class SettingsTests(unittest.TestCase):
     def test_sanitize_defaults_and_types(self):
         self.assertEqual(main.sanitize_settings(None), main.DEFAULTS)
         d = main.sanitize_settings({"language": "xx", "enabled": "yes", "target": "1.1.1.1"})
-        self.assertEqual(d, {"language": "pt", "enabled": False, "profile": "balanced"})
+        self.assertEqual(d, {"language": "pt", "enabled": False, "profile": "balanced", "collapsed": {}})
         ok = main.sanitize_settings({"language": "en", "enabled": True, "profile": "stable"})
-        self.assertEqual(ok, {"language": "en", "enabled": True, "profile": "stable"})
+        self.assertEqual(ok, {"language": "en", "enabled": True, "profile": "stable", "collapsed": {}})
         self.assertEqual(main.sanitize_settings({"profile": "x; rm"})["profile"], "balanced")
 
     def test_target_only_public_unicast(self):

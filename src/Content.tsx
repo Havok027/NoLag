@@ -1,7 +1,6 @@
 import {
   ButtonItem,
   DropdownItem,
-  PanelSection,
   PanelSectionRow,
   TextField,
   ToggleField,
@@ -20,6 +19,7 @@ import {
   setRouteEnabled,
   setSettings,
 } from "./api";
+import { BadgeTone, Card, Collapsible, Footer, TAB_ORDER, TabBar, TabId } from "./components";
 import { LANGS, LANG_NAMES, Lang, TEXTS, Texts, normalizeLang } from "./i18n";
 
 const DASH = "—";
@@ -69,26 +69,53 @@ function errorText(t: Texts, s: Status): string {
   }
 }
 
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <PanelSectionRow>
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
-        <span>{label}</span>
-        <span>{value}</span>
-      </div>
-    </PanelSectionRow>
-  );
+function badgeOf(t: Texts, s: Status | null): { text: string; tone: BadgeTone } {
+  switch (s?.phase) {
+    case "running":
+      return { text: t.badgeActive, tone: "good" };
+    case "waiting":
+      return { text: t.badgeWaiting, tone: "warn" };
+    case "starting":
+      return { text: t.badgeStarting, tone: "warn" };
+    case "error":
+      return { text: t.badgeError, tone: "bad" };
+    default:
+      return { text: t.badgeOff, tone: "off" };
+  }
 }
+
+function activeMetrics(s: Status | null): Metrics | null {
+  if (!s || s.phase !== "running") return null;
+  if (!s.active || s.active === "direct") return s.direct;
+  return s.relays.find((r) => r.iface === s.active)?.metrics ?? null;
+}
+
+function msText(m: Metrics | null): string {
+  return m && m.avg !== null ? `${m.avg.toFixed(0)} ms` : DASH;
+}
+
+function jitterText(m: Metrics | null): string {
+  return m && m.jitter !== null ? `${m.jitter.toFixed(1)} ms` : DASH;
+}
+
+function lossText(m: Metrics | null): string {
+  return m ? `${m.loss.toFixed(0)}%` : DASH;
+}
+
+const DEFAULT_COLLAPSED: Record<string, boolean> = { diag: true };
 
 export function Content() {
   const [lang, setLang] = useState<Lang>("pt");
   const [enabled, setEnabled] = useState(false);
   const [profile, setProfile] = useState<Profile>("balanced");
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const [tab, setTab] = useState<TabId>("dash");
   const [status, setStatus] = useState<Status | null>(null);
   const [relays, setRelays] = useState<Relay[]>([]);
   const [code, setCode] = useState("");
   const [relayMsg, setRelayMsg] = useState("");
   const timer = useRef<number | undefined>(undefined);
+  const root = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     getSettings()
@@ -96,6 +123,7 @@ export function Content() {
         setLang(normalizeLang(s?.language));
         setEnabled(s?.enabled === true);
         setProfile(s?.profile ?? "balanced");
+        setCollapsed(s?.collapsed ?? {});
       })
       .catch(() => {});
     getRelays()
@@ -112,14 +140,39 @@ export function Content() {
         })
         .catch(() => {});
     tick();
-    const id = window.setInterval(tick, 3000);
+    const id = window.setInterval(tick, 2000);
     return () => {
       alive = false;
       window.clearInterval(id);
     };
   }, []);
 
+  // L1/R1 troca de aba. Toque e botão A nas abas sempre funcionam.
+  useEffect(() => {
+    const el = root.current;
+    if (!el) return;
+    const onButton = (e: Event) => {
+      const button = (e as CustomEvent).detail?.button;
+      const step = button === 5 ? -1 : button === 6 ? 1 : 0;
+      if (!step) return;
+      setTab((cur) => {
+        const next = TAB_ORDER.indexOf(cur) + step;
+        return TAB_ORDER[Math.min(TAB_ORDER.length - 1, Math.max(0, next))];
+      });
+    };
+    el.addEventListener("vgp_onbuttondown", onButton);
+    return () => el.removeEventListener("vgp_onbuttondown", onButton);
+  }, []);
+
   const t = TEXTS[lang];
+
+  const isCollapsed = (key: string) => collapsed[key] ?? DEFAULT_COLLAPSED[key] ?? false;
+
+  const toggleSection = (key: string, value: boolean) => {
+    const next = { ...collapsed, [key]: value };
+    setCollapsed(next);
+    setSettings({ collapsed: next }).catch(() => {});
+  };
 
   const changeLanguage = (value: Lang) => {
     setLang(value);
@@ -170,102 +223,134 @@ export function Content() {
     status?.active && status.active !== "direct"
       ? status.relays.find((r) => r.iface === status.active)?.name ?? t.routeDirect
       : t.routeDirect;
+  const live = activeMetrics(status);
+  const badge = badgeOf(t, status);
+  const profileName =
+    profile === "stable" ? t.profileStable : profile === "aggressive" ? t.profileAggressive : t.profileBalanced;
+
+  const dashRows: [string, string][] = [[t.state, stateText(t, status)]];
+  if (status?.phase === "error") dashRows.push([t.stateError, errorText(t, status)]);
+  if (status?.notice && status.phase !== "off") dashRows.push([t.notice, noticeText(t, status)]);
+  if (status?.game) dashRows.push([t.game, status.game]);
+  if (status?.phase === "running") {
+    dashRows.push([t.server, status.target]);
+    dashRows.push([t.activeRoute, active]);
+    dashRows.push([t.pingNow, msText(live)]);
+    dashRows.push([t.jitter, jitterText(live)]);
+    dashRows.push([t.loss, lossText(live)]);
+  }
+
+  const liveRows: [string, string][] = [];
+  if (status?.phase === "running") {
+    const inUse = (key: string) => (status.active === key ? ` · ${t.inUse}` : "");
+    liveRows.push([t.direct + inUse("direct"), metricsText(status.direct)]);
+    status.relays.forEach((r) =>
+      liveRows.push([r.name + inUse(r.iface), r.valid ? metricsText(r.metrics) : t.relayInvalid])
+    );
+  }
+
+  const diag = status?.diag;
+  const diagRows: [string, string][] = [
+    [t.diagProcs, String(diag?.pids ?? 0)],
+    [t.diagPorts, String(diag?.ports ?? 0)],
+    [t.diagPackets, String(diag?.seen ?? 0)],
+    [t.diagTop, diag && diag.top.length ? diag.top.map(([ip, n]) => `${ip} (${n})`).join(", ") : DASH],
+  ];
 
   return (
-    <>
-      <PanelSection title={t.status}>
-        <Row label={t.state} value={stateText(t, status)} />
-        {status?.phase === "error" && <Row label={t.stateError} value={errorText(t, status)} />}
-        {status?.notice && status.phase !== "off" ? (
-          <Row label={t.notice} value={noticeText(t, status)} />
-        ) : null}
-        {status?.game ? <Row label={t.game} value={status.game} /> : null}
-        {status?.phase === "running" && (
-          <>
-            <Row label={t.server} value={status.target} />
-            <Row label={t.activeRoute} value={active} />
-            <Row label={t.metricsHint} value="" />
-            <Row label={t.direct} value={metricsText(status.direct)} />
-            {status.relays.map((r) => (
-              <Row
-                key={r.iface}
-                label={r.name}
-                value={r.valid ? metricsText(r.metrics) : t.relayInvalid}
-              />
-            ))}
-          </>
-        )}
-      </PanelSection>
-      <PanelSection title={t.route}>
-        <PanelSectionRow>
-          <ToggleField
-            label={t.enable}
-            description={t.enableDesc}
-            checked={enabled}
-            onChange={changeEnabled}
-          />
-        </PanelSectionRow>
-        <PanelSectionRow>
-          <DropdownItem
-            label={t.profile}
-            description={t.profileDesc}
-            rgOptions={[
-              { data: "stable", label: t.profileStable },
-              { data: "balanced", label: t.profileBalanced },
-              { data: "aggressive", label: t.profileAggressive },
-            ]}
-            selectedOption={profile}
-            onChange={(opt) => changeProfile(opt.data as Profile)}
-          />
-        </PanelSectionRow>
-      </PanelSection>
-      <PanelSection title={t.relaysTitle}>
-        {relays.length === 0 && <Row label={t.relaysNone} value="" />}
-        {relays.map((r) => (
-          <PanelSectionRow key={r.name}>
-            {r.builtin ? (
-              <Row label={r.name} value={t.relayBuiltin} />
-            ) : (
-              <ButtonItem
-                layout="inline"
-                label={r.name}
-                description={r.endpoint}
-                onClick={() => dropRelay(r.name)}
-              >
-                {t.relayRemove}
-              </ButtonItem>
-            )}
+    <div ref={root}>
+      <TabBar
+        labels={{ dash: t.tabDash, routes: t.tabRoutes, settings: t.settings }}
+        hint={t.tabHint}
+        active={tab}
+        onSelect={setTab}
+      />
+      {tab === "dash" && (
+        <>
+          <Card badge={badge.text} tone={badge.tone} rows={dashRows} />
+          <PanelSectionRow>
+            <ToggleField
+              label={t.enable}
+              description={t.enableDesc}
+              checked={enabled}
+              onChange={changeEnabled}
+            />
           </PanelSectionRow>
-        ))}
-        <PanelSectionRow>
-          <TextField
-            label={t.relayCode}
-            description={relayMsg || t.relayCodeDesc}
-            value={code}
-            onChange={(e) => changeCode(e.target.value)}
+          <Collapsible title={t.liveRoutes} collapsed={isCollapsed("routes")} onToggle={(v) => toggleSection("routes", v)}>
+            <Card rows={liveRows.length ? liveRows : [[t.noLive, DASH]]} />
+            <div style={{ fontSize: 11, opacity: 0.7, textAlign: "center" }}>{t.metricsHint}</div>
+          </Collapsible>
+          <Collapsible title={t.diagTitle} collapsed={isCollapsed("diag")} onToggle={(v) => toggleSection("diag", v)}>
+            <Card rows={diagRows} />
+            <div style={{ fontSize: 11, opacity: 0.7, textAlign: "center" }}>{t.diagHint}</div>
+          </Collapsible>
+        </>
+      )}
+      {tab === "routes" && (
+        <>
+          <Card
+            rows={[
+              [t.relaysCount, String(relays.length)],
+              [t.profile, profileName],
+              [t.activeRoute, active],
+            ]}
           />
-        </PanelSectionRow>
-      </PanelSection>
-      <PanelSection title={t.settings}>
-        <PanelSectionRow>
-          <DropdownItem
-            label={t.language}
-            rgOptions={LANGS.map((l) => ({ data: l, label: LANG_NAMES[l] }))}
-            selectedOption={lang}
-            onChange={(opt) => changeLanguage(normalizeLang(opt.data))}
-          />
-        </PanelSectionRow>
-      </PanelSection>
-      <div
-        style={{
-          textAlign: "center",
-          fontSize: 12,
-          opacity: 0.6,
-          padding: "8px 0",
-        }}
-      >
-        {t.createdBy}
-      </div>
-    </>
+          <PanelSectionRow>
+            <DropdownItem
+              label={t.profile}
+              description={t.profileDesc}
+              rgOptions={[
+                { data: "stable", label: t.profileStable },
+                { data: "balanced", label: t.profileBalanced },
+                { data: "aggressive", label: t.profileAggressive },
+              ]}
+              selectedOption={profile}
+              onChange={(opt) => changeProfile(opt.data as Profile)}
+            />
+          </PanelSectionRow>
+          <Collapsible title={t.relaysTitle} collapsed={isCollapsed("relays")} onToggle={(v) => toggleSection("relays", v)}>
+            {relays.length === 0 && <Card rows={[[t.relaysNone, DASH]]} />}
+            {relays.map((r) => (
+              <PanelSectionRow key={r.name}>
+                {r.builtin ? (
+                  <Card rows={[[r.name, t.relayBuiltin]]} />
+                ) : (
+                  <ButtonItem
+                    layout="inline"
+                    label={r.name}
+                    description={r.endpoint}
+                    onClick={() => dropRelay(r.name)}
+                  >
+                    {t.relayRemove}
+                  </ButtonItem>
+                )}
+              </PanelSectionRow>
+            ))}
+            <PanelSectionRow>
+              <TextField
+                label={t.relayCode}
+                description={relayMsg || t.relayCodeDesc}
+                value={code}
+                onChange={(e) => changeCode(e.target.value)}
+              />
+            </PanelSectionRow>
+          </Collapsible>
+        </>
+      )}
+      {tab === "settings" && (
+        <>
+          <Card rows={[[t.language, LANG_NAMES[lang]]]} />
+          <PanelSectionRow>
+            <DropdownItem
+              label={t.language}
+              rgOptions={LANGS.map((l) => ({ data: l, label: LANG_NAMES[l] }))}
+              selectedOption={lang}
+              onChange={(opt) => changeLanguage(normalizeLang(opt.data))}
+            />
+          </PanelSectionRow>
+        </>
+      )}
+      <Footer text={t.createdBy} />
+    </div>
   );
 }

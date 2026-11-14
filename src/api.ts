@@ -7,6 +7,7 @@ export interface Settings {
   language: Lang;
   enabled: boolean;
   profile: Profile;
+  collapsed: Record<string, boolean>;
 }
 
 export interface Metrics {
@@ -25,6 +26,13 @@ export interface RelayStatus {
   score: number | null;
 }
 
+export interface Diag {
+  pids: number;
+  ports: number;
+  seen: number;
+  top: [string, number][];
+}
+
 export interface Status {
   phase: "off" | "starting" | "waiting" | "running" | "error";
   active: string;
@@ -36,6 +44,7 @@ export interface Status {
   error: string;
   detail: string;
   notice: string;
+  diag: Diag;
 }
 
 export interface Relay {

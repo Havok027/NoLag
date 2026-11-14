@@ -51,6 +51,27 @@ export interface Texts {
   settings: string;
   language: string;
   createdBy: string;
+  tabDash: string;
+  tabRoutes: string;
+  tabHint: string;
+  badgeActive: string;
+  badgeWaiting: string;
+  badgeOff: string;
+  badgeError: string;
+  badgeStarting: string;
+  pingNow: string;
+  jitter: string;
+  loss: string;
+  liveRoutes: string;
+  inUse: string;
+  noLive: string;
+  diagTitle: string;
+  diagProcs: string;
+  diagPorts: string;
+  diagPackets: string;
+  diagTop: string;
+  diagHint: string;
+  relaysCount: string;
 }
 
 export const TEXTS: Record<Lang, Texts> = {
@@ -97,6 +118,27 @@ export const TEXTS: Record<Lang, Texts> = {
     settings: "Config.",
     language: "Idioma",
     createdBy: "Criado por Havok",
+    tabDash: "Painel",
+    tabRoutes: "Rotas",
+    tabHint: "L1 / R1 · trocar guia",
+    badgeActive: "ATIVO",
+    badgeWaiting: "AGUARDANDO",
+    badgeOff: "DESLIGADO",
+    badgeError: "ERRO",
+    badgeStarting: "INICIANDO",
+    pingNow: "Ping atual",
+    jitter: "Jitter",
+    loss: "Perda",
+    liveRoutes: "Rotas ao vivo",
+    inUse: "em uso",
+    noLive: "Sem medição ainda",
+    diagTitle: "Diagnóstico",
+    diagProcs: "Processos do jogo",
+    diagPorts: "Portas UDP do jogo",
+    diagPackets: "Pacotes UDP vistos",
+    diagTop: "Mais frequentes",
+    diagHint: "Em menus costuma não haver tráfego UDP até o servidor. Entre em uma partida.",
+    relaysCount: "Relays",
   },
   en: {
     status: "Status",
@@ -141,6 +183,27 @@ export const TEXTS: Record<Lang, Texts> = {
     settings: "Settings",
     language: "Language",
     createdBy: "Created by Havok",
+    tabDash: "Dashboard",
+    tabRoutes: "Routes",
+    tabHint: "L1 / R1 · switch tab",
+    badgeActive: "ACTIVE",
+    badgeWaiting: "WAITING",
+    badgeOff: "OFF",
+    badgeError: "ERROR",
+    badgeStarting: "STARTING",
+    pingNow: "Current ping",
+    jitter: "Jitter",
+    loss: "Loss",
+    liveRoutes: "Live routes",
+    inUse: "in use",
+    noLive: "No measurement yet",
+    diagTitle: "Diagnostics",
+    diagProcs: "Game processes",
+    diagPorts: "Game UDP ports",
+    diagPackets: "UDP packets seen",
+    diagTop: "Most frequent",
+    diagHint: "Menus usually have no UDP traffic to the server. Join a match.",
+    relaysCount: "Relays",
   },
   es: {
     status: "Estado",
@@ -185,6 +248,27 @@ export const TEXTS: Record<Lang, Texts> = {
     settings: "Config.",
     language: "Idioma",
     createdBy: "Creado por Havok",
+    tabDash: "Panel",
+    tabRoutes: "Rutas",
+    tabHint: "L1 / R1 · cambiar pestaña",
+    badgeActive: "ACTIVO",
+    badgeWaiting: "ESPERANDO",
+    badgeOff: "APAGADO",
+    badgeError: "ERROR",
+    badgeStarting: "INICIANDO",
+    pingNow: "Ping actual",
+    jitter: "Jitter",
+    loss: "Pérdida",
+    liveRoutes: "Rutas en vivo",
+    inUse: "en uso",
+    noLive: "Sin medición aún",
+    diagTitle: "Diagnóstico",
+    diagProcs: "Procesos del juego",
+    diagPorts: "Puertos UDP del juego",
+    diagPackets: "Paquetes UDP vistos",
+    diagTop: "Más frecuentes",
+    diagHint: "En los menús suele no haber tráfico UDP al servidor. Entra en una partida.",
+    relaysCount: "Relays",
   },
 };
 
