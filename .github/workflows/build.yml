@@ -34,8 +34,14 @@ jobs:
         run: |
           shopt -s nullglob
           mkdir -p src tests
-          for f in *.ts *.tsx; do mv -f "$f" src/; done
-          for f in *.test.cjs test_*.py check_direct_updater.py; do mv -f "$f" tests/; done
+          for f in *.ts *.tsx; do
+            [ -f "$f" ] || continue
+            mv -f "$f" src/
+          done
+          for f in *.test.cjs test_*.py check_direct_updater.py; do
+            [ -f "$f" ] || continue
+            mv -f "$f" tests/
+          done
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
@@ -67,16 +73,13 @@ jobs:
           mkdir -p out/NoLag
           cp -r dist out/NoLag/
           cp main.py plugin.json package.json out/NoLag/
-          for f in LICENSE README.md; do [ -f "$f" ] && cp "$f" out/NoLag/ || true; done
+          for f in LICENSE README.md; do
+            [ -f "$f" ] && cp "$f" out/NoLag/ || true
+          done
           (cd out && zip -qr "../NoLag-v$V.zip" NoLag)
 
       - name: Validar Direct Updater
-        run: |
-          if [ -f tests/check_direct_updater.py ]; then
-            python3 tests/check_direct_updater.py
-          else
-            echo "tests/check_direct_updater.py ausente, validação pulada"
-          fi
+        run: python3 tests/check_direct_updater.py
 
       - name: Publicar release
         run: |
