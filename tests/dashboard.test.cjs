@@ -40,6 +40,7 @@ test("gráfico, ajuda e botão Y estão ligados", () => {
   const src = read("Content.tsx");
   assert.ok(src.includes("LineChart") && src.includes("t.chartTitle"));
   assert.ok(src.includes("onSecondaryButton") && src.includes("toggleHelp"));
+  assert.ok(src.includes("button === 3") && src.includes("pressY"));
   assert.ok(src.includes("<PanelSection>"));
   for (const key of ["hStatus", "hPing", "hEnable", "hRoutes", "hChart", "hDiag", "hProfile", "hRelays", "hRelayCode", "hLang"]) {
     assert.ok(src.includes("t." + key), key);

@@ -131,6 +131,16 @@ export function Content() {
   const [relayMsg, setRelayMsg] = useState("");
   const timer = useRef<number | undefined>(undefined);
   const root = useRef<HTMLDivElement | null>(null);
+  const helpRef = useRef<() => void>(() => {});
+  const lastY = useRef(0);
+
+  // O botão Y chega por dois caminhos (evento do Steam e onSecondaryButton); só o primeiro conta.
+  const pressY = () => {
+    const now = Date.now();
+    if (now - lastY.current < 300) return;
+    lastY.current = now;
+    helpRef.current();
+  };
 
   useEffect(() => {
     getSettings()
@@ -168,6 +178,10 @@ export function Content() {
     if (!el) return;
     const onButton = (e: Event) => {
       const button = (e as CustomEvent).detail?.button;
+      if (button === 3) {
+        pressY();
+        return;
+      }
       const step = button === 5 ? -1 : button === 6 ? 1 : 0;
       if (!step) return;
       setTab((cur) => {
@@ -184,6 +198,7 @@ export function Content() {
   const isCollapsed = (key: string) => collapsed[key] ?? DEFAULT_COLLAPSED[key] ?? false;
   const helpOn = !isCollapsed("help");
   const toggleHelp = () => toggleSection("help", helpOn);
+  helpRef.current = toggleHelp;
 
   const toggleSection = (key: string, value: boolean) => {
     const next = { ...collapsed, [key]: value };
@@ -298,7 +313,7 @@ export function Content() {
     [t.diagTop, diag && diag.top.length ? diag.top.map(([ip, n]) => `${ip} (${n})`).join(", ") : DASH],
   ];
 
-  const yProps = { onSecondaryButton: toggleHelp, onSecondaryActionDescription: t.helpLegend };
+  const yProps = { onSecondaryButton: pressY, onSecondaryActionDescription: t.helpLegend };
 
   return (
     <PanelSection>
