@@ -11,7 +11,18 @@ Ligue a **Rota automática** e abra o jogo. Só isso: o plugin detecta o servido
 - O **Painel** mostra ping, jitter e perda ao vivo, a rota em uso e, em **Diagnóstico**, o que o plugin vê do jogo. Troque de aba por toque, A ou L1/R1; as setas recolhem as seções.
 - O **Painel** também traz a **Qualidade** da conexão e um **gráfico ao vivo** com uma linha por rota. O botão **Y** mostra ou oculta a ajuda de cada opção.
 - Sem relay, o plugin só monitora ping, jitter e perda até o servidor do jogo.
+- Ligue a chave uma vez dentro do jogo: o NoLag salva o perfil dele, liga sozinho nas próximas vezes e desliga ao sair. Gerencie em Rotas > Perfis de jogos.
 - Com relay, ele também testa os caminhos alternativos e usa o melhor.
+
+## Relay automático (recomendado)
+
+O usuário só liga a chave. O plugin gera a própria chave WireGuard, se cadastra sozinho nos relays listados no `relay-code.txt` e passa a medir e usar o melhor caminho.
+
+Para o dono do projeto (uma vez):
+1. Num servidor gratuito (ex.: Oracle Cloud Always Free, Ubuntu), coloque `relay-server.sh` e `enroll_server.py` na mesma pasta e rode `sudo bash relay-server.sh NoLag-BR`.
+2. Na Oracle, libere UDP 51820 e TCP 8077 na Security List.
+3. Cole a linha `nolag2:...` impressa no fim em uma linha do `relay-code.txt` na raiz do repositório. Esse código não tem chave privada e pode ficar em repositório público.
+4. O servidor só encaminha UDP e ping, com limite de velocidade por aparelho, e bloqueia redes internas.
 
 ## Relays (opcional)
 

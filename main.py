@@ -7,13 +7,18 @@ import re
 import shutil
 import socket
 import time
+import urllib.parse
+import urllib.request
 from collections import deque
 
 import decky
 
 LANGS = ("pt", "en", "es")
-DEFAULTS = {"language": "pt", "enabled": False, "profile": "balanced", "collapsed": {}}
-SECTIONS = ("diag", "routes", "relays", "settings", "chart", "help")
+DEFAULTS = {"language": "pt", "enabled": False, "profile": "balanced", "collapsed": {}, "games": {}}
+SECTIONS = ("diag", "routes", "relays", "settings", "chart", "help", "games")
+MAX_GAMES = 50
+WATCH_DELAY = 5
+WATCH_INTERVAL = 5
 HIST_POINTS = 60
 PROFILES = {
     "stable": {"margin": 10.0, "max_loss": 20.0},
@@ -22,6 +27,7 @@ PROFILES = {
 }
 
 MAX_RELAYS = 4
+ENROLL_TIMEOUT = 6
 IFACE = "nolag{}"
 TABLE_BASE = 51800
 PREF_APPLY = 800
@@ -38,9 +44,33 @@ TOOLS = ("ip", "wg", "iptables", "ping")
 
 # ---------- configurações ----------
 
+_APPID = re.compile(r"^\d{1,12}$")
+
+
+def clean_games(raw):
+    """Perfis salvos por jogo: appid -> {name, auto, profile}."""
+    out = {}
+    if not isinstance(raw, dict):
+        return out
+    for appid, g in raw.items():
+        if len(out) >= MAX_GAMES:
+            break
+        if not isinstance(appid, str) or not _APPID.match(appid) or not isinstance(g, dict):
+            continue
+        name = "".join(ch for ch in str(g.get("name", ""))[:40] if ch.isprintable()).strip() or appid
+        profile = g.get("profile")
+        out[appid] = {
+            "name": name,
+            "auto": g.get("auto") is True,
+            "profile": profile if profile in PROFILES else "balanced",
+        }
+    return out
+
+
 def sanitize_settings(raw):
     data = dict(DEFAULTS)
     data["collapsed"] = {}
+    data["games"] = {}
     if isinstance(raw, dict):
         lang = raw.get("language")
         if isinstance(lang, str) and lang in LANGS:
@@ -52,6 +82,7 @@ def sanitize_settings(raw):
         col = raw.get("collapsed")
         if isinstance(col, dict):
             data["collapsed"] = {k: col[k] for k in SECTIONS if isinstance(col.get(k), bool)}
+        data["games"] = clean_games(raw.get("games"))
     return data
 
 
@@ -169,6 +200,167 @@ def load_file_relays():
     return out
 
 
+# ---------- relays públicos com cadastro automático (nolag2) ----------
+
+_P25519 = 2**255 - 19
+_TOKEN = re.compile(r"^[A-Za-z0-9_\-]{1,64}$")
+
+
+def x25519(k_bytes, u_bytes):
+    """Curve25519 (RFC 7748). Usado só para gerar a chave WireGuard do próprio aparelho."""
+    p = _P25519
+    k = bytearray(k_bytes)
+    k[0] &= 248
+    k[31] &= 127
+    k[31] |= 64
+    k = int.from_bytes(k, "little")
+    u = int.from_bytes(u_bytes, "little") & ((1 << 255) - 1)
+    x1, x2, z2, x3, z3, swap = u, 1, 0, u, 1, 0
+    for t in range(254, -1, -1):
+        kt = (k >> t) & 1
+        swap ^= kt
+        if swap:
+            x2, x3, z2, z3 = x3, x2, z3, z2
+        swap = kt
+        a = (x2 + z2) % p
+        aa = a * a % p
+        b = (x2 - z2) % p
+        bb = b * b % p
+        e = (aa - bb) % p
+        c = (x3 + z3) % p
+        d = (x3 - z3) % p
+        da = d * a % p
+        cb = c * b % p
+        x3 = pow(da + cb, 2, p)
+        z3 = x1 * pow(da - cb, 2, p) % p
+        x2 = aa * bb % p
+        z2 = e * (aa + 121665 * e) % p
+    if swap:
+        x2, x3, z2, z3 = x3, x2, z3, z2
+    return (x2 * pow(z2, p - 2, p) % p).to_bytes(32, "little")
+
+
+def new_keypair():
+    priv = bytearray(os.urandom(32))
+    priv[0] &= 248
+    priv[31] &= 127
+    priv[31] |= 64
+    pub = x25519(bytes(priv), (9).to_bytes(32, "little"))
+    return base64.b64encode(bytes(priv)).decode(), base64.b64encode(pub).decode()
+
+
+def parse_public_code(code):
+    """Código 'nolag2:<base64url(json)>': relay público, sem chave privada. Devolve dict ou None."""
+    if not isinstance(code, str) or not code.strip().startswith("nolag2:"):
+        return None
+    body = code.strip()[7:]
+    try:
+        data = json.loads(base64.urlsafe_b64decode(body + "=" * (-len(body) % 4)).decode("utf-8"))
+        name = str(data.get("n", "")).strip()
+        host, port = str(data.get("e", "")).rsplit(":", 1)
+        ip = ipaddress.IPv4Address(host)
+        port = int(port)
+        server_key = str(data.get("s", ""))
+        url = urllib.parse.urlparse(str(data.get("u", "")))
+        token = str(data.get("t", ""))
+        url_port = url.port
+    except Exception:
+        return None
+    if not _NAME.match(name) or not ip.is_global or not 1 <= port <= 65535:
+        return None
+    if not _KEY.match(server_key) or not _TOKEN.match(token):
+        return None
+    if url.scheme not in ("http", "https") or url.hostname != str(ip) or url_port is None:
+        return None
+    return {
+        "name": name,
+        "endpoint": "%s:%d" % (ip, port),
+        "public_key": server_key,
+        "url": "%s://%s:%d" % (url.scheme, ip, url_port),
+        "token": token,
+    }
+
+
+def load_public_relays():
+    """Relays públicos listados como 'nolag2:...' em relay-code.txt."""
+    out = []
+    folders = (getattr(decky, "DECKY_PLUGIN_DIR", ""), decky.DECKY_PLUGIN_SETTINGS_DIR)
+    for folder in folders:
+        if not folder:
+            continue
+        try:
+            with open(os.path.join(folder, "relay-code.txt"), "r", encoding="utf-8") as f:
+                lines = f.read().splitlines()
+        except OSError:
+            continue
+        for line in lines:
+            relay = parse_public_code(line)
+            if relay and all(relay["name"] != r["name"] for r in out):
+                out.append(relay)
+    return out
+
+
+def load_enrollments():
+    try:
+        with open(_path("enrollments.json"), "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except Exception:
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def _enroll_http(base, token, pubkey):
+    """Pede ao relay um endereço para esta chave pública. Devolve o endereço ou None."""
+    body = json.dumps({"v": 1, "pubkey": pubkey, "token": token}).encode("utf-8")
+    req = urllib.request.Request(
+        base.rstrip("/") + "/enroll", data=body, headers={"Content-Type": "application/json"}, method="POST"
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=ENROLL_TIMEOUT) as resp:
+            data = json.loads(resp.read(2048).decode("utf-8"))
+    except Exception:
+        return None
+    address = data.get("address") if isinstance(data, dict) else None
+    return address if isinstance(address, str) else None
+
+
+async def enrolled_relays(room):
+    """Gera a chave própria, cadastra no relay público e reaproveita o cadastro. Devolve (relays, falhas)."""
+    store = load_enrollments()
+    out, failed, changed = [], 0, False
+    for pub in load_public_relays()[: max(room, 0)]:
+        saved = store.get(pub["name"])
+        if not (
+            isinstance(saved, dict)
+            and saved.get("server") == pub["public_key"]
+            and saved.get("endpoint") == pub["endpoint"]
+            and _KEY.match(str(saved.get("private_key", "")))
+            and _KEY.match(str(saved.get("public_key", "")))
+        ):
+            priv, cpub = new_keypair()
+            saved = {"private_key": priv, "public_key": cpub, "server": pub["public_key"], "endpoint": pub["endpoint"]}
+        address = await asyncio.to_thread(_enroll_http, pub["url"], pub["token"], saved["public_key"])
+        relay = None
+        if address:
+            relay = clean_relay({
+                "name": pub["name"],
+                "endpoint": pub["endpoint"],
+                "public_key": pub["public_key"],
+                "private_key": saved["private_key"],
+                "address": address,
+            })
+        if relay:
+            store[pub["name"]] = dict(saved, address=address)
+            changed = True
+            out.append(dict(relay, builtin=True))
+        else:
+            failed += 1
+    if changed:
+        _write_private(_path("enrollments.json"), json.dumps(store, indent=2))
+    return out, failed
+
+
+
 def load_relays():
     out = load_file_relays()
     for relay in load_stored_relays():
@@ -214,6 +406,23 @@ def find_game_pids():
                     pids.append(int(entry))
                 break
     return pids
+
+
+def game_id(pids):
+    """appid do Steam (SteamGameId) do primeiro processo do jogo, ou ''."""
+    for pid in pids:
+        try:
+            with open("/proc/%d/environ" % pid, "rb") as f:
+                env = f.read(65536)
+        except OSError:
+            continue
+        for item in env.split(b"\0"):
+            if item.startswith(b"SteamGameId="):
+                value = item[12:].decode("ascii", "ignore").strip()
+                if _APPID.match(value) and value != "0":
+                    return value
+                break
+    return ""
 
 
 def parse_udp_table(text):
@@ -484,7 +693,7 @@ async def apply_route(target, index):
     if index is None:
         return True
     rc, _o = await run(
-        ["ip", "rule", "add", "to", target + "/32", "lookup", str(TABLE_BASE + index), "pref", str(PREF_APPLY)]
+        ["ip", "rule", "add", "to", target + "/32", "ipproto", "udp", "lookup", str(TABLE_BASE + index), "pref", str(PREF_APPLY)]
     )
     return rc == 0
 
@@ -503,13 +712,16 @@ async def ping_target(target, iface=None):
 class Plugin:
     def __init__(self):
         self.task = None
+        self.watcher = None
+        self.manual = False
         self.status = self._new_status("off")
 
-    def _new_status(self, phase, error="", detail="", game="", target="", notice="", relays=None):
+    def _new_status(self, phase, error="", detail="", game="", target="", notice="", relays=None, appid=""):
         return {
             "phase": phase,
             "active": "direct",
             "game": game,
+            "appid": appid,
             "target": target,
             "direct": None,
             "direct_score": None,
@@ -524,13 +736,52 @@ class Plugin:
     def _fail(self, error, detail=""):
         self.status = self._new_status("error", error, detail)
 
+    def _cancel_watch(self):
+        watcher, self.watcher = self.watcher, None
+        if watcher and not watcher.done():
+            watcher.cancel()
+
+    def _begin_watch(self, force=False):
+        if self.watcher and not self.watcher.done():
+            return
+        if not force and self.task and not self.task.done():
+            return
+        self.watcher = asyncio.ensure_future(self._watch())
+
+    async def _watch(self):
+        """Com a chave desligada, espera um jogo com perfil automático abrir e liga sozinho."""
+        try:
+            await asyncio.sleep(WATCH_DELAY)
+            while True:
+                data = _load()
+                if data["enabled"]:
+                    return
+                wanted = {k for k, g in data["games"].items() if g["auto"]}
+                if wanted:
+                    pids = await asyncio.to_thread(find_game_pids)
+                    appid = await asyncio.to_thread(game_id, pids) if pids else ""
+                    if appid in wanted:
+                        data["enabled"] = True
+                        _save(data)
+                        self.manual = False
+                        self.watcher = None
+                        self._start()
+                        return
+                await asyncio.sleep(WATCH_INTERVAL)
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            decky.logger.exception("NoLag: falha ao esperar o jogo")
+
     def _start(self):
+        self._cancel_watch()
         if self.task and not self.task.done():
             return
         self.status = self._new_status("starting")
         self.task = asyncio.ensure_future(self._monitor())
 
     async def _stop(self):
+        self._cancel_watch()
         task, self.task = self.task, None
         if task and not task.done():
             task.cancel()
@@ -545,6 +796,8 @@ class Plugin:
         await self._stop()
         if _load()["enabled"]:
             self._start()
+        else:
+            self._begin_watch()
 
     async def _monitor(self):
         notice, detail = "", ""
@@ -552,12 +805,17 @@ class Plugin:
             if not shutil.which("ping"):
                 return self._fail("tools_missing", "ping")
             relays = load_relays()
-            if relays:
-                missing = [t for t in TOOLS if not shutil.which(t)]
-                if missing:
-                    notice, detail, relays = "tools_missing", ", ".join(missing), []
+            missing = [t for t in TOOLS if not shutil.which(t)]
+            has_public = bool(load_public_relays())
+            if missing and (relays or has_public):
+                notice, detail, relays = "tools_missing", ", ".join(missing), []
             else:
-                notice = "no_relays"
+                auto_failed = 0
+                if has_public and len(relays) < MAX_RELAYS:
+                    auto, auto_failed = await enrolled_relays(MAX_RELAYS - len(relays))
+                    relays += [r for r in auto if all(r["name"] != x["name"] for x in relays)]
+                if not relays:
+                    notice = "enroll_failed" if auto_failed else "no_relays"
             rows, ready = [], []
             if relays:
                 await teardown()
@@ -583,19 +841,42 @@ class Plugin:
 
             history = deque(maxlen=HISTORY)
             series = {}
+            had_game, appid, saved_appid = False, "", ""
             target, active, game = None, "direct", ""
             while True:
                 pids = await asyncio.to_thread(find_game_pids)
                 if not pids:
                     if target:
                         await apply_route(target, None)
-                    target, active, game = None, "direct", ""
+                    if had_game:
+                        # Saiu do jogo: desliga sozinho. Com perfil automático, liga de novo ao reabrir.
+                        data = _load()
+                        data["enabled"] = False
+                        _save(data)
+                        self.status = self._new_status("off")
+                        self._begin_watch(force=True)
+                        return
+                    target, active, game, appid = None, "direct", "", ""
                     history.clear()
                     self.status = st("waiting")
                     await asyncio.sleep(3)
                     continue
+                had_game = True
+                appid = await asyncio.to_thread(game_id, pids)
                 ports, name = await asyncio.to_thread(game_ports, pids)
                 game = name or game
+                if appid and appid != saved_appid:
+                    saved_appid = appid
+                    if self.manual:
+                        # Ligou à mão dentro de um jogo: salva o perfil para ligar sozinho nas próximas vezes.
+                        data = _load()
+                        old = data["games"].get(appid, {})
+                        data["games"][appid] = {
+                            "name": game or old.get("name") or appid,
+                            "auto": True,
+                            "profile": old.get("profile") or data["profile"],
+                        }
+                        _save(sanitize_settings(data))
                 try:
                     stats = {}
                     counts = await asyncio.to_thread(sniff, ports, SNIFF_SECONDS, stats)
@@ -615,10 +896,12 @@ class Plugin:
                     for _i, row in ready:
                         row["metrics"], row["score"] = None, None
                 if not target:
-                    self.status = st("waiting", game=game)
+                    self.status = st("waiting", game=game, appid=appid)
                     self.status["diag"] = diag
                     continue
-                prof = PROFILES[_load()["profile"]]
+                cur = _load()
+                pname = cur["games"].get(appid, {}).get("profile") or cur["profile"]
+                prof = PROFILES[pname if pname in PROFILES else "balanced"]
                 results = await asyncio.gather(
                     ping_target(target),
                     *[ping_target(target, IFACE.format(i)) for i, _row in ready]
@@ -637,7 +920,7 @@ class Plugin:
                 if new != active:
                     index = None if new == "direct" else int(new[len("nolag"):])
                     active = new if await apply_route(target, index) else "direct"
-                self.status = st("running", game=game, target=target)
+                self.status = st("running", game=game, target=target, appid=appid)
                 self.status["active"] = active
                 self.status["direct"] = direct
                 self.status["direct_score"] = dscore
@@ -656,9 +939,13 @@ class Plugin:
     async def set_settings(self, patch):
         data = _load()
         if isinstance(patch, dict):
+            appid = self.status.get("appid") or ""
             for key in ("language", "profile", "collapsed"):
                 if key in patch:
-                    data[key] = patch[key]
+                    if key == "profile" and appid in data["games"] and patch[key] in PROFILES:
+                        data["games"][appid]["profile"] = patch[key]  # dentro de um jogo salvo, vale só para ele
+                    else:
+                        data[key] = patch[key]
         data = sanitize_settings(data)
         _save(data)
         return data
@@ -666,18 +953,43 @@ class Plugin:
     async def set_enabled(self, enabled):
         data = _load()
         data["enabled"] = enabled is True
+        appid = self.status.get("appid") or ""
+        if not data["enabled"] and appid in data["games"]:
+            data["games"][appid]["auto"] = False  # desligou de propósito: não liga sozinho neste jogo
         _save(data)
         if data["enabled"]:
+            self.manual = True
             self._start()
         else:
             await self._stop()
+            self._begin_watch()
         return self.status
+
+    async def set_game_auto(self, appid, auto):
+        data = _load()
+        if isinstance(appid, str) and appid in data["games"]:
+            data["games"][appid]["auto"] = auto is True
+            _save(data)
+        if not data["enabled"]:
+            self._begin_watch()
+        return _load()
+
+    async def delete_game(self, appid):
+        data = _load()
+        if isinstance(appid, str):
+            data["games"].pop(appid, None)
+            _save(data)
+        return _load()
 
     async def get_status(self):
         return self.status
 
     async def get_relays(self):
-        return public_relays(load_relays())
+        rows = public_relays(load_relays())
+        for r in load_public_relays():
+            if all(r["name"] != x["name"] for x in rows):
+                rows.append({"name": r["name"], "endpoint": r["endpoint"], "builtin": True})
+        return rows[:MAX_RELAYS]
 
     async def add_relay(self, code):
         relay, err = parse_relay_code(code)
@@ -699,7 +1011,10 @@ class Plugin:
     async def _main(self):
         await teardown()
         if _load()["enabled"]:
+            self.manual = False
             self._start()
+        else:
+            self._begin_watch()
         decky.logger.info("NoLag iniciado")
 
     async def _unload(self):

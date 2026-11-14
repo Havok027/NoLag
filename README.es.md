@@ -11,7 +11,18 @@ Activa la **Ruta automática** y abre el juego. Nada más: el plugin detecta el 
 - El **Panel** muestra ping, jitter y pérdida en vivo, la ruta en uso y, en **Diagnóstico**, lo que el plugin ve del juego. Cambia de pestaña con toque, A o L1/R1; las flechas contraen las secciones.
 - El **Panel** también muestra la **Calidad** de la conexión y un **gráfico en vivo** con una línea por ruta. El botón **Y** muestra u oculta la ayuda de cada opción.
 - Sin relay, el plugin solo monitorea ping, jitter y pérdida hasta el servidor del juego.
+- Activa el interruptor una vez dentro del juego: NoLag guarda su perfil, se activa solo la próxima vez y se apaga al salir. Gestiónalo en Rutas > Perfiles de juegos.
 - Con relay, también prueba los caminos alternativos y usa el mejor.
+
+## Relay automático (recomendado)
+
+El usuario solo activa el interruptor. El plugin crea su propia clave WireGuard, se registra solo en los relays de `relay-code.txt` y mide y usa el mejor camino.
+
+Para el dueño del proyecto (una vez):
+1. En un servidor gratuito (p. ej. Oracle Cloud Always Free, Ubuntu), pon `relay-server.sh` y `enroll_server.py` en la misma carpeta y ejecuta `sudo bash relay-server.sh NoLag-BR`.
+2. En Oracle, abre UDP 51820 y TCP 8077 en la Security List.
+3. Pega la línea `nolag2:...` impresa al final en una línea de `relay-code.txt` en la raíz del repositorio. Este código no tiene clave privada y puede estar en un repositorio público.
+4. El servidor solo reenvía UDP y ping, con límite de velocidad por dispositivo, y bloquea redes internas.
 
 ## Relays (opcional)
 

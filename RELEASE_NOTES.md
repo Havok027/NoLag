@@ -1,3 +1,25 @@
+## v0.7.0
+
+- Perfil por jogo: ao ligar a chave dentro de um jogo, o NoLag salva o perfil dele (nome, sensibilidade e início automático).
+- Início automático: com a chave desligada, o plugin espera um jogo com perfil automático abrir e liga sozinho.
+- Ao sair do jogo, a chave desliga sozinha e tudo é removido da rede. Se o jogo tem perfil automático, liga de novo na próxima vez.
+- Desligar a chave dentro de um jogo também desliga o início automático dele.
+- A sensibilidade, dentro de um jogo salvo, vale só para esse jogo.
+- Aba Rotas: seção Perfis de jogos, com início automático por jogo e botão Excluir.
+- A chave do Painel acompanha o estado real do plugin e mostra se o jogo atual tem perfil salvo.
+- Testes novos: perfis, leitura do appid, ligar e desligar sozinho e perfil por jogo.
+
+## v0.6.0
+
+- Relay automático: o plugin gera a própria chave WireGuard e se cadastra sozinho nos relays públicos (linhas `nolag2:` do relay-code.txt). O usuário só liga a chave.
+- Novo servidor de relay gratuito: `relay-server.sh` e `enroll_server.py`. Cadastro por aparelho, limite de aparelhos e de pedidos, e remoção de quem some por 30 dias.
+- O relay só encaminha UDP e ping, com limite de velocidade por aparelho, e bloqueia redes internas.
+- O desvio para o servidor do jogo passa a valer só para UDP.
+- Aviso quando o cadastro no relay falha; o plugin segue monitorando.
+- A área de relays do app fica recolhida por padrão (só para quem tem relay próprio) e a ajuda foi reescrita.
+- Os códigos `nolag1:` e relays manuais continuam funcionando.
+- Testes novos para a geração de chaves (vetores da RFC 7748), códigos públicos, cadastro e servidor.
+
 ## v0.5.2
 
 - Botão Y passa a mostrar e ocultar a ajuda também pelo evento de botões do Steam (o mesmo caminho que já funciona para L1/R1).
