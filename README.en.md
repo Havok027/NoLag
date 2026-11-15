@@ -30,6 +30,17 @@ For the project owner (once):
 2. Preconfigured: put the code on a line of the `relay-code.txt` file at the repository root. The build includes the file in the release and the plugin reads it by itself. Note: the code contains a private key; if the repository is public, anyone can use your relay.
 3. Alternative: paste the code under **Relays** (up to 4 relays).
 
+## Wi-Fi (independent module)
+
+**Wi-Fi** tab: local network optimizations that work on their own, without the NoLag route and without Mudfish.
+
+- Turn off power save, fix on wake, larger network buffers, CAKE queue, IPv6, access point lock, preferred band and DNS.
+- Streaming mode (turns the fixes on only during a stream) and a fix for stalled streams.
+- **Apply safe optimizations** turns everything on at once; **Restore** puts back the system default.
+- The tweaks survive sleep, reconnects and system updates (SteamOS and Bazzite). Uninstalling the plugin undoes everything.
+- Nothing is sent to the internet. If the original WiFi Optimizer is installed, turn one of the two off.
+- Module derived from WiFi Optimizer 0.25.0 (Arcada Labs, BSD 3-Clause): see `THIRD_PARTY_NOTICES.md`.
+
 ## How it works
 
 - The plugin finds the game opened by Steam and watches (read-only) which IP it sends data to.

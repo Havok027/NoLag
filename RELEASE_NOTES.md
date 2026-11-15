@@ -1,3 +1,13 @@
+## v0.8.0
+
+- Novo módulo Wi-Fi, independente da rota e do Mudfish: economia de energia, corrigir ao acordar, buffers, CAKE, IPv6, trava no ponto de acesso, banda preferida, DNS, modo streaming e correção de streams travados.
+- Aplicar otimizações seguras e Restaurar tudo ao padrão, em um toque.
+- Os ajustes sobrevivem a suspensão, reconexão e atualização do sistema, no SteamOS e no Bazzite; ao desinstalar, tudo é desfeito.
+- Configuração própria (wifi.json) e arquivos de sistema próprios (99-nolag-wifi), sem conflito com o WiFi Optimizer original.
+- Se o módulo Wi-Fi falhar ao carregar, o resto do NoLag continua funcionando.
+- Sem atualizador próprio, envio de relatório ou qualquer acesso à internet no módulo.
+- Testes novos: módulo Wi-Fi, dispatcher embutido, independência e textos nos 3 idiomas.
+
 ## v0.7.0
 
 - Perfil por jogo: ao ligar a chave dentro de um jogo, o NoLag salva o perfil dele (nome, sensibilidade e início automático).

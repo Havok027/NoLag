@@ -6,6 +6,7 @@ import os
 import re
 import shutil
 import socket
+import sys
 import time
 import urllib.parse
 import urllib.request
@@ -13,9 +14,20 @@ from collections import deque
 
 import decky
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+# O módulo Wi-Fi é independente: se falhar ao carregar, o resto do NoLag segue.
+try:
+    from wifi_mgr import WifiManager
+    WIFI_IMPORT_ERROR = ""
+except Exception as _e:  # pragma: no cover - só em ambiente quebrado
+    WifiManager = None  # type: ignore
+    WIFI_IMPORT_ERROR = f"{type(_e).__name__}: {_e}"[:200]
+
 LANGS = ("pt", "en", "es")
 DEFAULTS = {"language": "pt", "enabled": False, "profile": "balanced", "collapsed": {}, "games": {}}
-SECTIONS = ("diag", "routes", "relays", "settings", "chart", "help", "games")
+SECTIONS = ("diag", "routes", "relays", "settings", "chart", "help", "games",
+            "wifiMain", "wifiAdv", "wifiStream", "wifiActions")
 MAX_GAMES = 50
 WATCH_DELAY = 5
 WATCH_INTERVAL = 5
@@ -711,6 +723,8 @@ async def ping_target(target, iface=None):
 
 class Plugin:
     def __init__(self):
+        self.wifi = WifiManager() if WifiManager is not None else None
+        self.wifi_task = None
         self.task = None
         self.watcher = None
         self.manual = False
@@ -1009,6 +1023,8 @@ class Plugin:
         return public_relays(load_relays())
 
     async def _main(self):
+        if self.wifi is not None:
+            self.wifi_task = asyncio.ensure_future(self._wifi_boot())
         await teardown()
         if _load()["enabled"]:
             self.manual = False
@@ -1017,6 +1033,149 @@ class Plugin:
             self._begin_watch()
         decky.logger.info("NoLag iniciado")
 
+    async def _wifi_boot(self):
+        try:
+            await self.wifi._main()
+        except asyncio.CancelledError:
+            raise
+        except Exception as e:
+            decky.logger.error(f"NoLag Wi-Fi: falha ao iniciar: {e}")
+
     async def _unload(self):
+        if self.wifi is not None:
+            try:
+                await self.wifi._unload()
+            except Exception as e:
+                decky.logger.error(f"NoLag Wi-Fi: falha ao descarregar: {e}")
+            if self.wifi_task is not None and not self.wifi_task.done():
+                self.wifi_task.cancel()
         await self._stop()
         decky.logger.info("NoLag descarregado")
+
+    async def _uninstall(self):
+        if self.wifi is not None:
+            try:
+                await self.wifi._uninstall()
+            except Exception as e:
+                decky.logger.error(f"NoLag Wi-Fi: falha ao desinstalar: {e}")
+
+    async def _migration(self):
+        if self.wifi is not None:
+            try:
+                await self.wifi._migration()
+            except Exception as e:
+                decky.logger.error(f"NoLag Wi-Fi: falha na migração: {e}")
+
+    async def _wifi_call(self, name, *args):
+        if self.wifi is None:
+            return {"success": False, "error": "wifi_unavailable"}
+        return await getattr(self.wifi, name)(*args)
+
+    async def wifi_acknowledge_settings_recovered(self):
+        return await self._wifi_call("acknowledge_settings_recovered")
+
+    async def wifi_allow_wpa2(self):
+        return await self._wifi_call("allow_wpa2")
+
+    async def wifi_get_backend_switch_status(self):
+        return await self._wifi_call("get_backend_switch_status")
+
+    async def wifi_get_device_info(self):
+        return await self._wifi_call("get_device_info")
+
+    async def wifi_get_diagnostic_info(self):
+        return await self._wifi_call("get_diagnostic_info")
+
+    async def wifi_get_regdomain(self):
+        return await self._wifi_call("get_regdomain")
+
+    async def wifi_get_status(self):
+        return await self._wifi_call("get_status")
+
+    async def wifi_list_streaming_apps(self):
+        return await self._wifi_call("list_streaming_apps")
+
+    async def wifi_move_bssid_lock(self):
+        return await self._wifi_call("move_bssid_lock")
+
+    async def wifi_optimize_safe(self):
+        return await self._wifi_call("optimize_safe")
+
+    async def wifi_poke_detection(self):
+        return await self._wifi_call("poke_detection")
+
+    async def wifi_reapply_all(self):
+        return await self._wifi_call("reapply_all")
+
+    async def wifi_reapply_volatile(self):
+        return await self._wifi_call("reapply_volatile")
+
+    async def wifi_repair_drifted(self):
+        return await self._wifi_call("repair_drifted")
+
+    async def wifi_reset_settings(self):
+        return await self._wifi_call("reset_settings")
+
+    async def wifi_save_diagnostic_info(self):
+        return await self._wifi_call("save_diagnostic_info")
+
+    async def wifi_set_auto_fix(self, enabled):
+        return await self._wifi_call("set_auto_fix", enabled)
+
+    async def wifi_set_band_preference(self, enabled, band='a'):
+        return await self._wifi_call("set_band_preference", enabled, band)
+
+    async def wifi_set_bssid_lock(self, enabled):
+        return await self._wifi_call("set_bssid_lock", enabled)
+
+    async def wifi_set_buffer_tuning(self, enabled):
+        return await self._wifi_call("set_buffer_tuning", enabled)
+
+    async def wifi_set_cake(self, enabled):
+        return await self._wifi_call("set_cake", enabled)
+
+    async def wifi_set_dns(self, enabled, provider='cloudflare', custom_servers=''):
+        return await self._wifi_call("set_dns", enabled, provider, custom_servers)
+
+    async def wifi_set_ipv6(self, disabled):
+        return await self._wifi_call("set_ipv6", disabled)
+
+    async def wifi_set_link_watchdog(self, enabled):
+        return await self._wifi_call("set_link_watchdog", enabled)
+
+    async def wifi_set_power_save(self, disabled):
+        return await self._wifi_call("set_power_save", disabled)
+
+    async def wifi_set_regdomain(self, country):
+        return await self._wifi_call("set_regdomain", country)
+
+    async def wifi_set_streaming_app(self, app_id, watched):
+        return await self._wifi_call("set_streaming_app", app_id, watched)
+
+    async def wifi_set_streaming_hold(self, held):
+        return await self._wifi_call("set_streaming_hold", held)
+
+    async def wifi_set_streaming_mode(self, enabled):
+        return await self._wifi_call("set_streaming_mode", enabled)
+
+    async def wifi_set_streaming_patterns(self, text):
+        return await self._wifi_call("set_streaming_patterns", text)
+
+    async def wifi_start_backend_switch(self, backend):
+        return await self._wifi_call("start_backend_switch", backend)
+
+    async def wifi_available(self):
+        return {"available": self.wifi is not None, "error": WIFI_IMPORT_ERROR}
+
+
+# Métodos do módulo Wi-Fi expostos ao frontend com o prefixo wifi_.
+WIFI_API = (
+    "acknowledge_settings_recovered", "allow_wpa2", "get_backend_switch_status",
+    "get_device_info", "get_diagnostic_info", "get_regdomain", "get_status",
+    "list_streaming_apps", "move_bssid_lock", "optimize_safe", "poke_detection",
+    "reapply_all", "reapply_volatile", "repair_drifted", "reset_settings",
+    "save_diagnostic_info", "set_auto_fix", "set_band_preference", "set_bssid_lock",
+    "set_buffer_tuning", "set_cake", "set_dns", "set_ipv6", "set_link_watchdog",
+    "set_power_save", "set_regdomain", "set_streaming_app", "set_streaming_hold",
+    "set_streaming_mode", "set_streaming_patterns", "start_backend_switch",
+)
