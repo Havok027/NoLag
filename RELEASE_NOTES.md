@@ -1,3 +1,8 @@
+## v0.8.1
+
+- Abas: ao trocar com L1/R1, o foco acompanha a aba nova e a aba ativa fica em destaque (a anterior não fica mais marcada).
+- Wi-Fi: quando o módulo não carrega, a aba mostra o motivo e os arquivos Python presentes, para facilitar o diagnóstico.
+
 ## v0.8.0
 
 - Novo módulo Wi-Fi, independente da rota e do Mudfish: economia de energia, corrigir ao acordar, buffers, CAKE, IPv6, trava no ponto de acesso, banda preferida, DNS, modo streaming e correção de streams travados.

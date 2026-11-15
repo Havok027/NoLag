@@ -22,7 +22,12 @@ try:
     WIFI_IMPORT_ERROR = ""
 except Exception as _e:  # pragma: no cover - só em ambiente quebrado
     WifiManager = None  # type: ignore
-    WIFI_IMPORT_ERROR = f"{type(_e).__name__}: {_e}"[:200]
+    try:
+        _py = ",".join(sorted(f for f in os.listdir(os.path.dirname(os.path.abspath(__file__))) if f.endswith(".py")))
+    except Exception:
+        _py = "?"
+    WIFI_IMPORT_ERROR = f"{type(_e).__name__}: {_e} | py: {_py}"[:300]
+    decky.logger.error(f"NoLag Wi-Fi: módulo não carregou: {WIFI_IMPORT_ERROR}")
 
 LANGS = ("pt", "en", "es")
 DEFAULTS = {"language": "pt", "enabled": False, "profile": "balanced", "collapsed": {}, "games": {}}
@@ -1165,7 +1170,12 @@ class Plugin:
         return await self._wifi_call("start_backend_switch", backend)
 
     async def wifi_available(self):
-        return {"available": self.wifi is not None, "error": WIFI_IMPORT_ERROR}
+        here = os.path.dirname(os.path.abspath(__file__))
+        files = [n for n in ("wifi_mgr.py", "wifi_dispatcher.py") if not os.path.exists(os.path.join(here, n))]
+        error = WIFI_IMPORT_ERROR
+        if files:
+            error = ("arquivo ausente: " + ", ".join(files))[:200]
+        return {"available": self.wifi is not None, "error": error}
 
 
 # Métodos do módulo Wi-Fi expostos ao frontend com o prefixo wifi_.
