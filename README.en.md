@@ -32,7 +32,7 @@ For the project owner (once):
 
 ## Mudfish / Routes (independent module)
 
-**Routes** tab: installs the official Mudfish in a persistent folder (survives SteamOS updates, bound to `/opt/mudfish` with `mount --bind`), stores the login, turns the service on and off and shows port 8282, the active route and the ping before and after. "Open Mudfish panel" opens `http://127.0.0.1:8282` so you can pick the node. It works without Wi-Fi and without the NoLag route. Mudfish charges by traffic.
+**Routes** tab: installs the official Mudfish in a persistent folder (survives SteamOS updates, bound to `/opt/mudfish` with `mount --bind`), follows the official SteamOS guide (installer run with `sh`, `mudrun-headless` service without flags, sign-in on the panel), shows the exact reason when the install fails, turns the service on and off and shows port 8282, the active route and the ping before and after. "Open Mudfish panel" opens `http://127.0.0.1:8282` so you can pick the node. It works without Wi-Fi and without the NoLag route. Mudfish charges by traffic.
 
 The Dashboard has one switch for Wi-Fi and another for Mudfish, plus the **Connection** table (interface, IP, gateway, ping and jitter). Each saved game can turn Wi-Fi and/or Mudfish on by itself when it opens; on exit it only turns off what it turned on.
 

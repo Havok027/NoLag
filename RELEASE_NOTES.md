@@ -1,3 +1,11 @@
+## v0.9.1
+
+- Mudfish: instalação corrigida para seguir o guia oficial do SteamOS: o instalador roda com `sh` (extração numa pasta temporária própria, sem depender do /tmp), grava em /opt/mudfish/<versão>/bin e o serviço abre com `mudrun-headless` sem flags; o login é feito no painel (porta 8282).
+- Mudfish: a pasta persistente no diretório do Decky continua ligada em /opt/mudfish com mount --bind, então a instalação sobrevive a atualizações do SteamOS e funciona no Bazzite.
+- Mudfish: quando algo falha, a tela mostra o motivo exato: erro de rede ou HTTP, arquivo baixado inválido, falta de espaço, falha ao criar ou montar /opt/mudfish, saída do instalador e fim do log do serviço. Se o download falhar, tenta de novo com o curl do sistema e com a versão 5.11.0.
+- Mudfish: o serviço não exige mais usuário e senha salvos para ligar. Os logs ficam em mudfish-install.log e mudfish.log na pasta de runtime do Decky.
+- Testes novos para o motivo das falhas e para o comando do serviço. O módulo Wi-Fi não foi alterado.
+
 ## v0.9.0
 
 - Novo módulo Mudfish na aba Rotas, independente do Wi-Fi e da rota do NoLag: instalação e atualização do Mudfish oficial em pasta persistente (montada em /opt/mudfish), login salvo para entrar sozinho, chave liga/desliga do serviço, status da porta 8282 e botão para abrir o painel do Mudfish.

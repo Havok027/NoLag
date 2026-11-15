@@ -1,8 +1,11 @@
 """Módulo Mudfish do NoLag: instalação persistente, daemon headless, porta 8282, rota e ping.
 
 Independente do Wi-Fi: só usa o core_state (estado e eventos compartilhados).
-O instalador oficial grava em /opt/mudfish/<versão>; como o SteamOS é imutável, a pasta
-persistente fica em DECKY_PLUGIN_RUNTIME_DIR/mudfish e é ligada em /opt/mudfish com mount --bind.
+Segue o guia oficial do SteamOS (docs.mudfish.net, "Instalação e utilização no Steam Deck"):
+  - instalação: `sh mudfish-X.Y.Z-linux-x86_64.sh`, que grava em /opt/mudfish/<versão>/bin/;
+  - execução: `/opt/mudfish/<versão>/bin/mudrun-headless` (sem flags) e login em http://127.0.0.1:8282.
+Como o SteamOS é imutável, a pasta persistente fica em DECKY_PLUGIN_RUNTIME_DIR/mudfish e é ligada
+em /opt/mudfish com mount --bind. Toda falha devolve um código e o motivo exato em "detail".
 """
 import asyncio
 import json
@@ -13,6 +16,7 @@ import shutil
 import signal
 import socket
 import time
+import urllib.error
 import urllib.request
 
 import decky
@@ -27,10 +31,28 @@ INSTALLER = "mudfish-%s-linux-x86_64.sh"
 MOUNT_POINT = "/opt/mudfish"
 START_WAIT = 25
 MIN_INSTALLER = 1_000_000
+MIN_FREE = 100_000_000
+DETAIL_MAX = 400
+LOG_MAX = 200_000
 _VERSION = re.compile(r"^\d+\.\d+\.\d+$")
 _RELEASE_RX = re.compile(r"mudfish-(\d+\.\d+\.\d+)-linux-x86_64\.sh")
 _USER_MAX = 64
 _PASS_MAX = 128
+
+
+def _tail(text, limit=DETAIL_MAX):
+    """Final de uma saída de comando em uma linha só, para mostrar na tela."""
+    flat = " | ".join(line.strip() for line in str(text or "").splitlines() if line.strip())
+    return flat[-limit:]
+
+
+def _err(e):
+    """Motivo curto e legível de uma exceção de rede ou de arquivo."""
+    if isinstance(e, urllib.error.HTTPError):
+        return "HTTP %s %s" % (e.code, e.reason)
+    if isinstance(e, urllib.error.URLError):
+        return "rede: %s" % (e.reason,)
+    return "%s: %s" % (type(e).__name__, e)
 
 
 def _ver_key(v):
@@ -121,6 +143,7 @@ class MudfishManager:
         self.lock = asyncio.Lock()
         self.phase = "off"  # off | installing | starting | running | stopping | error
         self.error = ""
+        self.detail = ""  # motivo exato da última falha, mostrado na tela
         self.owned = False  # ligado por perfil de jogo (não persiste ao reiniciar)
 
     # ---------- arquivos ----------
@@ -131,6 +154,27 @@ class MudfishManager:
     @property
     def log_path(self):
         return os.path.join(self.runtime_dir, "mudfish.log")
+
+    @property
+    def install_log_path(self):
+        return os.path.join(self.runtime_dir, "mudfish-install.log")
+
+    def _log_install(self, text):
+        try:
+            os.makedirs(self.runtime_dir, exist_ok=True)
+            with open(self.install_log_path, "a", encoding="utf-8") as f:
+                f.write("[%s] %s\n" % (time.strftime("%Y-%m-%d %H:%M:%S"), str(text)[-LOG_MAX:]))
+        except OSError:
+            pass
+
+    def _log_tail(self):
+        try:
+            with open(self.log_path, "rb") as f:
+                f.seek(0, os.SEEK_END)
+                f.seek(max(0, f.tell() - 600))
+                return _tail(f.read().decode("utf-8", "replace"))
+        except OSError:
+            return ""
 
     def _cfg_path(self):
         return os.path.join(self.settings_dir, "mudfish.json")
@@ -171,14 +215,15 @@ class MudfishManager:
             return True
         return bool(find_daemon_pids())
 
-    def _set(self, phase, error=""):
-        self.phase, self.error = phase, error
+    def _set(self, phase, error="", detail=""):
+        self.phase, self.error, self.detail = phase, error, detail
         self._publish()
 
     def _publish(self):
         version, _exe = self.installed()
         core_state.bus.set_state("mudfish", {
             "installed": bool(version), "running": self._alive(), "phase": self.phase, "error": self.error,
+            "detail": self.detail,
         })
 
     async def get_status(self):
@@ -198,6 +243,7 @@ class MudfishManager:
             "port_open": await asyncio.to_thread(port_open),
             "phase": self.phase,
             "error": self.error,
+            "detail": self.detail,
             "user": cfg["user"],
             "has_password": bool(cfg["password"]),
             "keep_on": cfg["keep_on"],
@@ -211,26 +257,37 @@ class MudfishManager:
 
     # ---------- instalação ----------
     async def _ensure_mount(self):
+        """(ok, motivo). Liga a pasta persistente em /opt/mudfish com mount --bind."""
         if mounted(self.mount_point):
-            return True
-        os.makedirs(self.store, exist_ok=True)
+            return True, ""
+        try:
+            os.makedirs(self.store, exist_ok=True)
+        except OSError as e:
+            return False, "pasta persistente %s: %s" % (self.store, _err(e))
         try:
             os.makedirs(self.mount_point, exist_ok=True)
-        except OSError:
+        except OSError as e:
             # SteamOS imutável: libera a escrita só o tempo de criar o ponto de montagem.
             if not shutil.which("steamos-readonly"):
-                return False
-            await self.run(["steamos-readonly", "disable"], 30)
+                return False, "não deu para criar %s (%s) e steamos-readonly não existe" % (self.mount_point, _err(e))
+            rc, out = await self.run(["steamos-readonly", "disable"], 30)
+            if rc != 0:
+                return False, "steamos-readonly disable falhou (código %s): %s" % (rc, _tail(out, 200))
+            mk_err = ""
             try:
                 os.makedirs(self.mount_point, exist_ok=True)
-            except OSError:
-                pass
+            except OSError as e2:
+                mk_err = _err(e2)
             finally:
                 await self.run(["steamos-readonly", "enable"], 30)
             if not os.path.isdir(self.mount_point):
-                return False
-        rc, _out = await self.run(["mount", "--bind", self.store, self.mount_point], 15)
-        return rc == 0 and mounted(self.mount_point)
+                return False, "não deu para criar %s mesmo liberando a escrita: %s" % (self.mount_point, mk_err)
+        rc, out = await self.run(["mount", "--bind", self.store, self.mount_point], 15)
+        if rc != 0:
+            return False, "mount --bind falhou (código %s): %s" % (rc, _tail(out, 200))
+        if not mounted(self.mount_point):
+            return False, "mount --bind terminou sem erro, mas %s não aparece montado" % self.mount_point
+        return True, ""
 
     def _fetch_latest(self):
         try:
@@ -242,64 +299,154 @@ class MudfishManager:
         except Exception:
             return FALLBACK_VERSION
 
+    def _check_installer(self, tmp):
+        """Confere o arquivo baixado; devolve o motivo se não for o instalador, senão ''."""
+        try:
+            size = os.path.getsize(tmp)
+            with open(tmp, "rb") as f:
+                head = f.read(60)
+        except OSError as e:
+            return _err(e)
+        if size < MIN_INSTALLER or not head.startswith(b"#!"):
+            start = head[:40].decode("utf-8", "replace").replace("\n", " ")
+            return "arquivo inválido: %d bytes, começa com %r (esperado um script com mais de 1 MB)" % (size, start)
+        return ""
+
     def _download(self, version, dest):
+        """Baixa com urllib. Levanta ValueError com o motivo exato se falhar."""
         url = RELEASES_URL + INSTALLER % version
         req = urllib.request.Request(url, headers={"User-Agent": "NoLag"})
         tmp = dest + ".part"
-        with urllib.request.urlopen(req, timeout=60) as r, open(tmp, "wb") as f:  # noqa: S310 - URL fixa
-            shutil.copyfileobj(r, f)
-        size = os.path.getsize(tmp)
-        with open(tmp, "rb") as f:
-            head = f.read(2)
-        if size < MIN_INSTALLER or head != b"#!":
-            os.remove(tmp)
-            raise ValueError("installer_invalid")
+        try:
+            with urllib.request.urlopen(req, timeout=60) as r, open(tmp, "wb") as f:  # noqa: S310 - URL fixa
+                shutil.copyfileobj(r, f)
+        except Exception as e:
+            self._rm(tmp)
+            raise ValueError("%s (%s)" % (_err(e), url))
+        bad = self._check_installer(tmp)
+        if bad:
+            self._rm(tmp)
+            raise ValueError(bad)
         os.replace(tmp, dest)
+
+    @staticmethod
+    def _rm(path):
+        try:
+            os.remove(path)
+        except OSError:
+            pass
+
+    async def _download_curl(self, version, dest):
+        """Plano B: curl do sistema (certificados do SteamOS). Devolve o motivo ou ''."""
+        if not shutil.which("curl"):
+            return "curl não encontrado"
+        url = RELEASES_URL + INSTALLER % version
+        tmp = dest + ".part"
+        rc, out = await self.run(["curl", "-fsSL", "--retry", "2", "--connect-timeout", "15", "-o", tmp, url], 180)
+        if rc != 0:
+            self._rm(tmp)
+            return "curl código %s: %s" % (rc, _tail(out, 200))
+        bad = self._check_installer(tmp)
+        if bad:
+            self._rm(tmp)
+            return bad
+        os.replace(tmp, dest)
+        return ""
+
+    async def _fetch_installer(self, version, dest):
+        """Baixa o instalador (urllib, depois curl). Devolve '' se deu certo, senão o motivo."""
+        try:
+            await asyncio.to_thread(self._download, version, dest)
+            return ""
+        except Exception as e:
+            first = str(e)
+        self._log_install("download urllib falhou: %s" % first)
+        second = await self._download_curl(version, dest)
+        if not second:
+            return ""
+        self._log_install("download curl falhou: %s" % second)
+        return "%s; plano B: %s" % (first, second)
+
+    def _find_exe(self, version):
+        exe = os.path.join(self.store, version, "bin", "mudrun-headless")
+        return exe if os.path.isfile(exe) else ""
 
     async def install(self):
         if self.lock.locked():
-            return {"ok": False, "error": "busy"}
+            return {"ok": False, "error": "busy", "detail": ""}
         async with self.lock:
             if platform.machine() != "x86_64":
-                return {"ok": False, "error": "unsupported_arch"}
+                return self._fail("unsupported_arch", "arquitetura %s, o Mudfish só tem pacote x86_64" % platform.machine())
             was_running = self._alive()
             self._set("installing")
+            version = ""
             try:
                 if was_running:
                     await self._stop_locked()
                     self._set("installing")
-                os.makedirs(self.store, exist_ok=True)
-                if not await self._ensure_mount():
-                    return self._fail("mount_failed")
-                version = await asyncio.to_thread(self._fetch_latest)
-                dest = os.path.join(self.runtime_dir, INSTALLER % version)
                 try:
-                    await asyncio.to_thread(self._download, version, dest)
-                except Exception:
-                    return self._fail("download_failed")
-                rc, _out = await self.run(["sh", dest], 300)
+                    os.makedirs(self.runtime_dir, exist_ok=True)
+                    os.makedirs(self.store, exist_ok=True)
+                    free = shutil.disk_usage(self.runtime_dir).free
+                except OSError as e:
+                    return self._fail("install_failed", "pasta %s: %s" % (self.runtime_dir, _err(e)))
+                if free < MIN_FREE:
+                    return self._fail("install_failed", "pouco espaço livre em %s: %d MB (precisa de ao menos %d MB)"
+                                      % (self.runtime_dir, free // 1_000_000, MIN_FREE // 1_000_000))
+                ok, why = await self._ensure_mount()
+                if not ok:
+                    return self._fail("mount_failed", why)
+                latest = await asyncio.to_thread(self._fetch_latest)
+                tried, reasons, version, dest = [], [], "", ""
+                for cand in (latest, FALLBACK_VERSION):
+                    if cand in tried:
+                        continue
+                    tried.append(cand)
+                    path = os.path.join(self.runtime_dir, INSTALLER % cand)
+                    why = await self._fetch_installer(cand, path)
+                    if not why:
+                        version, dest = cand, path
+                        break
+                    reasons.append("v%s: %s" % (cand, why))
+                if not version:
+                    return self._fail("download_failed", " || ".join(reasons))
+                tmpdir = os.path.join(self.runtime_dir, "tmp")
+                os.makedirs(tmpdir, exist_ok=True)
+                # Guia oficial: `sh mudfish-X.Y.Z-linux-x86_64.sh` (aqui já como root, sem sudo).
+                rc, out = await self.run(["env", "TMPDIR=" + tmpdir, "sh", dest], 300)
+                self._rm(dest)
+                shutil.rmtree(tmpdir, ignore_errors=True)
+                self._log_install("instalador v%s código %s:\n%s" % (version, rc, out))
+                exe = self._find_exe(version)
+                if rc != 0 or not exe:
+                    try:
+                        found = ", ".join(sorted(os.listdir(self.store))) or "vazia"
+                    except OSError:
+                        found = "ilegível"
+                    why = "instalador v%s terminou com código %s%s; %s não tem mudrun-headless (pasta: %s). Saída: %s" % (
+                        version, rc, " (tempo esgotado)" if rc == 124 else "", self.store, found, _tail(out, 220))
+                    return self._fail("install_failed", why)
                 try:
-                    os.remove(dest)
-                except OSError:
-                    pass
-                exe = os.path.join(self.store, version, "bin", "mudrun-headless")
-                if rc != 0 or not os.path.isfile(exe):
-                    return self._fail("install_failed")
-                os.chmod(exe, 0o755)
+                    os.chmod(exe, 0o755)
+                except OSError as e:
+                    return self._fail("install_failed", "chmod no mudrun-headless: %s" % _err(e))
                 for old in os.listdir(self.store):  # só a versão nova fica no disco
                     if old != version and _VERSION.match(old):
                         shutil.rmtree(os.path.join(self.store, old), ignore_errors=True)
                 self._set("off")
             except Exception as e:
                 decky.logger.error(f"NoLag Mudfish: instalação falhou: {e}")
-                return self._fail("install_failed")
+                return self._fail("install_failed", _err(e))
         if was_running:
             return await self.start()
-        return {"ok": True, "error": "", "version": version}
+        return {"ok": True, "error": "", "detail": "", "version": version}
 
-    def _fail(self, code):
-        self._set("error", code)
-        return {"ok": False, "error": code}
+    def _fail(self, code, detail=""):
+        detail = str(detail or "")[:DETAIL_MAX * 2]
+        decky.logger.error(f"NoLag Mudfish: {code}: {detail}")
+        self._log_install("%s: %s" % (code, detail))
+        self._set("error", code, detail)
+        return {"ok": False, "error": code, "detail": detail}
 
     # ---------- daemon ----------
     async def start(self, persist=True):
@@ -316,31 +463,42 @@ class MudfishManager:
         if not version:
             return self._fail("not_installed")
         cfg = self.load()
-        if not cfg["user"] or not cfg["password"]:
-            return self._fail("no_credentials")
         self._set("starting")
+        log = None
         try:
-            if not await self._ensure_mount():
-                return self._fail("mount_failed")
+            ok, why = await self._ensure_mount()
+            if not ok:
+                return self._fail("mount_failed", why)
+            if not os.access(exe, os.X_OK):
+                try:
+                    os.chmod(exe, 0o755)
+                except OSError as e:
+                    return self._fail("start_failed", "chmod no mudrun-headless: %s" % _err(e))
             os.makedirs(os.path.dirname(self.log_path), exist_ok=True)
+            if os.path.isfile(self.log_path) and os.path.getsize(self.log_path) > LOG_MAX:
+                os.remove(self.log_path)
+            log = open(self.log_path, "ab")
+            # Guia oficial: `/opt/mudfish/<versão>/bin/mudrun-headless`, sem flags; o login é pela porta 8282.
             self.proc = await asyncio.create_subprocess_exec(
-                exe, "-B", "-u", cfg["user"], "-p", cfg["password"], "-O", self.log_path,
-                stdin=asyncio.subprocess.DEVNULL, stdout=asyncio.subprocess.DEVNULL,
-                stderr=asyncio.subprocess.DEVNULL, start_new_session=True,
+                exe, stdin=asyncio.subprocess.DEVNULL, stdout=log, stderr=log, start_new_session=True,
             )
         except Exception as e:
             decky.logger.error(f"NoLag Mudfish: não iniciou: {e}")
-            return self._fail("start_failed")
+            return self._fail("start_failed", "%s (%s)" % (_err(e), exe))
+        finally:
+            if log is not None:
+                log.close()
         deadline = time.monotonic() + START_WAIT
         while time.monotonic() < deadline:
             if self.proc.returncode is not None and not find_daemon_pids():
-                return self._fail("exited")
+                return self._fail("exited", "código %s. Log: %s" % (self.proc.returncode, self._log_tail() or "vazio"))
             if await asyncio.to_thread(port_open):
                 break
             await asyncio.sleep(1)
         else:
+            tail = self._log_tail()
             await self._kill()
-            return self._fail("start_failed")
+            return self._fail("start_failed", "a porta %d não abriu em %d s. Log: %s" % (PORT, START_WAIT, tail or "vazio"))
         if persist:
             cfg["keep_on"] = True
             self.save(cfg)
@@ -455,7 +613,9 @@ class MudfishManager:
         self.register()
         try:
             if self.installed()[0]:
-                await self._ensure_mount()
+                ok, why = await self._ensure_mount()
+                if not ok:
+                    decky.logger.error(f"NoLag Mudfish: montagem no boot falhou: {why}")
             if self.load()["keep_on"] and not self._alive():
                 await self.start()
         except Exception as e:

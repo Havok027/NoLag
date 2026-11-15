@@ -32,7 +32,7 @@ Para el dueño del proyecto (una vez):
 
 ## Mudfish / Rutas (módulo independiente)
 
-Pestaña **Rutas**: instala el Mudfish oficial en una carpeta persistente (sobrevive a las actualizaciones de SteamOS, enlazada en `/opt/mudfish` con `mount --bind`), guarda el acceso, activa y desactiva el servicio y muestra el puerto 8282, la ruta activa y el ping antes y después. "Abrir panel de Mudfish" abre `http://127.0.0.1:8282` para elegir el nodo. Funciona sin Wi-Fi y sin la ruta de NoLag. Mudfish cobra por tráfico.
+Pestaña **Rutas**: instala el Mudfish oficial en una carpeta persistente (sobrevive a las actualizaciones de SteamOS, enlazada en `/opt/mudfish` con `mount --bind`), sigue la guía oficial de SteamOS (instalador con `sh`, servicio `mudrun-headless` sin flags, acceso en el panel), muestra el motivo exacto si la instalación falla, activa y desactiva el servicio y muestra el puerto 8282, la ruta activa y el ping antes y después. "Abrir panel de Mudfish" abre `http://127.0.0.1:8282` para elegir el nodo. Funciona sin Wi-Fi y sin la ruta de NoLag. Mudfish cobra por tráfico.
 
 El Panel tiene un interruptor para Wi-Fi y otro para Mudfish, y la tabla **Conexión** (interfaz, IP, gateway, ping y jitter). Cada juego guardado puede activar Wi-Fi y/o Mudfish solo al abrirse; al salir, solo apaga lo que él mismo activó.
 

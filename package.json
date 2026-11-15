@@ -1,6 +1,6 @@
 {
   "name": "nolag",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "NoLag: rotas de rede gratuitas e automáticas por jogo e otimização de Wi-Fi para o Decky Loader.",
   "type": "module",
   "scripts": {
