@@ -113,10 +113,18 @@ class ManagerTests(unittest.TestCase):
         run(self.mgr.clear_credentials())
         self.assertEqual(self.mgr.load()["user"], "")
 
-    def test_start_requires_install_and_login(self):
+    def test_start_requires_install_but_not_login(self):
         self.assertEqual(run(self.mgr.start())["error"], "not_installed")
         fake_install(self.mgr)
-        self.assertEqual(run(self.mgr.start())["error"], "no_credentials")
+        mudfish_mgr.port_open, old = (lambda *a, **k: True), mudfish_mgr.port_open
+        try:
+            async def go():
+                r = await self.mgr.start()
+                await self.mgr.stop()
+                return r
+            self.assertTrue(run(go())["ok"])  # o login é feito no painel 127.0.0.1:8282
+        finally:
+            mudfish_mgr.port_open = old
 
     def test_start_and_stop_daemon(self):
         fake_install(self.mgr)
@@ -139,7 +147,7 @@ class ManagerTests(unittest.TestCase):
         self.assertIsNone(proc)
         self.assertFalse(self.mgr.load()["keep_on"])
 
-    def test_daemon_command_uses_headless_flags(self):
+    def test_daemon_command_follows_official_guide(self):
         fake_install(self.mgr)
         run(self.mgr.set_credentials("ana", "s3nha"))
         seen = {}
@@ -160,11 +168,9 @@ class ManagerTests(unittest.TestCase):
             asyncio.create_subprocess_exec = orig
             mudfish_mgr.port_open = old
         a = list(seen["args"])
-        self.assertTrue(a[0].endswith("mudrun-headless"))
-        self.assertIn("-B", a)
-        self.assertEqual(a[a.index("-u") + 1], "ana")
-        self.assertEqual(a[a.index("-p") + 1], "s3nha")
-        self.assertIn("-O", a)
+        self.assertEqual(len(a), 1)  # guia oficial: mudrun-headless sem flags
+        self.assertTrue(a[0].endswith("/bin/mudrun-headless"))
+        self.assertNotIn("s3nha", str(a))  # a senha nunca vai para a linha de comando
 
     def test_game_profile_only_stops_what_it_started(self):
         self.assertTrue(run(self.mgr._game_off())["ok"])  # nada ligado por jogo: nada a desligar
@@ -238,7 +244,9 @@ class ManagerTests(unittest.TestCase):
             if cmd[0] == "mount":
                 os.rmdir(cmd[-1])
                 os.symlink(cmd[-2], cmd[-1])
-            if cmd[0] == "sh":
+            if "sh" in cmd:
+                self.assertEqual(cmd[0], "env")  # sh <instalador> com TMPDIR próprio
+                self.assertTrue(cmd[1].startswith("TMPDIR="))
                 exe_dir = os.path.join(self.mgr.store, "5.12.0", "bin")
                 os.makedirs(exe_dir, exist_ok=True)
                 with open(os.path.join(exe_dir, "mudrun-headless"), "w") as f:
@@ -263,6 +271,84 @@ class ManagerTests(unittest.TestCase):
         r = run(mgr.install())
         self.assertFalse(r["ok"])
         self.assertIn(r["error"], ("mount_failed", "unsupported_arch"))
+        self.assertTrue(r["detail"])  # o motivo exato sempre acompanha o código
+
+    def test_install_download_failure_shows_exact_reason(self):
+        async def runner(cmd, timeout=15):
+            if cmd[0] == "mount":
+                os.rmdir(cmd[-1])
+                os.symlink(cmd[-2], cmd[-1])
+            if cmd[0] == "curl":
+                return 22, "curl: (22) The requested URL returned error: 404"
+            return 0, ""
+
+        mgr = make(self.tmp, runner)
+        mgr._fetch_latest = lambda: "5.12.0"
+
+        def boom(version, dest):
+            raise ValueError("HTTP 404 Not Found (https://mudfish.net/releases/x.sh)")
+
+        mgr._download = boom
+        r = run(mgr.install())
+        self.assertEqual(r["error"], "download_failed")
+        self.assertIn("HTTP 404", r["detail"])
+        self.assertIn("curl código 22", r["detail"])
+        self.assertIn("v5.12.0", r["detail"])
+        self.assertIn("v5.11.0", r["detail"])  # tentou também a versão de reserva
+        st = run(mgr.get_status())
+        self.assertEqual((st["phase"], st["error"]), ("error", "download_failed"))
+        self.assertEqual(st["detail"], r["detail"])
+        self.assertTrue(os.path.isfile(mgr.install_log_path))
+
+    def test_install_extraction_failure_shows_installer_output(self):
+        async def runner(cmd, timeout=15):
+            if cmd[0] == "mount":
+                os.rmdir(cmd[-1])
+                os.symlink(cmd[-2], cmd[-1])
+                return 0, ""
+            if "sh" in cmd:
+                return 1, "Verifying archive integrity...\nCRC checksum is wrong"
+            return 0, ""
+
+        mgr = make(self.tmp, runner)
+        mgr._fetch_latest = lambda: "5.11.0"
+        mgr._download = lambda v, dest: open(dest, "w").write("#!/bin/sh\n")
+        r = run(mgr.install())
+        self.assertEqual(r["error"], "install_failed")
+        self.assertIn("código 1", r["detail"])
+        self.assertIn("CRC checksum is wrong", r["detail"])
+        self.assertIn("mudrun-headless", r["detail"])
+
+    def test_mount_failure_shows_exact_reason(self):
+        async def runner(cmd, timeout=15):
+            return 32, "mount: /opt/mudfish: permission denied."
+
+        mgr = make(self.tmp, runner)
+        ok, why = run(mgr._ensure_mount())
+        self.assertFalse(ok)
+        self.assertIn("código 32", why)
+        self.assertIn("permission denied", why)
+
+    def test_invalid_installer_file_is_explained(self):
+        mgr = make(self.tmp)
+        os.makedirs(mgr.runtime_dir, exist_ok=True)
+        bad = os.path.join(mgr.runtime_dir, "x.sh.part")
+        with open(bad, "w") as f:
+            f.write("<html>404</html>")
+        why = mgr._check_installer(bad)
+        self.assertIn("arquivo inválido", why)
+        self.assertIn("<html>", why)
+
+    def test_daemon_exit_shows_service_log(self):
+        fake_install(self.mgr)
+        exe = self.mgr.installed()[1]
+        with open(exe, "w") as f:
+            f.write("#!/bin/sh\necho 'sem permissao de root'\nexit 3\n")
+        os.chmod(exe, 0o755)
+        r = run(self.mgr.start())
+        self.assertEqual(r["error"], "exited")
+        self.assertIn("código 3", r["detail"])
+        self.assertIn("sem permissao de root", r["detail"])
 
     def test_bus_registration_and_state(self):
         core_state.bus.unregister("mudfish")

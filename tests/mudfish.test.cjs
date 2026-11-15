@@ -97,3 +97,11 @@ test("build.yml empacota todos os .py novos", () => {
     assert.ok(yml.includes(f), f);
   }
 });
+
+test("a falha mostra o motivo exato (detail) na mensagem e na tabela de status", () => {
+  const tab = read("MudfishTab.tsx");
+  const api = read("api.ts");
+  assert.ok(tab.includes("mudfishErrorFull"));
+  assert.ok(tab.includes("status.detail") && tab.includes("r?.detail"));
+  assert.ok((api.match(/detail\?: string;/g) || []).length >= 2);
+});

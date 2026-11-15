@@ -62,6 +62,13 @@ export function mudfishError(t: Texts, code: string): string {
   }
 }
 
+// Mensagem da falha + o motivo exato vindo do backend (rede, extração, montagem, log do serviço).
+export function mudfishErrorFull(t: Texts, code: string, detail?: string): string {
+  const base = mudfishError(t, code);
+  const why = (detail || "").trim();
+  return why ? `${base}: ${why}` : base;
+}
+
 function msText(m: Metrics | null | undefined): string {
   return m && m.avg !== null ? `${m.avg.toFixed(0)} ms` : DASH;
 }
@@ -125,13 +132,13 @@ export function useMudfish(t: Texts) {
     try {
       const r = await job();
       ok = !!r && r.ok === true;
-      msg = ok ? okText || t.mfToastOk : mudfishError(t, r?.error || "");
+      msg = ok ? okText || t.mfToastOk : mudfishErrorFull(t, r?.error || "", r?.detail);
     } catch {
       ok = false;
     }
     setNote(msg);
     try {
-      toaster.toast({ title: ok ? t.mfToastOk : t.mfToastFail, body: msg, duration: 4000 });
+      toaster.toast({ title: ok ? t.mfToastOk : t.mfToastFail, body: msg, duration: ok ? 4000 : 10000 });
     } catch {
       /* sem aviso na tela, o texto da aba continua */
     }
@@ -277,7 +284,7 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
     [t.mfDaemon, status?.running ? t.mfRunning : t.mfStopped],
     [t.mfPort, status?.port_open ? t.mfPortOpen : t.mfPortClosed],
   ];
-  if (status?.phase === "error" && status.error) rows.push([t.mfBadgeError, mudfishError(t, status.error)]);
+  if (status?.phase === "error" && status.error) rows.push([t.mfBadgeError, mudfishErrorFull(t, status.error, status.detail)]);
 
   const saveLogin = () =>
     run(async () => {

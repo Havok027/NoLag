@@ -145,6 +145,7 @@ export const wifiReset = callable<[], WifiResult>("wifi_reset_settings");
 export interface MudfishResult {
   ok: boolean;
   error: string;
+  detail?: string;
   version?: string;
 }
 
@@ -157,6 +158,7 @@ export interface MudfishStatus {
   port_open?: boolean;
   phase: "off" | "installing" | "starting" | "running" | "stopping" | "error";
   error: string;
+  detail?: string;
   user?: string;
   has_password?: boolean;
   keep_on?: boolean;
