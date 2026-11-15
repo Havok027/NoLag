@@ -72,7 +72,7 @@ jobs:
           V="${{ steps.ver.outputs.v }}"
           mkdir -p out/NoLag
           cp -r dist out/NoLag/
-          for f in main.py plugin.json package.json wifi_mgr.py wifi_dispatcher.py; do
+          for f in main.py plugin.json package.json wifi_mgr.py wifi_dispatcher.py mudfish_mgr.py core_state.py game_profiles.py; do
             cp "$f" out/NoLag/
           done
           for f in LICENSE THIRD_PARTY_NOTICES.md README.md relay-code.txt; do
