@@ -57,10 +57,9 @@ test("seções do Wi-Fi são salvas pelo backend", () => {
   for (const k of ["wifiMain", "wifiAdv", "wifiStream", "wifiActions"]) assert.ok(py.includes('"' + k + '"'), k);
 });
 
-test("troca de aba por L1/R1 move o foco e destaca a aba ativa", () => {
+test("só a aba ativa fica em destaque", () => {
   const nav = read("TabNav.tsx");
-  assert.ok(nav.includes("target.focus()") && nav.includes("[active]"));
-  assert.ok(nav.includes("active === key"));
+  assert.ok(nav.includes("active === key") && nav.includes("onSelect(key)"));
 });
 
 test("aba Wi-Fi mostra o motivo quando o módulo não carrega", () => {
@@ -68,4 +67,24 @@ test("aba Wi-Fi mostra o motivo quando o módulo não carrega", () => {
   assert.ok(tab.includes("loadError"));
   const py = read("main.py");
   assert.ok(py.includes("WIFI_IMPORT_ERROR") && py.includes("| py:"));
+});
+
+test("abas não pegam o foco do controle e a ajuda não usa o botão Y", () => {
+  const nav = read("TabNav.tsx");
+  assert.ok(!nav.includes("Focusable") && !nav.includes("DialogButton") && !nav.includes(".focus("));
+  const i18n = read("i18n.tsx");
+  assert.ok(!/helpBtn: ".*\(Y\)"/.test(i18n));
+});
+
+test("Wi-Fi mostra só informação simples e confirma o resultado com aviso", () => {
+  const tab = read("WifiTab.tsx");
+  assert.ok(!tab.includes("tx_bitrate") && !tab.includes("live.band") && !tab.includes("device_label"));
+  assert.ok(tab.includes("toaster.toast") && tab.includes("wifiAppliedCount"));
+});
+
+test("cada ajuste do Wi-Fi tem um resumo de ajuda", () => {
+  const tab = read("WifiTab.tsx");
+  for (const k of ["PowerSave", "AutoFix", "Buffers", "Cake", "Ipv6", "Lock", "Band", "Dns", "Streaming", "Watchdog"]) {
+    assert.ok(tab.includes("t.hWifi" + k), k);
+  }
 });

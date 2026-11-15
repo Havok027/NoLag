@@ -109,10 +109,7 @@ export interface Texts {
   wifiConnected: string;
   wifiDisconnected: string;
   wifiSignal: string;
-  wifiBandRow: string;
-  wifiRate: string;
   wifiActiveCount: string;
-  wifiDevice: string;
   wifiUnavailable: string;
   wifiIndep: string;
   wifiSecMain: string;
@@ -142,6 +139,23 @@ export interface Texts {
   wifiWatchdog: string;
   wifiWatchdogDesc: string;
   wifiOptimizeAll: string;
+  wifiSigGood: string;
+  wifiSigFair: string;
+  wifiSigWeak: string;
+  wifiAppliedCount: string;
+  wifiToastOk: string;
+  wifiToastFail: string;
+  wifiRestored: string;
+  hWifiPowerSave: string;
+  hWifiAutoFix: string;
+  hWifiBuffers: string;
+  hWifiCake: string;
+  hWifiIpv6: string;
+  hWifiLock: string;
+  hWifiBand: string;
+  hWifiDns: string;
+  hWifiStreaming: string;
+  hWifiWatchdog: string;
   wifiCardToggle: string;
   wifiCardToggleDesc: string;
   wifiRestore: string;
@@ -149,9 +163,6 @@ export interface Texts {
   wifiDone: string;
   wifiFailed: string;
   hWifiStatus: string;
-  hWifiMain: string;
-  hWifiAdv: string;
-  hWifiStream: string;
   hWifiActions: string;
   noticeEnroll: string;
 }
@@ -229,7 +240,7 @@ export const TEXTS: Record<Lang, Texts> = {
     qualGood: "Ótima",
     qualFair: "Regular",
     qualBad: "Ruim",
-    helpBtn: "Ajuda (Y)",
+    helpBtn: "Ajuda",
     helpLegend: "Ajuda",
     hStatus: "Mostra o que o NoLag está fazendo agora. Verde: funcionando. Amarelo: esperando você abrir um jogo e entrar em uma partida.",
     hPing: "Ping é o tempo de resposta até o servidor do jogo: quanto menor, melhor. Jitter é a oscilação do ping: quanto menor, mais estável. Perda é a parte dos dados que se perde: o ideal é 0%. Qualidade resume tudo em Ótima, Regular ou Ruim.",
@@ -258,10 +269,7 @@ export const TEXTS: Record<Lang, Texts> = {
     wifiConnected: "Conectado",
     wifiDisconnected: "Desconectado",
     wifiSignal: "Sinal",
-    wifiBandRow: "Banda",
-    wifiRate: "Taxa",
     wifiActiveCount: "Otimizações ativas",
-    wifiDevice: "Aparelho",
     wifiUnavailable: "O módulo Wi-Fi não carregou",
     wifiIndep: "Funciona sem a rota do NoLag e sem o Mudfish.",
     wifiSecMain: "Otimizações",
@@ -291,6 +299,23 @@ export const TEXTS: Record<Lang, Texts> = {
     wifiWatchdog: "Corrigir streams travados",
     wifiWatchdogDesc: "Reconecta o Wi-Fi quando o link trava durante um stream",
     wifiOptimizeAll: "Aplicar otimizações seguras",
+    wifiSigGood: "Bom",
+    wifiSigFair: "Médio",
+    wifiSigWeak: "Fraco",
+    wifiAppliedCount: "{a} de {b} otimizações aplicadas",
+    wifiToastOk: "Wi-Fi: tudo certo",
+    wifiToastFail: "Wi-Fi: não foi possível aplicar",
+    wifiRestored: "Wi-Fi restaurado ao padrão",
+    hWifiPowerSave: "Ajuda se o ping sobe do nada ou o jogo engasga em partidas online.",
+    hWifiAutoFix: "Ajuda se o Wi-Fi fica pior depois de suspender o aparelho.",
+    hWifiBuffers: "Ajuda em jogos e streaming que perdem quadros quando a rede dá picos.",
+    hWifiCake: "Ajuda quando alguém usa a internet em casa e seu ping sobe.",
+    hWifiIpv6: "Ajuda se alguns jogos ou sites demoram para conectar ou caem.",
+    hWifiLock: "Ajuda se a conexão cai ao andar pela casa com mais de um roteador.",
+    hWifiBand: "Ajuda a escolher o Wi-Fi mais rápido (5 GHz) ou o de maior alcance (2.4 GHz).",
+    hWifiDns: "Ajuda se os sites e jogos demoram para abrir ou o provedor está lento.",
+    hWifiStreaming: "Ajuda quem joga por Moonlight ou Steam Link: os ajustes só ligam durante o stream.",
+    hWifiWatchdog: "Ajuda quando a imagem do stream congela e não volta sozinha.",
     wifiCardToggle: "Otimizar Wi-Fi",
     wifiCardToggleDesc: "Liga os ajustes seguros; desligar restaura o padrão",
     wifiRestore: "Restaurar tudo ao padrão",
@@ -298,9 +323,6 @@ export const TEXTS: Record<Lang, Texts> = {
     wifiDone: "Pronto",
     wifiFailed: "Não foi possível aplicar",
     hWifiStatus: "Resumo do Wi-Fi agora. As otimizações daqui não dependem da rota do NoLag nem do Mudfish.",
-    hWifiMain: "Cada chave liga ou desliga um ajuste. Eles sobrevivem a suspensão, reconexão e atualização do sistema.",
-    hWifiAdv: "Ajustes que mudam a conexão desta rede. Mudar a banda ou travar o ponto de acesso reconecta o Wi-Fi por alguns segundos.",
-    hWifiStream: "Para jogar por streaming (Moonlight, Steam Link). Com o modo streaming, os ajustes só ficam ligados durante o stream.",
     hWifiActions: "Aplicar liga os ajustes seguros de uma vez. Restaurar devolve tudo ao padrão do sistema.",
     noticeEnroll: "Não foi possível registrar no relay; só monitorando o ping",
   },
@@ -376,7 +398,7 @@ export const TEXTS: Record<Lang, Texts> = {
     qualGood: "Great",
     qualFair: "Fair",
     qualBad: "Poor",
-    helpBtn: "Help (Y)",
+    helpBtn: "Help",
     helpLegend: "Help",
     hStatus: "Shows what NoLag is doing right now. Green: working. Yellow: waiting for you to open a game and join a match.",
     hPing: "Ping is the response time to the game server: lower is better. Jitter is how much the ping wobbles: lower is steadier. Loss is the share of data that gets lost: ideally 0%. Quality sums it all up as Great, Fair or Poor.",
@@ -405,10 +427,7 @@ export const TEXTS: Record<Lang, Texts> = {
     wifiConnected: "Connected",
     wifiDisconnected: "Disconnected",
     wifiSignal: "Signal",
-    wifiBandRow: "Band",
-    wifiRate: "Link rate",
     wifiActiveCount: "Active optimizations",
-    wifiDevice: "Device",
     wifiUnavailable: "The Wi-Fi module did not load",
     wifiIndep: "Works without the NoLag route and without Mudfish.",
     wifiSecMain: "Optimizations",
@@ -438,6 +457,23 @@ export const TEXTS: Record<Lang, Texts> = {
     wifiWatchdog: "Fix stalled streams",
     wifiWatchdogDesc: "Reconnects Wi-Fi when the link stalls during a stream",
     wifiOptimizeAll: "Apply safe optimizations",
+    wifiSigGood: "Good",
+    wifiSigFair: "Fair",
+    wifiSigWeak: "Weak",
+    wifiAppliedCount: "{a} of {b} optimizations applied",
+    wifiToastOk: "Wi-Fi: all good",
+    wifiToastFail: "Wi-Fi: could not apply",
+    wifiRestored: "Wi-Fi restored to default",
+    hWifiPowerSave: "Helps if ping jumps for no reason or online games stutter.",
+    hWifiAutoFix: "Helps if Wi-Fi gets worse after the device sleeps.",
+    hWifiBuffers: "Helps games and streaming that drop frames when the network spikes.",
+    hWifiCake: "Helps when someone else uses the home internet and your ping rises.",
+    hWifiIpv6: "Helps if some games or sites are slow to connect or drop.",
+    hWifiLock: "Helps if the connection drops while moving around with more than one router.",
+    hWifiBand: "Helps pick the faster Wi-Fi (5 GHz) or the longer-range one (2.4 GHz).",
+    hWifiDns: "Helps if sites and games are slow to open or your provider is slow.",
+    hWifiStreaming: "Helps Moonlight or Steam Link players: the fixes only turn on during the stream.",
+    hWifiWatchdog: "Helps when the stream image freezes and does not recover.",
     wifiCardToggle: "Optimize Wi-Fi",
     wifiCardToggleDesc: "Turns on the safe tweaks; turning off restores the default",
     wifiRestore: "Restore everything to default",
@@ -445,9 +481,6 @@ export const TEXTS: Record<Lang, Texts> = {
     wifiDone: "Done",
     wifiFailed: "Could not apply",
     hWifiStatus: "Wi-Fi summary right now. These optimizations do not depend on the NoLag route or Mudfish.",
-    hWifiMain: "Each switch turns one tweak on or off. They survive sleep, reconnects and system updates.",
-    hWifiAdv: "Tweaks that change this network connection. Changing the band or locking the access point reconnects Wi-Fi for a few seconds.",
-    hWifiStream: "For streaming play (Moonlight, Steam Link). With streaming mode, the fixes are only on during the stream.",
     hWifiActions: "Apply turns on the safe tweaks at once. Restore puts everything back to the system default.",
     noticeEnroll: "Could not register with the relay; only monitoring ping",
   },
@@ -523,7 +556,7 @@ export const TEXTS: Record<Lang, Texts> = {
     qualGood: "Óptima",
     qualFair: "Regular",
     qualBad: "Mala",
-    helpBtn: "Ayuda (Y)",
+    helpBtn: "Ayuda",
     helpLegend: "Ayuda",
     hStatus: "Muestra lo que NoLag está haciendo ahora. Verde: funcionando. Amarillo: esperando que abras un juego y entres en una partida.",
     hPing: "Ping es el tiempo de respuesta hasta el servidor del juego: cuanto menor, mejor. Jitter es la oscilación del ping: cuanto menor, más estable. Pérdida es la parte de los datos que se pierde: lo ideal es 0%. Calidad lo resume en Óptima, Regular o Mala.",
@@ -552,10 +585,7 @@ export const TEXTS: Record<Lang, Texts> = {
     wifiConnected: "Conectado",
     wifiDisconnected: "Desconectado",
     wifiSignal: "Señal",
-    wifiBandRow: "Banda",
-    wifiRate: "Velocidad",
     wifiActiveCount: "Optimizaciones activas",
-    wifiDevice: "Dispositivo",
     wifiUnavailable: "El módulo Wi-Fi no cargó",
     wifiIndep: "Funciona sin la ruta de NoLag y sin Mudfish.",
     wifiSecMain: "Optimizaciones",
@@ -585,6 +615,23 @@ export const TEXTS: Record<Lang, Texts> = {
     wifiWatchdog: "Corregir streams detenidos",
     wifiWatchdogDesc: "Reconecta el Wi-Fi si el enlace se detiene durante un stream",
     wifiOptimizeAll: "Aplicar optimizaciones seguras",
+    wifiSigGood: "Buena",
+    wifiSigFair: "Media",
+    wifiSigWeak: "Débil",
+    wifiAppliedCount: "{a} de {b} optimizaciones aplicadas",
+    wifiToastOk: "Wi-Fi: todo bien",
+    wifiToastFail: "Wi-Fi: no se pudo aplicar",
+    wifiRestored: "Wi-Fi restaurado a lo predeterminado",
+    hWifiPowerSave: "Ayuda si el ping sube de la nada o el juego se traba en línea.",
+    hWifiAutoFix: "Ayuda si el Wi-Fi empeora después de suspender el equipo.",
+    hWifiBuffers: "Ayuda en juegos y streaming que pierden cuadros cuando la red tiene picos.",
+    hWifiCake: "Ayuda cuando alguien usa el internet en casa y tu ping sube.",
+    hWifiIpv6: "Ayuda si algunos juegos o sitios tardan en conectar o se caen.",
+    hWifiLock: "Ayuda si la conexión se cae al moverte con más de un router.",
+    hWifiBand: "Ayuda a elegir el Wi-Fi más rápido (5 GHz) o el de mayor alcance (2.4 GHz).",
+    hWifiDns: "Ayuda si los sitios y juegos tardan en abrir o tu proveedor está lento.",
+    hWifiStreaming: "Ayuda a quien juega con Moonlight o Steam Link: los ajustes solo se activan durante el stream.",
+    hWifiWatchdog: "Ayuda cuando la imagen del stream se congela y no se recupera.",
     wifiCardToggle: "Optimizar Wi-Fi",
     wifiCardToggleDesc: "Activa los ajustes seguros; desactivar restaura lo predeterminado",
     wifiRestore: "Restaurar todo a lo predeterminado",
@@ -592,9 +639,6 @@ export const TEXTS: Record<Lang, Texts> = {
     wifiDone: "Listo",
     wifiFailed: "No se pudo aplicar",
     hWifiStatus: "Resumen del Wi-Fi ahora. Estas optimizaciones no dependen de la ruta de NoLag ni de Mudfish.",
-    hWifiMain: "Cada interruptor activa o desactiva un ajuste. Sobreviven a suspensión, reconexión y actualizaciones del sistema.",
-    hWifiAdv: "Ajustes que cambian la conexión de esta red. Cambiar la banda o fijar el punto de acceso reconecta el Wi-Fi unos segundos.",
-    hWifiStream: "Para jugar por streaming (Moonlight, Steam Link). Con el modo streaming, los ajustes solo se activan durante el stream.",
     hWifiActions: "Aplicar activa los ajustes seguros de una vez. Restaurar devuelve todo a lo predeterminado del sistema.",
     noticeEnroll: "No se pudo registrar en el relay; solo monitoreando el ping",
   },

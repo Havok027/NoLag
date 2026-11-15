@@ -1,6 +1,8 @@
+import { toaster } from "@decky/api";
 import { ButtonItem, DropdownItem, PanelSectionRow, ToggleField } from "@decky/ui";
 import { useEffect, useRef, useState } from "react";
 import {
+  WifiOptimizeResult,
   WifiResult,
   WifiStatus,
   wifiAvailable,
@@ -87,21 +89,37 @@ export function useWifi(t: Texts) {
     };
   }, []);
 
-  const run = async (job: () => Promise<WifiResult>) => {
+  const run = async (job: () => Promise<WifiResult>, okText?: (r: WifiResult) => string) => {
     if (busy) return;
     setBusy(true);
     setNote(t.wifiWorking);
+    let ok = false;
+    let msg = t.wifiFailed;
     try {
       const r = await job();
-      setNote(r && r.success ? t.wifiDone : r?.message || r?.error || t.wifiFailed);
+      ok = !!r && r.success === true;
+      msg = ok ? (okText ? okText(r) : t.wifiDone) : r?.message || r?.error || t.wifiFailed;
     } catch {
-      setNote(t.wifiFailed);
+      ok = false;
+    }
+    setNote(msg);
+    try {
+      toaster.toast({ title: ok ? t.wifiToastOk : t.wifiToastFail, body: msg, duration: 4000 });
+    } catch {
+      /* sem aviso na tela, o texto da aba continua */
     }
     await refresh();
     if (alive.current) setBusy(false);
   };
 
   return { available, loadError, status, busy, note, run };
+}
+
+function applied(t: Texts) {
+  return (r: WifiResult) => {
+    const o = r as WifiOptimizeResult;
+    return t.wifiAppliedCount.replace("{a}", String(o.applied ?? 0)).replace("{b}", String(o.total ?? 0));
+  };
 }
 
 function badgeOf(t: Texts, status: WifiStatus | null) {
@@ -127,7 +145,7 @@ export function WifiCard({ t }: { t: Texts }) {
           description={t.wifiCardToggleDesc}
           checked={on}
           disabled={busy || !status}
-          onChange={(v) => run(() => (v ? wifiOptimizeSafe() : wifiReset()))}
+          onChange={(v) => run(() => (v ? wifiOptimizeSafe() : wifiReset()), v ? applied(t) : () => t.wifiRestored)}
         />
       </PanelSectionRow>
     </>
@@ -158,11 +176,9 @@ export function WifiTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
     [t.wifiConn, !status ? DASH : connected ? t.wifiConnected : t.wifiDisconnected],
     [t.wifiActiveCount, status ? String(count) : DASH],
   ];
-  if (cfg?.device_label) rows.push([t.wifiDevice, cfg.device_label]);
-  if (connected && live) {
-    if (live.signal_dbm) rows.push([t.wifiSignal, `${live.signal_dbm}`]);
-    if (live.band) rows.push([t.wifiBandRow, live.band]);
-    if (live.tx_bitrate) rows.push([t.wifiRate, live.tx_bitrate]);
+  if (connected && live?.signal_dbm) {
+    const dbm = parseInt(String(live.signal_dbm), 10);
+    if (!Number.isNaN(dbm)) rows.push([t.wifiSignal, dbm >= -60 ? t.wifiSigGood : dbm >= -72 ? t.wifiSigFair : t.wifiSigWeak]);
   }
   if (live?.streaming_active) rows.push([t.wifiStreamingNow, "✓"]);
 
@@ -198,6 +214,7 @@ export function WifiTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
             onChange={(v) => run(() => wifiSetPowerSave(v))}
           />
         </PanelSectionRow>
+        <Help show={helpOn} text={t.hWifiPowerSave} />
         <PanelSectionRow>
           <ToggleField
             label={t.wifiAutoFix}
@@ -207,6 +224,7 @@ export function WifiTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
             onChange={(v) => run(() => wifiSetAutoFix(v))}
           />
         </PanelSectionRow>
+        <Help show={helpOn} text={t.hWifiAutoFix} />
         <PanelSectionRow>
           <ToggleField
             label={t.wifiBuffers}
@@ -216,6 +234,7 @@ export function WifiTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
             onChange={(v) => run(() => wifiSetBuffers(v))}
           />
         </PanelSectionRow>
+        <Help show={helpOn} text={t.hWifiBuffers} />
         <PanelSectionRow>
           <ToggleField
             label={t.wifiCake}
@@ -225,7 +244,7 @@ export function WifiTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
             onChange={(v) => run(() => wifiSetCake(v))}
           />
         </PanelSectionRow>
-        <Help show={helpOn} text={t.hWifiMain} />
+        <Help show={helpOn} text={t.hWifiCake} />
       </Collapsible>
 
       <Collapsible title={t.wifiSecAdv} collapsed={isCollapsed("wifiAdv")} onToggle={(v) => toggleSection("wifiAdv", v)}>
@@ -238,6 +257,7 @@ export function WifiTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
             onChange={(v) => run(() => wifiSetIpv6(v))}
           />
         </PanelSectionRow>
+        <Help show={helpOn} text={t.hWifiIpv6} />
         <PanelSectionRow>
           <ToggleField
             label={t.wifiLock}
@@ -247,6 +267,7 @@ export function WifiTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
             onChange={(v) => run(() => wifiSetBssidLock(v))}
           />
         </PanelSectionRow>
+        <Help show={helpOn} text={t.hWifiLock} />
         <PanelSectionRow>
           <DropdownItem
             label={t.wifiBand}
@@ -257,6 +278,7 @@ export function WifiTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
             onChange={(opt) => run(() => (opt.data === "off" ? wifiSetBand(false, cfg?.band_preference || "a") : wifiSetBand(true, String(opt.data))))}
           />
         </PanelSectionRow>
+        <Help show={helpOn} text={t.hWifiBand} />
         <PanelSectionRow>
           <DropdownItem
             label={t.wifiDns}
@@ -267,7 +289,7 @@ export function WifiTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
             onChange={(opt) => run(() => (opt.data === "off" ? wifiSetDns(false, dnsValue === "off" ? "cloudflare" : dnsValue, "") : wifiSetDns(true, String(opt.data), "")))}
           />
         </PanelSectionRow>
-        <Help show={helpOn} text={t.hWifiAdv} />
+        <Help show={helpOn} text={t.hWifiDns} />
       </Collapsible>
 
       <Collapsible title={t.wifiSecStream} collapsed={isCollapsed("wifiStream")} onToggle={(v) => toggleSection("wifiStream", v)}>
@@ -280,6 +302,7 @@ export function WifiTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
             onChange={(v) => run(() => wifiSetStreaming(v))}
           />
         </PanelSectionRow>
+        <Help show={helpOn} text={t.hWifiStreaming} />
         <PanelSectionRow>
           <ToggleField
             label={t.wifiWatchdog}
@@ -289,17 +312,17 @@ export function WifiTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
             onChange={(v) => run(() => wifiSetWatchdog(v))}
           />
         </PanelSectionRow>
-        <Help show={helpOn} text={t.hWifiStream} />
+        <Help show={helpOn} text={t.hWifiWatchdog} />
       </Collapsible>
 
       <Collapsible title={t.wifiSecActions} collapsed={isCollapsed("wifiActions")} onToggle={(v) => toggleSection("wifiActions", v)}>
         <PanelSectionRow>
-          <ButtonItem layout="below" disabled={busy || !status} onClick={() => run(() => wifiOptimizeSafe())}>
+          <ButtonItem layout="below" disabled={busy || !status} onClick={() => run(() => wifiOptimizeSafe(), applied(t))}>
             {t.wifiOptimizeAll}
           </ButtonItem>
         </PanelSectionRow>
         <PanelSectionRow>
-          <ButtonItem layout="below" disabled={busy || !status} onClick={() => run(() => wifiReset())}>
+          <ButtonItem layout="below" disabled={busy || !status} onClick={() => run(() => wifiReset(), () => t.wifiRestored)}>
             {t.wifiRestore}
           </ButtonItem>
         </PanelSectionRow>
