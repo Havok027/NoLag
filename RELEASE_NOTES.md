@@ -1,3 +1,11 @@
+## v0.8.2
+
+- Abas: só a aba ativa fica em destaque. L1/R1 e o toque trocam de aba, e o botão A não volta mais para a aba anterior.
+- Ajuda: agora só por toque, sem o botão Y.
+- Wi-Fi: o resumo mostra só conexão, otimizações ativas e a qualidade do sinal (Bom, Médio ou Fraco), sem termos técnicos.
+- Wi-Fi: com a Ajuda ligada, cada ajuste explica em uma frase em que situação ajuda.
+- Wi-Fi: Aplicar otimizações seguras, Restaurar e cada chave mostram um aviso na tela dizendo se deu certo ou errado.
+
 ## v0.8.1
 
 - Abas: ao trocar com L1/R1, o foco acompanha a aba nova e a aba ativa fica em destaque (a anterior não fica mais marcada).
