@@ -51,6 +51,7 @@ export function activeCount(s: WifiStatus | null): number {
 
 export function useWifi(t: Texts) {
   const [available, setAvailable] = useState<boolean | null>(null);
+  const [loadError, setLoadError] = useState("");
   const [status, setStatus] = useState<WifiStatus | null>(null);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState("");
@@ -68,8 +69,16 @@ export function useWifi(t: Texts) {
   useEffect(() => {
     alive.current = true;
     wifiAvailable()
-      .then((r) => alive.current && setAvailable(!!r?.available))
-      .catch(() => alive.current && setAvailable(false));
+      .then((r) => {
+        if (!alive.current) return;
+        setAvailable(!!r?.available);
+        setLoadError(r?.error || "");
+      })
+      .catch((e) => {
+        if (!alive.current) return;
+        setAvailable(false);
+        setLoadError(`wifi_available: ${String(e).slice(0, 160)}`);
+      });
     refresh();
     const id = setInterval(refresh, POLL_MS);
     return () => {
@@ -92,7 +101,7 @@ export function useWifi(t: Texts) {
     if (alive.current) setBusy(false);
   };
 
-  return { available, status, busy, note, run };
+  return { available, loadError, status, busy, note, run };
 }
 
 function badgeOf(t: Texts, status: WifiStatus | null) {
@@ -126,10 +135,17 @@ export function WifiCard({ t }: { t: Texts }) {
 }
 
 export function WifiTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
-  const { available, status, busy, note, run } = useWifi(t);
+  const { available, loadError, status, busy, note, run } = useWifi(t);
 
   if (available === false) {
-    return <Card rows={[[t.wifiUnavailable, DASH]]} />;
+    return (
+      <>
+        <Card rows={[[t.wifiUnavailable, DASH]]} />
+        {loadError && (
+          <div style={{ fontSize: 11, opacity: 0.7, textAlign: "center", wordBreak: "break-word" }}>{loadError}</div>
+        )}
+      </>
+    );
   }
 
   const cfg = status?.settings;

@@ -56,3 +56,16 @@ test("seções do Wi-Fi são salvas pelo backend", () => {
   const py = read("main.py");
   for (const k of ["wifiMain", "wifiAdv", "wifiStream", "wifiActions"]) assert.ok(py.includes('"' + k + '"'), k);
 });
+
+test("troca de aba por L1/R1 move o foco e destaca a aba ativa", () => {
+  const nav = read("TabNav.tsx");
+  assert.ok(nav.includes("target.focus()") && nav.includes("[active]"));
+  assert.ok(nav.includes("active === key"));
+});
+
+test("aba Wi-Fi mostra o motivo quando o módulo não carrega", () => {
+  const tab = read("WifiTab.tsx");
+  assert.ok(tab.includes("loadError"));
+  const py = read("main.py");
+  assert.ok(py.includes("WIFI_IMPORT_ERROR") && py.includes("| py:"));
+});
