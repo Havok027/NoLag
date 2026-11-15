@@ -165,6 +165,93 @@ export interface Texts {
   hWifiStatus: string;
   hWifiActions: string;
   noticeEnroll: string;
+  mfBadgeOn: string;
+  mfBadgeOff: string;
+  mfBadgeBusy: string;
+  mfBadgeError: string;
+  mfBadgeMissing: string;
+  mfUnavailable: string;
+  mfStatusTitle: string;
+  mfVersion: string;
+  mfInstalledRow: string;
+  mfInstalledYes: string;
+  mfInstalledNo: string;
+  mfDaemon: string;
+  mfRunning: string;
+  mfStopped: string;
+  mfPort: string;
+  mfPortOpen: string;
+  mfPortClosed: string;
+  mfInstall: string;
+  mfUpdate: string;
+  mfInstallDesc: string;
+  mfInstalling: string;
+  mfInstallOk: string;
+  mfToggle: string;
+  mfToggleDesc: string;
+  mfCardToggle: string;
+  mfCardToggleDesc: string;
+  mfOn: string;
+  mfOff: string;
+  mfLoginTitle: string;
+  mfUser: string;
+  mfUserDesc: string;
+  mfPass: string;
+  mfPassSaved: string;
+  mfPassEmpty: string;
+  mfSave: string;
+  mfClear: string;
+  mfLoginSaved: string;
+  mfLoginCleared: string;
+  mfOpenWeb: string;
+  mfOpenWebDesc: string;
+  mfNetTitle: string;
+  mfRouteIface: string;
+  mfRouteIp: string;
+  mfRouteGw: string;
+  mfPingTarget: string;
+  mfPingTargetDesc: string;
+  mfPingBefore: string;
+  mfPingAfter: string;
+  mfPingTest: string;
+  mfPingTestDesc: string;
+  mfPingTesting: string;
+  mfPingFail: string;
+  mfRefresh: string;
+  mfErrNotInstalled: string;
+  mfErrNoCreds: string;
+  mfErrMount: string;
+  mfErrDownload: string;
+  mfErrInstall: string;
+  mfErrStart: string;
+  mfErrExited: string;
+  mfErrBusy: string;
+  mfErrArch: string;
+  mfErrBadUser: string;
+  mfErrBadPass: string;
+  mfErrGeneric: string;
+  mfToastOk: string;
+  mfToastFail: string;
+  hMfInstall: string;
+  hMfLogin: string;
+  hMfToggle: string;
+  hMfNet: string;
+  gameWifi: string;
+  gameMudfish: string;
+  gameModulesDesc: string;
+  gameCurrent: string;
+  gameAddCurrent: string;
+  hGameModules: string;
+  connTitle: string;
+  connWifi: string;
+  connMudfish: string;
+  connIface: string;
+  connIp: string;
+  connRoute: string;
+  connPing: string;
+  connJitter: string;
+  connHint: string;
+  hConn: string;
 }
 
 export const TEXTS: Record<Lang, Texts> = {
@@ -325,6 +412,93 @@ export const TEXTS: Record<Lang, Texts> = {
     hWifiStatus: "Resumo do Wi-Fi agora. As otimizações daqui não dependem da rota do NoLag nem do Mudfish.",
     hWifiActions: "Aplicar liga os ajustes seguros de uma vez. Restaurar devolve tudo ao padrão do sistema.",
     noticeEnroll: "Não foi possível registrar no relay; só monitorando o ping",
+    mfBadgeOn: "Ativo",
+    mfBadgeOff: "Desligado",
+    mfBadgeBusy: "Aguarde",
+    mfBadgeError: "Erro",
+    mfBadgeMissing: "Sem instalação",
+    mfUnavailable: "O módulo Mudfish não carregou",
+    mfStatusTitle: "Mudfish",
+    mfVersion: "Versão",
+    mfInstalledRow: "Instalação",
+    mfInstalledYes: "Instalado",
+    mfInstalledNo: "Não instalado",
+    mfDaemon: "Serviço",
+    mfRunning: "Rodando",
+    mfStopped: "Parado",
+    mfPort: "Porta 8282",
+    mfPortOpen: "Aberta",
+    mfPortClosed: "Fechada",
+    mfInstall: "Instalar Mudfish",
+    mfUpdate: "Atualizar Mudfish",
+    mfInstallDesc: "Baixa o instalador oficial e guarda em pasta persistente",
+    mfInstalling: "Instalando, pode levar um minuto…",
+    mfInstallOk: "Mudfish instalado",
+    mfToggle: "Mudfish ligado",
+    mfToggleDesc: "Inicia o serviço com o login salvo. Mudfish cobra por tráfego.",
+    mfCardToggle: "Rotas (Mudfish)",
+    mfCardToggleDesc: "Liga ou desliga o Mudfish",
+    mfOn: "Mudfish ligado",
+    mfOff: "Mudfish desligado",
+    mfLoginTitle: "Login do Mudfish",
+    mfUser: "Usuário",
+    mfUserDesc: "Conta do Mudfish usada no login automático",
+    mfPass: "Senha",
+    mfPassSaved: "Senha salva. Digite outra só para trocar.",
+    mfPassEmpty: "Digite a senha do Mudfish",
+    mfSave: "Salvar login",
+    mfClear: "Apagar login",
+    mfLoginSaved: "Login salvo",
+    mfLoginCleared: "Login apagado",
+    mfOpenWeb: "Abrir painel do Mudfish",
+    mfOpenWebDesc: "Escolha o nó e veja o saldo em 127.0.0.1:8282",
+    mfNetTitle: "Rota e ping",
+    mfRouteIface: "Interface",
+    mfRouteIp: "IP local",
+    mfRouteGw: "Gateway",
+    mfPingTarget: "Alvo do ping",
+    mfPingTargetDesc: "IP ou site do servidor do jogo. Padrão: 1.1.1.1",
+    mfPingBefore: "Ping antes",
+    mfPingAfter: "Ping depois",
+    mfPingTest: "Testar ping",
+    mfPingTestDesc: "Desligado guarda o antes; ligado guarda o depois",
+    mfPingTesting: "Testando…",
+    mfPingFail: "Sem resposta do alvo",
+    mfRefresh: "Atualizar",
+    mfErrNotInstalled: "Instale o Mudfish primeiro",
+    mfErrNoCreds: "Salve o usuário e a senha antes de ligar",
+    mfErrMount: "Não foi possível montar a pasta persistente",
+    mfErrDownload: "Falha ao baixar o instalador",
+    mfErrInstall: "A instalação falhou",
+    mfErrStart: "O Mudfish não abriu a porta 8282",
+    mfErrExited: "O Mudfish fechou ao iniciar",
+    mfErrBusy: "Outra ação em andamento",
+    mfErrArch: "Só funciona em aparelhos x86_64",
+    mfErrBadUser: "Usuário inválido",
+    mfErrBadPass: "Senha inválida",
+    mfErrGeneric: "Não foi possível concluir",
+    mfToastOk: "Mudfish: tudo certo",
+    mfToastFail: "Mudfish: não deu certo",
+    hMfInstall: "Baixa o Mudfish oficial e guarda na pasta do plugin, então ele continua instalado depois de atualizar o SteamOS.",
+    hMfLogin: "O login fica só neste aparelho e serve para o Mudfish entrar sozinho, sem abrir navegador.",
+    hMfToggle: "Liga o serviço do Mudfish. Depois escolha o nó no painel do Mudfish.",
+    hMfNet: "Compare o ping com o Mudfish desligado e ligado para ver se a rota ajuda.",
+    gameWifi: "Wi-Fi",
+    gameMudfish: "Mudfish",
+    gameModulesDesc: "Liga ao abrir o jogo; só desliga o que ele mesmo ligou",
+    gameCurrent: "Jogo aberto",
+    gameAddCurrent: "Salvar jogo aberto",
+    hGameModules: "Cada jogo salvo pode ligar o Wi-Fi e o Mudfish por conta própria, sem depender da rota do NoLag.",
+    connTitle: "Conexão",
+    connWifi: "Wi-Fi",
+    connMudfish: "Mudfish",
+    connIface: "Interface ativa",
+    connIp: "IP local",
+    connRoute: "Rota (gateway)",
+    connPing: "Ping",
+    connJitter: "Jitter",
+    connHint: "Mudfish: ligado ou desligado · Wi-Fi: conexão",
+    hConn: "Fotografia da conexão agora: por qual interface sai o tráfego e como está o ping até o alvo.",
   },
   en: {
     status: "Status",
@@ -483,6 +657,93 @@ export const TEXTS: Record<Lang, Texts> = {
     hWifiStatus: "Wi-Fi summary right now. These optimizations do not depend on the NoLag route or Mudfish.",
     hWifiActions: "Apply turns on the safe tweaks at once. Restore puts everything back to the system default.",
     noticeEnroll: "Could not register with the relay; only monitoring ping",
+    mfBadgeOn: "Active",
+    mfBadgeOff: "Off",
+    mfBadgeBusy: "Wait",
+    mfBadgeError: "Error",
+    mfBadgeMissing: "Not installed",
+    mfUnavailable: "The Mudfish module did not load",
+    mfStatusTitle: "Mudfish",
+    mfVersion: "Version",
+    mfInstalledRow: "Install",
+    mfInstalledYes: "Installed",
+    mfInstalledNo: "Not installed",
+    mfDaemon: "Service",
+    mfRunning: "Running",
+    mfStopped: "Stopped",
+    mfPort: "Port 8282",
+    mfPortOpen: "Open",
+    mfPortClosed: "Closed",
+    mfInstall: "Install Mudfish",
+    mfUpdate: "Update Mudfish",
+    mfInstallDesc: "Downloads the official installer and keeps it in a persistent folder",
+    mfInstalling: "Installing, this can take a minute…",
+    mfInstallOk: "Mudfish installed",
+    mfToggle: "Mudfish on",
+    mfToggleDesc: "Starts the service with the saved login. Mudfish charges by traffic.",
+    mfCardToggle: "Routes (Mudfish)",
+    mfCardToggleDesc: "Turns Mudfish on or off",
+    mfOn: "Mudfish is on",
+    mfOff: "Mudfish is off",
+    mfLoginTitle: "Mudfish login",
+    mfUser: "User",
+    mfUserDesc: "Mudfish account used for the automatic login",
+    mfPass: "Password",
+    mfPassSaved: "Password saved. Type another only to change it.",
+    mfPassEmpty: "Type your Mudfish password",
+    mfSave: "Save login",
+    mfClear: "Clear login",
+    mfLoginSaved: "Login saved",
+    mfLoginCleared: "Login cleared",
+    mfOpenWeb: "Open Mudfish panel",
+    mfOpenWebDesc: "Pick the node and see your balance at 127.0.0.1:8282",
+    mfNetTitle: "Route and ping",
+    mfRouteIface: "Interface",
+    mfRouteIp: "Local IP",
+    mfRouteGw: "Gateway",
+    mfPingTarget: "Ping target",
+    mfPingTargetDesc: "IP or host of the game server. Default: 1.1.1.1",
+    mfPingBefore: "Ping before",
+    mfPingAfter: "Ping after",
+    mfPingTest: "Test ping",
+    mfPingTestDesc: "Off saves the before; on saves the after",
+    mfPingTesting: "Testing…",
+    mfPingFail: "No reply from the target",
+    mfRefresh: "Refresh",
+    mfErrNotInstalled: "Install Mudfish first",
+    mfErrNoCreds: "Save the user and password before turning on",
+    mfErrMount: "Could not mount the persistent folder",
+    mfErrDownload: "Could not download the installer",
+    mfErrInstall: "The installation failed",
+    mfErrStart: "Mudfish did not open port 8282",
+    mfErrExited: "Mudfish closed on start",
+    mfErrBusy: "Another action is running",
+    mfErrArch: "Only works on x86_64 devices",
+    mfErrBadUser: "Invalid user",
+    mfErrBadPass: "Invalid password",
+    mfErrGeneric: "Could not complete",
+    mfToastOk: "Mudfish: all good",
+    mfToastFail: "Mudfish: it did not work",
+    hMfInstall: "Downloads the official Mudfish and keeps it in the plugin folder, so it stays installed after a SteamOS update.",
+    hMfLogin: "The login stays on this device only and lets Mudfish sign in by itself, without a browser.",
+    hMfToggle: "Starts the Mudfish service. Then pick the node in the Mudfish panel.",
+    hMfNet: "Compare the ping with Mudfish off and on to see if the route helps.",
+    gameWifi: "Wi-Fi",
+    gameMudfish: "Mudfish",
+    gameModulesDesc: "Turns on when the game opens; only turns off what it turned on",
+    gameCurrent: "Open game",
+    gameAddCurrent: "Save open game",
+    hGameModules: "Each saved game can turn on Wi-Fi and Mudfish on its own, without depending on the NoLag route.",
+    connTitle: "Connection",
+    connWifi: "Wi-Fi",
+    connMudfish: "Mudfish",
+    connIface: "Active interface",
+    connIp: "Local IP",
+    connRoute: "Route (gateway)",
+    connPing: "Ping",
+    connJitter: "Jitter",
+    connHint: "Mudfish: on or off · Wi-Fi: link",
+    hConn: "A snapshot of the connection now: which interface the traffic uses and the ping to the target.",
   },
   es: {
     status: "Estado",
@@ -641,6 +902,93 @@ export const TEXTS: Record<Lang, Texts> = {
     hWifiStatus: "Resumen del Wi-Fi ahora. Estas optimizaciones no dependen de la ruta de NoLag ni de Mudfish.",
     hWifiActions: "Aplicar activa los ajustes seguros de una vez. Restaurar devuelve todo a lo predeterminado del sistema.",
     noticeEnroll: "No se pudo registrar en el relay; solo monitoreando el ping",
+    mfBadgeOn: "Activo",
+    mfBadgeOff: "Apagado",
+    mfBadgeBusy: "Espera",
+    mfBadgeError: "Error",
+    mfBadgeMissing: "Sin instalar",
+    mfUnavailable: "El módulo Mudfish no cargó",
+    mfStatusTitle: "Mudfish",
+    mfVersion: "Versión",
+    mfInstalledRow: "Instalación",
+    mfInstalledYes: "Instalado",
+    mfInstalledNo: "No instalado",
+    mfDaemon: "Servicio",
+    mfRunning: "En marcha",
+    mfStopped: "Detenido",
+    mfPort: "Puerto 8282",
+    mfPortOpen: "Abierto",
+    mfPortClosed: "Cerrado",
+    mfInstall: "Instalar Mudfish",
+    mfUpdate: "Actualizar Mudfish",
+    mfInstallDesc: "Descarga el instalador oficial y lo guarda en una carpeta persistente",
+    mfInstalling: "Instalando, puede tardar un minuto…",
+    mfInstallOk: "Mudfish instalado",
+    mfToggle: "Mudfish activado",
+    mfToggleDesc: "Inicia el servicio con el acceso guardado. Mudfish cobra por tráfico.",
+    mfCardToggle: "Rutas (Mudfish)",
+    mfCardToggleDesc: "Activa o desactiva Mudfish",
+    mfOn: "Mudfish activado",
+    mfOff: "Mudfish apagado",
+    mfLoginTitle: "Acceso a Mudfish",
+    mfUser: "Usuario",
+    mfUserDesc: "Cuenta de Mudfish para el acceso automático",
+    mfPass: "Contraseña",
+    mfPassSaved: "Contraseña guardada. Escribe otra solo para cambiarla.",
+    mfPassEmpty: "Escribe tu contraseña de Mudfish",
+    mfSave: "Guardar acceso",
+    mfClear: "Borrar acceso",
+    mfLoginSaved: "Acceso guardado",
+    mfLoginCleared: "Acceso borrado",
+    mfOpenWeb: "Abrir panel de Mudfish",
+    mfOpenWebDesc: "Elige el nodo y mira tu saldo en 127.0.0.1:8282",
+    mfNetTitle: "Ruta y ping",
+    mfRouteIface: "Interfaz",
+    mfRouteIp: "IP local",
+    mfRouteGw: "Puerta de enlace",
+    mfPingTarget: "Destino del ping",
+    mfPingTargetDesc: "IP o sitio del servidor del juego. Predeterminado: 1.1.1.1",
+    mfPingBefore: "Ping antes",
+    mfPingAfter: "Ping después",
+    mfPingTest: "Probar ping",
+    mfPingTestDesc: "Apagado guarda el antes; activado guarda el después",
+    mfPingTesting: "Probando…",
+    mfPingFail: "Sin respuesta del destino",
+    mfRefresh: "Actualizar",
+    mfErrNotInstalled: "Instala Mudfish primero",
+    mfErrNoCreds: "Guarda usuario y contraseña antes de activar",
+    mfErrMount: "No se pudo montar la carpeta persistente",
+    mfErrDownload: "Error al descargar el instalador",
+    mfErrInstall: "La instalación falló",
+    mfErrStart: "Mudfish no abrió el puerto 8282",
+    mfErrExited: "Mudfish se cerró al iniciar",
+    mfErrBusy: "Otra acción en curso",
+    mfErrArch: "Solo funciona en equipos x86_64",
+    mfErrBadUser: "Usuario no válido",
+    mfErrBadPass: "Contraseña no válida",
+    mfErrGeneric: "No se pudo completar",
+    mfToastOk: "Mudfish: todo bien",
+    mfToastFail: "Mudfish: no funcionó",
+    hMfInstall: "Descarga Mudfish oficial y lo guarda en la carpeta del plugin, así sigue instalado tras actualizar SteamOS.",
+    hMfLogin: "El acceso queda solo en este equipo y permite que Mudfish entre solo, sin navegador.",
+    hMfToggle: "Inicia el servicio de Mudfish. Luego elige el nodo en el panel de Mudfish.",
+    hMfNet: "Compara el ping con Mudfish apagado y activado para ver si la ruta ayuda.",
+    gameWifi: "Wi-Fi",
+    gameMudfish: "Mudfish",
+    gameModulesDesc: "Se activa al abrir el juego; solo apaga lo que activó",
+    gameCurrent: "Juego abierto",
+    gameAddCurrent: "Guardar juego abierto",
+    hGameModules: "Cada juego guardado puede activar Wi-Fi y Mudfish por su cuenta, sin depender de la ruta de NoLag.",
+    connTitle: "Conexión",
+    connWifi: "Wi-Fi",
+    connMudfish: "Mudfish",
+    connIface: "Interfaz activa",
+    connIp: "IP local",
+    connRoute: "Ruta (gateway)",
+    connPing: "Ping",
+    connJitter: "Jitter",
+    connHint: "Mudfish: activado o apagado · Wi-Fi: enlace",
+    hConn: "Una foto de la conexión ahora: por qué interfaz sale el tráfico y el ping al destino.",
   },
 };
 

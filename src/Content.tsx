@@ -14,11 +14,14 @@ import {
   Relay,
   Status,
   addRelay,
+  CurrentGame,
+  getCurrentGame,
   getRelays,
   getSettings,
   getStatus,
   removeRelay,
   setGameAuto,
+  setGameModule,
   deleteGame,
   GameProfile,
   setRouteEnabled,
@@ -26,6 +29,7 @@ import {
 } from "./api";
 import { BadgeTone, Card, ChartLine, Collapsible, Footer, Help, LineChart } from "./components";
 import { HelpToggle, TAB_KEYS, TabKey, TabNav } from "./TabNav";
+import { ConnCard, MudfishCard, MudfishTab } from "./MudfishTab";
 import { WifiCard, WifiTab } from "./WifiTab";
 import { LANGS, LANG_NAMES, Lang, TEXTS, Texts, normalizeLang } from "./i18n";
 
@@ -137,6 +141,7 @@ export function Content() {
   const [games, setGames] = useState<Record<string, GameProfile>>({});
   const [code, setCode] = useState("");
   const [relayMsg, setRelayMsg] = useState("");
+  const [current, setCurrent] = useState<CurrentGame>({ appid: "", name: "" });
   const timer = useRef<number | undefined>(undefined);
   const root = useRef<HTMLDivElement | null>(null);
 
@@ -180,6 +185,24 @@ export function Content() {
       })
       .catch(() => {});
   }, [status?.appid, status?.phase]);
+
+  // Jogo aberto no momento (para salvar o perfil dele com Wi-Fi e Mudfish), só na aba Rotas.
+  useEffect(() => {
+    if (tab !== "routes") return;
+    let alive = true;
+    const tick = () =>
+      getCurrentGame()
+        .then((g) => {
+          if (alive && g) setCurrent(g);
+        })
+        .catch(() => {});
+    tick();
+    const id = window.setInterval(tick, 5000);
+    return () => {
+      alive = false;
+      window.clearInterval(id);
+    };
+  }, [tab]);
 
   // L1/R1 troca de aba. Toque e botão A nas abas sempre funcionam.
   useEffect(() => {
@@ -236,6 +259,12 @@ export function Content() {
 
   const changeGameAuto = (appid: string, value: boolean) => {
     setGameAuto(appid, value)
+      .then((s) => setGames(s?.games ?? {}))
+      .catch(() => {});
+  };
+
+  const changeGameModule = (appid: string, module: "wifi" | "mudfish", value: boolean) => {
+    setGameModule(appid, module, value)
       .then((s) => setGames(s?.games ?? {}))
       .catch(() => {});
   };
@@ -368,6 +397,10 @@ export function Content() {
           </PanelSectionRow>
           <Help show={helpOn} text={t.hEnable} />
           <WifiCard t={t} />
+          <MudfishCard t={t} />
+          <Collapsible title={t.connTitle} collapsed={isCollapsed("conn")} onToggle={(v) => toggleSection("conn", v)}>
+            <ConnCard t={t} helpOn={helpOn} />
+          </Collapsible>
           <Collapsible title={t.liveRoutes} collapsed={isCollapsed("routes")} onToggle={(v) => toggleSection("routes", v)}>
             <Card rows={liveRows.length ? liveRows : [[t.noLive, DASH]]} />
             <div style={{ fontSize: 11, opacity: 0.7, textAlign: "center", marginBottom: 8 }}>{t.metricsHint}</div>
@@ -394,6 +427,13 @@ export function Content() {
       )}
       {tab === "routes" && (
         <>
+          <Collapsible
+            title={t.mfStatusTitle}
+            collapsed={isCollapsed("mudfishMain")}
+            onToggle={(v) => toggleSection("mudfishMain", v)}
+          >
+            <MudfishTab t={t} helpOn={helpOn} isCollapsed={isCollapsed} toggleSection={toggleSection} />
+          </Collapsible>
           <Card
             rows={[
               [t.relaysCount, String(relays.length)],
@@ -417,6 +457,23 @@ export function Content() {
           <Help show={helpOn} text={t.hProfile} />
           <Collapsible title={t.gamesTitle} collapsed={isCollapsed("games")} onToggle={(v) => toggleSection("games", v)}>
             <Help show={helpOn} text={t.hGames} />
+            <Help show={helpOn} text={t.hGameModules} />
+            {current.appid && (
+              <>
+                <Card rows={[[t.gameCurrent, current.name || current.appid]]} />
+                {!games[current.appid] && (
+                  <PanelSectionRow>
+                    <ButtonItem
+                      layout="inline"
+                      label={current.name || current.appid}
+                      onClick={() => changeGameModule(current.appid, "wifi", false)}
+                    >
+                      {t.gameAddCurrent}
+                    </ButtonItem>
+                  </PanelSectionRow>
+                )}
+              </>
+            )}
             {Object.keys(games).length === 0 && <Card rows={[[t.gamesNone, DASH]]} />}
             {Object.entries(games).map(([appid, g]) => (
               <div key={appid}>
@@ -426,6 +483,22 @@ export function Content() {
                     description={`${profileLabel(g.profile)} · ${t.gameSavedAuto}`}
                     checked={g.auto}
                     onChange={(v) => changeGameAuto(appid, v)}
+                  />
+                </PanelSectionRow>
+                <PanelSectionRow>
+                  <ToggleField
+                    label={`${g.name} · ${t.gameWifi}`}
+                    description={t.gameModulesDesc}
+                    checked={g.wifi === true}
+                    onChange={(v) => changeGameModule(appid, "wifi", v)}
+                  />
+                </PanelSectionRow>
+                <PanelSectionRow>
+                  <ToggleField
+                    label={`${g.name} · ${t.gameMudfish}`}
+                    description={t.gameModulesDesc}
+                    checked={g.mudfish === true}
+                    onChange={(v) => changeGameModule(appid, "mudfish", v)}
                   />
                 </PanelSectionRow>
                 <PanelSectionRow>

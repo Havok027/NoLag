@@ -7,6 +7,8 @@ export interface GameProfile {
   name: string;
   auto: boolean;
   profile: Profile;
+  wifi?: boolean;
+  mudfish?: boolean;
 }
 
 export interface Settings {
@@ -137,3 +139,69 @@ export const wifiSetStreaming = callable<[enabled: boolean], WifiResult>("wifi_s
 export const wifiSetWatchdog = callable<[enabled: boolean], WifiResult>("wifi_set_link_watchdog");
 export const wifiOptimizeSafe = callable<[], WifiOptimizeResult>("wifi_optimize_safe");
 export const wifiReset = callable<[], WifiResult>("wifi_reset_settings");
+
+// ---- Módulo Mudfish (independente do Wi-Fi e da rota) ----
+
+export interface MudfishResult {
+  ok: boolean;
+  error: string;
+  version?: string;
+}
+
+export interface MudfishStatus {
+  arch_ok?: boolean;
+  installed: boolean;
+  version?: string;
+  mounted?: boolean;
+  running: boolean;
+  port_open?: boolean;
+  phase: "off" | "installing" | "starting" | "running" | "stopping" | "error";
+  error: string;
+  user?: string;
+  has_password?: boolean;
+  keep_on?: boolean;
+  ping_target?: string;
+  ping_before?: Metrics | null;
+  ping_after?: Metrics | null;
+  webui?: string;
+}
+
+export interface RouteInfo {
+  dev: string;
+  src: string;
+  via: string;
+  target?: string;
+}
+
+export interface MudfishPing {
+  ok: boolean;
+  which?: "before" | "after";
+  metrics?: Metrics | null;
+}
+
+export interface Snapshot {
+  route: RouteInfo;
+  ping: Metrics | null;
+  modules: {
+    mudfish?: MudfishStatus;
+    wifi?: { connected: boolean; live?: WifiLive };
+  };
+}
+
+export interface CurrentGame {
+  appid: string;
+  name: string;
+}
+
+export const mudfishAvailable = callable<[], { available: boolean; error: string }>("mudfish_available");
+export const mudfishGetStatus = callable<[], MudfishStatus>("mudfish_get_status");
+export const mudfishInstall = callable<[], MudfishResult>("mudfish_install");
+export const mudfishSetEnabled = callable<[enabled: boolean], MudfishResult>("mudfish_set_enabled");
+export const mudfishSetCredentials = callable<[user: string, password: string], MudfishResult>("mudfish_set_credentials");
+export const mudfishClearCredentials = callable<[], MudfishResult>("mudfish_clear_credentials");
+export const mudfishSetPingTarget = callable<[target: string], { ok: boolean; target: string }>("mudfish_set_ping_target");
+export const mudfishGetRoute = callable<[], RouteInfo & { running: boolean }>("mudfish_get_route");
+export const mudfishTestPing = callable<[], MudfishPing>("mudfish_test_ping");
+export const getSnapshot = callable<[], Snapshot>("get_snapshot");
+export const getCurrentGame = callable<[], CurrentGame>("get_current_game");
+export const setGameModule = callable<[appid: string, module: "wifi" | "mudfish", value: boolean], Settings>("set_game_module");
