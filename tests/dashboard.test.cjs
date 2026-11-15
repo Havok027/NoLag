@@ -29,7 +29,7 @@ test("textos do painel existem nos 3 idiomas", () => {
 test("painel mostra ping atual e rotas ao vivo", () => {
   const src = read("Content.tsx");
   assert.ok(src.includes("t.pingNow") && src.includes("t.liveRoutes") && src.includes("t.diagTitle"));
-  assert.ok(src.includes("TabBar") && src.includes("Collapsible"));
+  assert.ok(src.includes("TabNav") && src.includes("Collapsible"));
 });
 
 test("seções recolhíveis salvam o estado", () => {

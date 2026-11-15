@@ -100,6 +100,59 @@ export interface Texts {
   gameNotSaved: string;
   gameDelete: string;
   hGames: string;
+  tabWifi: string;
+  wifiBadgeOn: string;
+  wifiBadgeOff: string;
+  wifiBadgeDown: string;
+  wifiBadgeUnavailable: string;
+  wifiConn: string;
+  wifiConnected: string;
+  wifiDisconnected: string;
+  wifiSignal: string;
+  wifiBandRow: string;
+  wifiRate: string;
+  wifiActiveCount: string;
+  wifiDevice: string;
+  wifiUnavailable: string;
+  wifiIndep: string;
+  wifiSecMain: string;
+  wifiSecAdv: string;
+  wifiSecStream: string;
+  wifiSecActions: string;
+  wifiPowerSave: string;
+  wifiPowerSaveDesc: string;
+  wifiAutoFix: string;
+  wifiAutoFixDesc: string;
+  wifiBuffers: string;
+  wifiBuffersDesc: string;
+  wifiCake: string;
+  wifiCakeDesc: string;
+  wifiIpv6: string;
+  wifiIpv6Desc: string;
+  wifiLock: string;
+  wifiLockDesc: string;
+  wifiBand: string;
+  wifiBandDesc: string;
+  wifiDns: string;
+  wifiDnsDesc: string;
+  wifiOff: string;
+  wifiStreaming: string;
+  wifiStreamingDesc: string;
+  wifiStreamingNow: string;
+  wifiWatchdog: string;
+  wifiWatchdogDesc: string;
+  wifiOptimizeAll: string;
+  wifiCardToggle: string;
+  wifiCardToggleDesc: string;
+  wifiRestore: string;
+  wifiWorking: string;
+  wifiDone: string;
+  wifiFailed: string;
+  hWifiStatus: string;
+  hWifiMain: string;
+  hWifiAdv: string;
+  hWifiStream: string;
+  hWifiActions: string;
   noticeEnroll: string;
 }
 
@@ -196,6 +249,59 @@ export const TEXTS: Record<Lang, Texts> = {
     gameNotSaved: "Ainda não salvo",
     gameDelete: "Excluir",
     hGames: "Ao ligar a chave dentro de um jogo, o NoLag salva um perfil dele e passa a ligar sozinho sempre que você abrir esse jogo. Aqui você pode desativar o início automático de um jogo ou excluir o perfil.",
+    tabWifi: "Wi-Fi",
+    wifiBadgeOn: "Otimizado",
+    wifiBadgeOff: "Padrão",
+    wifiBadgeDown: "Sem Wi-Fi",
+    wifiBadgeUnavailable: "Indisponível",
+    wifiConn: "Conexão",
+    wifiConnected: "Conectado",
+    wifiDisconnected: "Desconectado",
+    wifiSignal: "Sinal",
+    wifiBandRow: "Banda",
+    wifiRate: "Taxa",
+    wifiActiveCount: "Otimizações ativas",
+    wifiDevice: "Aparelho",
+    wifiUnavailable: "O módulo Wi-Fi não carregou",
+    wifiIndep: "Funciona sem a rota do NoLag e sem o Mudfish.",
+    wifiSecMain: "Otimizações",
+    wifiSecAdv: "Avançado",
+    wifiSecStream: "Streaming",
+    wifiSecActions: "Ações",
+    wifiPowerSave: "Desligar economia de energia",
+    wifiPowerSaveDesc: "Evita picos de ping causados pela economia do Wi-Fi",
+    wifiAutoFix: "Corrigir ao acordar",
+    wifiAutoFixDesc: "Reaplica os ajustes depois de suspender",
+    wifiBuffers: "Buffers de rede maiores",
+    wifiBuffersDesc: "Absorve rajadas de pacotes em jogos e streaming",
+    wifiCake: "Fila CAKE",
+    wifiCakeDesc: "Reduz o ping quando a rede está cheia",
+    wifiIpv6: "Desligar IPv6",
+    wifiIpv6Desc: "Só nesta rede; ajuda quando o IPv6 do provedor é instável",
+    wifiLock: "Travar no ponto de acesso",
+    wifiLockDesc: "Evita saltos entre roteadores da mesma rede",
+    wifiBand: "Banda preferida",
+    wifiBandDesc: "Força a banda nesta rede",
+    wifiDns: "DNS",
+    wifiDnsDesc: "Servidor DNS usado nesta rede",
+    wifiOff: "Desligado",
+    wifiStreaming: "Modo streaming",
+    wifiStreamingDesc: "Liga os ajustes só enquanto um stream está ativo",
+    wifiStreamingNow: "Streaming detectado",
+    wifiWatchdog: "Corrigir streams travados",
+    wifiWatchdogDesc: "Reconecta o Wi-Fi quando o link trava durante um stream",
+    wifiOptimizeAll: "Aplicar otimizações seguras",
+    wifiCardToggle: "Otimizar Wi-Fi",
+    wifiCardToggleDesc: "Liga os ajustes seguros; desligar restaura o padrão",
+    wifiRestore: "Restaurar tudo ao padrão",
+    wifiWorking: "Aplicando…",
+    wifiDone: "Pronto",
+    wifiFailed: "Não foi possível aplicar",
+    hWifiStatus: "Resumo do Wi-Fi agora. As otimizações daqui não dependem da rota do NoLag nem do Mudfish.",
+    hWifiMain: "Cada chave liga ou desliga um ajuste. Eles sobrevivem a suspensão, reconexão e atualização do sistema.",
+    hWifiAdv: "Ajustes que mudam a conexão desta rede. Mudar a banda ou travar o ponto de acesso reconecta o Wi-Fi por alguns segundos.",
+    hWifiStream: "Para jogar por streaming (Moonlight, Steam Link). Com o modo streaming, os ajustes só ficam ligados durante o stream.",
+    hWifiActions: "Aplicar liga os ajustes seguros de uma vez. Restaurar devolve tudo ao padrão do sistema.",
     noticeEnroll: "Não foi possível registrar no relay; só monitorando o ping",
   },
   en: {
@@ -290,6 +396,59 @@ export const TEXTS: Record<Lang, Texts> = {
     gameNotSaved: "Not saved yet",
     gameDelete: "Delete",
     hGames: "When you turn the switch on inside a game, NoLag saves a profile for it and turns on by itself every time you open that game. Here you can disable auto start for a game or delete its profile.",
+    tabWifi: "Wi-Fi",
+    wifiBadgeOn: "Optimized",
+    wifiBadgeOff: "Default",
+    wifiBadgeDown: "No Wi-Fi",
+    wifiBadgeUnavailable: "Unavailable",
+    wifiConn: "Connection",
+    wifiConnected: "Connected",
+    wifiDisconnected: "Disconnected",
+    wifiSignal: "Signal",
+    wifiBandRow: "Band",
+    wifiRate: "Link rate",
+    wifiActiveCount: "Active optimizations",
+    wifiDevice: "Device",
+    wifiUnavailable: "The Wi-Fi module did not load",
+    wifiIndep: "Works without the NoLag route and without Mudfish.",
+    wifiSecMain: "Optimizations",
+    wifiSecAdv: "Advanced",
+    wifiSecStream: "Streaming",
+    wifiSecActions: "Actions",
+    wifiPowerSave: "Turn off power save",
+    wifiPowerSaveDesc: "Avoids ping spikes caused by Wi-Fi power saving",
+    wifiAutoFix: "Fix on wake",
+    wifiAutoFixDesc: "Reapplies the settings after sleep",
+    wifiBuffers: "Larger network buffers",
+    wifiBuffersDesc: "Absorbs packet bursts in games and streaming",
+    wifiCake: "CAKE queue",
+    wifiCakeDesc: "Lowers ping when the network is busy",
+    wifiIpv6: "Turn off IPv6",
+    wifiIpv6Desc: "This network only; helps when the ISP IPv6 is unstable",
+    wifiLock: "Lock to access point",
+    wifiLockDesc: "Stops hopping between routers of the same network",
+    wifiBand: "Preferred band",
+    wifiBandDesc: "Forces the band on this network",
+    wifiDns: "DNS",
+    wifiDnsDesc: "DNS server used on this network",
+    wifiOff: "Off",
+    wifiStreaming: "Streaming mode",
+    wifiStreamingDesc: "Turns the fixes on only while a stream is running",
+    wifiStreamingNow: "Streaming detected",
+    wifiWatchdog: "Fix stalled streams",
+    wifiWatchdogDesc: "Reconnects Wi-Fi when the link stalls during a stream",
+    wifiOptimizeAll: "Apply safe optimizations",
+    wifiCardToggle: "Optimize Wi-Fi",
+    wifiCardToggleDesc: "Turns on the safe tweaks; turning off restores the default",
+    wifiRestore: "Restore everything to default",
+    wifiWorking: "Applying…",
+    wifiDone: "Done",
+    wifiFailed: "Could not apply",
+    hWifiStatus: "Wi-Fi summary right now. These optimizations do not depend on the NoLag route or Mudfish.",
+    hWifiMain: "Each switch turns one tweak on or off. They survive sleep, reconnects and system updates.",
+    hWifiAdv: "Tweaks that change this network connection. Changing the band or locking the access point reconnects Wi-Fi for a few seconds.",
+    hWifiStream: "For streaming play (Moonlight, Steam Link). With streaming mode, the fixes are only on during the stream.",
+    hWifiActions: "Apply turns on the safe tweaks at once. Restore puts everything back to the system default.",
     noticeEnroll: "Could not register with the relay; only monitoring ping",
   },
   es: {
@@ -384,6 +543,59 @@ export const TEXTS: Record<Lang, Texts> = {
     gameNotSaved: "Aún no guardado",
     gameDelete: "Eliminar",
     hGames: "Al activar el interruptor dentro de un juego, NoLag guarda un perfil y se activa solo cada vez que abres ese juego. Aquí puedes desactivar el inicio automático de un juego o eliminar su perfil.",
+    tabWifi: "Wi-Fi",
+    wifiBadgeOn: "Optimizado",
+    wifiBadgeOff: "Predeterminado",
+    wifiBadgeDown: "Sin Wi-Fi",
+    wifiBadgeUnavailable: "No disponible",
+    wifiConn: "Conexión",
+    wifiConnected: "Conectado",
+    wifiDisconnected: "Desconectado",
+    wifiSignal: "Señal",
+    wifiBandRow: "Banda",
+    wifiRate: "Velocidad",
+    wifiActiveCount: "Optimizaciones activas",
+    wifiDevice: "Dispositivo",
+    wifiUnavailable: "El módulo Wi-Fi no cargó",
+    wifiIndep: "Funciona sin la ruta de NoLag y sin Mudfish.",
+    wifiSecMain: "Optimizaciones",
+    wifiSecAdv: "Avanzado",
+    wifiSecStream: "Streaming",
+    wifiSecActions: "Acciones",
+    wifiPowerSave: "Desactivar ahorro de energía",
+    wifiPowerSaveDesc: "Evita picos de ping por el ahorro del Wi-Fi",
+    wifiAutoFix: "Corregir al despertar",
+    wifiAutoFixDesc: "Reaplica los ajustes tras suspender",
+    wifiBuffers: "Búferes de red mayores",
+    wifiBuffersDesc: "Absorbe ráfagas de paquetes en juegos y streaming",
+    wifiCake: "Cola CAKE",
+    wifiCakeDesc: "Reduce el ping cuando la red está saturada",
+    wifiIpv6: "Desactivar IPv6",
+    wifiIpv6Desc: "Solo en esta red; ayuda si el IPv6 del proveedor es inestable",
+    wifiLock: "Fijar al punto de acceso",
+    wifiLockDesc: "Evita saltos entre routers de la misma red",
+    wifiBand: "Banda preferida",
+    wifiBandDesc: "Fuerza la banda en esta red",
+    wifiDns: "DNS",
+    wifiDnsDesc: "Servidor DNS usado en esta red",
+    wifiOff: "Desactivado",
+    wifiStreaming: "Modo streaming",
+    wifiStreamingDesc: "Activa los ajustes solo mientras hay un stream",
+    wifiStreamingNow: "Streaming detectado",
+    wifiWatchdog: "Corregir streams detenidos",
+    wifiWatchdogDesc: "Reconecta el Wi-Fi si el enlace se detiene durante un stream",
+    wifiOptimizeAll: "Aplicar optimizaciones seguras",
+    wifiCardToggle: "Optimizar Wi-Fi",
+    wifiCardToggleDesc: "Activa los ajustes seguros; desactivar restaura lo predeterminado",
+    wifiRestore: "Restaurar todo a lo predeterminado",
+    wifiWorking: "Aplicando…",
+    wifiDone: "Listo",
+    wifiFailed: "No se pudo aplicar",
+    hWifiStatus: "Resumen del Wi-Fi ahora. Estas optimizaciones no dependen de la ruta de NoLag ni de Mudfish.",
+    hWifiMain: "Cada interruptor activa o desactiva un ajuste. Sobreviven a suspensión, reconexión y actualizaciones del sistema.",
+    hWifiAdv: "Ajustes que cambian la conexión de esta red. Cambiar la banda o fijar el punto de acceso reconecta el Wi-Fi unos segundos.",
+    hWifiStream: "Para jugar por streaming (Moonlight, Steam Link). Con el modo streaming, los ajustes solo se activan durante el stream.",
+    hWifiActions: "Aplicar activa los ajustes seguros de una vez. Restaurar devuelve todo a lo predeterminado del sistema.",
     noticeEnroll: "No se pudo registrar en el relay; solo monitoreando el ping",
   },
 };

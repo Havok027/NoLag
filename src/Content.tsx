@@ -24,7 +24,9 @@ import {
   setRouteEnabled,
   setSettings,
 } from "./api";
-import { BadgeTone, Card, ChartLine, Collapsible, Footer, Help, HelpBar, LineChart, TAB_ORDER, TabBar, TabId } from "./components";
+import { BadgeTone, Card, ChartLine, Collapsible, Footer, Help, HelpBar, LineChart } from "./components";
+import { TAB_KEYS, TabKey, TabNav } from "./TabNav";
+import { WifiCard, WifiTab } from "./WifiTab";
 import { LANGS, LANG_NAMES, Lang, TEXTS, Texts, normalizeLang } from "./i18n";
 
 const DASH = "—";
@@ -129,7 +131,7 @@ export function Content() {
   const [enabled, setEnabled] = useState(false);
   const [profile, setProfile] = useState<Profile>("balanced");
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
-  const [tab, setTab] = useState<TabId>("dash");
+  const [tab, setTab] = useState<TabKey>("dash");
   const [status, setStatus] = useState<Status | null>(null);
   const [relays, setRelays] = useState<Relay[]>([]);
   const [games, setGames] = useState<Record<string, GameProfile>>({});
@@ -202,8 +204,8 @@ export function Content() {
       const step = button === 5 ? -1 : button === 6 ? 1 : 0;
       if (!step) return;
       setTab((cur) => {
-        const next = TAB_ORDER.indexOf(cur) + step;
-        return TAB_ORDER[Math.min(TAB_ORDER.length - 1, Math.max(0, next))];
+        const next = TAB_KEYS.indexOf(cur) + step;
+        return TAB_KEYS[Math.min(TAB_KEYS.length - 1, Math.max(0, next))];
       });
     };
     el.addEventListener("vgp_onbuttondown", onButton);
@@ -361,8 +363,8 @@ export function Content() {
     <PanelSection>
     <Focusable {...(yProps as object)} style={{ width: "100%", boxSizing: "border-box" }}>
     <div ref={root}>
-      <TabBar
-        labels={{ dash: t.tabDash, routes: t.tabRoutes, settings: t.settings }}
+      <TabNav
+        labels={{ dash: t.tabDash, wifi: t.tabWifi, routes: t.tabRoutes, settings: t.settings }}
         hint={t.tabHint}
         active={tab}
         onSelect={setTab}
@@ -382,6 +384,7 @@ export function Content() {
             />
           </PanelSectionRow>
           <Help show={helpOn} text={t.hEnable} />
+          <WifiCard t={t} />
           <Collapsible title={t.liveRoutes} collapsed={isCollapsed("routes")} onToggle={(v) => toggleSection("routes", v)}>
             <Card rows={liveRows.length ? liveRows : [[t.noLive, DASH]]} />
             <div style={{ fontSize: 11, opacity: 0.7, textAlign: "center", marginBottom: 8 }}>{t.metricsHint}</div>
@@ -402,6 +405,9 @@ export function Content() {
             <Help show={helpOn} text={t.hDiag} />
           </Collapsible>
         </>
+      )}
+      {tab === "wifi" && (
+        <WifiTab t={t} helpOn={helpOn} isCollapsed={isCollapsed} toggleSection={toggleSection} />
       )}
       {tab === "routes" && (
         <>
