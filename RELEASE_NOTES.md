@@ -1,3 +1,12 @@
+## v0.9.0
+
+- Novo módulo Mudfish na aba Rotas, independente do Wi-Fi e da rota do NoLag: instalação e atualização do Mudfish oficial em pasta persistente (montada em /opt/mudfish), login salvo para entrar sozinho, chave liga/desliga do serviço, status da porta 8282 e botão para abrir o painel do Mudfish.
+- Rota ativa (interface, IP e gateway) e teste de ping antes e depois, com alvo configurável.
+- Painel: uma chave para o Wi-Fi e outra para o Mudfish, e a tabela Conexão com Wi-Fi, Mudfish, interface ativa, IP, gateway, ping e jitter.
+- Perfis por jogo: cada jogo salvo liga o Wi-Fi e/ou o Mudfish por conta própria ao abrir e só desliga o que ele mesmo ligou.
+- Módulos conversam por um estado compartilhado (core_state.py): se um falhar ou for desativado, o outro segue normal. O módulo Wi-Fi não foi alterado.
+- Testes novos: Mudfish, estado compartilhado, perfis por jogo, roteador do main.py e textos nos 3 idiomas.
+
 ## v0.8.2
 
 - Abas: só a aba ativa fica em destaque. L1/R1 e o toque trocam de aba, e o botão A não volta mais para a aba anterior.

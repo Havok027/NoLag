@@ -29,10 +29,27 @@ except Exception as _e:  # pragma: no cover - só em ambiente quebrado
     WIFI_IMPORT_ERROR = f"{type(_e).__name__}: {_e} | py: {_py}"[:300]
     decky.logger.error(f"NoLag Wi-Fi: módulo não carregou: {WIFI_IMPORT_ERROR}")
 
+# O módulo Mudfish e o barramento compartilhado também são independentes do Wi-Fi.
+try:
+    import core_state
+    from mudfish_mgr import MudfishManager
+    MUDFISH_IMPORT_ERROR = ""
+except Exception as _e:  # pragma: no cover - só em ambiente quebrado
+    core_state = None  # type: ignore
+    MudfishManager = None  # type: ignore
+    MUDFISH_IMPORT_ERROR = f"{type(_e).__name__}: {_e}"[:300]
+    decky.logger.error(f"NoLag Mudfish: módulo não carregou: {MUDFISH_IMPORT_ERROR}")
+try:
+    from game_profiles import GameProfiles
+except Exception as _e:  # pragma: no cover
+    GameProfiles = None  # type: ignore
+    decky.logger.error(f"NoLag perfis por jogo: não carregou: {_e}")
+
 LANGS = ("pt", "en", "es")
 DEFAULTS = {"language": "pt", "enabled": False, "profile": "balanced", "collapsed": {}, "games": {}}
 SECTIONS = ("diag", "routes", "relays", "settings", "chart", "help", "games",
-            "wifiMain", "wifiAdv", "wifiStream", "wifiActions")
+            "wifiMain", "wifiAdv", "wifiStream", "wifiActions",
+            "mudfishMain", "mudfishLogin", "mudfishNet", "conn")
 MAX_GAMES = 50
 WATCH_DELAY = 5
 WATCH_INTERVAL = 5
@@ -81,6 +98,9 @@ def clean_games(raw):
             "auto": g.get("auto") is True,
             "profile": profile if profile in PROFILES else "balanced",
         }
+        for module in ("wifi", "mudfish"):  # só aparecem quando ligados: perfis antigos ficam iguais
+            if g.get(module) is True:
+                out[appid][module] = True
     return out
 
 
@@ -730,6 +750,9 @@ class Plugin:
     def __init__(self):
         self.wifi = WifiManager() if WifiManager is not None else None
         self.wifi_task = None
+        self.mudfish = MudfishManager() if MudfishManager is not None else None
+        self.profiles = None
+        self.modules_task = None
         self.task = None
         self.watcher = None
         self.manual = False
@@ -891,6 +914,7 @@ class Plugin:
                         data = _load()
                         old = data["games"].get(appid, {})
                         data["games"][appid] = {
+                            **old,
                             "name": game or old.get("name") or appid,
                             "auto": True,
                             "profile": old.get("profile") or data["profile"],
@@ -1030,6 +1054,7 @@ class Plugin:
     async def _main(self):
         if self.wifi is not None:
             self.wifi_task = asyncio.ensure_future(self._wifi_boot())
+        self.modules_task = asyncio.ensure_future(self._modules_boot())
         await teardown()
         if _load()["enabled"]:
             self.manual = False
@@ -1037,6 +1062,48 @@ class Plugin:
         else:
             self._begin_watch()
         decky.logger.info("NoLag iniciado")
+
+    async def _modules_boot(self):
+        """Mudfish, barramento e perfis por jogo: cada parte falha sozinha, sem afetar o resto."""
+        if core_state is None:
+            return
+        if self.wifi is not None:
+            core_state.bus.register("wifi", enable=self._wifi_game_on, disable=self._wifi_game_off,
+                                    active=self._wifi_active)
+        if self.mudfish is not None:
+            try:
+                await self.mudfish._main()
+            except Exception as e:
+                decky.logger.error(f"NoLag Mudfish: falha ao iniciar: {e}")
+        if GameProfiles is not None:
+            self.profiles = GameProfiles(self._detect_game, lambda: _load()["games"])
+            self.profiles.start()
+
+    async def _detect_game(self):
+        pids = await asyncio.to_thread(find_game_pids)
+        if not pids:
+            return "", ""
+        appid = await asyncio.to_thread(game_id, pids)
+        if not appid:
+            return "", ""
+        name = _load()["games"].get(appid, {}).get("name", "")
+        if not name or name == appid:
+            try:
+                _ports, name = await asyncio.to_thread(game_ports, pids)
+            except Exception:
+                name = ""
+        return appid, name or appid
+
+    async def _wifi_active(self):
+        st = await self.wifi.get_status()
+        cfg = (st or {}).get("settings") or {}
+        return any(cfg.get(k) is True for k in WIFI_ACTIVE_KEYS)
+
+    async def _wifi_game_on(self):
+        return await self.wifi.optimize_safe()
+
+    async def _wifi_game_off(self):
+        return await self.wifi.reset_settings()
 
     async def _wifi_boot(self):
         try:
@@ -1047,6 +1114,18 @@ class Plugin:
             decky.logger.error(f"NoLag Wi-Fi: falha ao iniciar: {e}")
 
     async def _unload(self):
+        if self.modules_task is not None and not self.modules_task.done():
+            self.modules_task.cancel()
+        if self.profiles is not None:
+            try:
+                await self.profiles.stop()
+            except Exception as e:
+                decky.logger.error(f"NoLag perfis por jogo: falha ao descarregar: {e}")
+        if self.mudfish is not None:
+            try:
+                await self.mudfish._unload()
+            except Exception as e:
+                decky.logger.error(f"NoLag Mudfish: falha ao descarregar: {e}")
         if self.wifi is not None:
             try:
                 await self.wifi._unload()
@@ -1063,6 +1142,11 @@ class Plugin:
                 await self.wifi._uninstall()
             except Exception as e:
                 decky.logger.error(f"NoLag Wi-Fi: falha ao desinstalar: {e}")
+        if self.mudfish is not None:
+            try:
+                await self.mudfish._uninstall()
+            except Exception as e:
+                decky.logger.error(f"NoLag Mudfish: falha ao desinstalar: {e}")
 
     async def _migration(self):
         if self.wifi is not None:
@@ -1169,6 +1253,86 @@ class Plugin:
     async def wifi_start_backend_switch(self, backend):
         return await self._wifi_call("start_backend_switch", backend)
 
+    # ---- Mudfish (roteador fino: a lógica fica em mudfish_mgr.py) ----
+    async def _mudfish_call(self, name, *args):
+        if self.mudfish is None:
+            return {"ok": False, "error": "mudfish_unavailable"}
+        return await getattr(self.mudfish, name)(*args)
+
+    async def mudfish_available(self):
+        here = os.path.dirname(os.path.abspath(__file__))
+        files = [n for n in ("mudfish_mgr.py", "core_state.py") if not os.path.exists(os.path.join(here, n))]
+        error = MUDFISH_IMPORT_ERROR
+        if files:
+            error = ("arquivo ausente: " + ", ".join(files))[:200]
+        return {"available": self.mudfish is not None, "error": error}
+
+    async def mudfish_get_status(self):
+        if self.mudfish is None:
+            return {"installed": False, "running": False, "phase": "error", "error": "mudfish_unavailable"}
+        return await self.mudfish.get_status()
+
+    async def mudfish_install(self):
+        return await self._mudfish_call("install")
+
+    async def mudfish_set_enabled(self, enabled):
+        return await self._mudfish_call("set_enabled", enabled)
+
+    async def mudfish_set_credentials(self, user, password):
+        return await self._mudfish_call("set_credentials", user, password)
+
+    async def mudfish_clear_credentials(self):
+        return await self._mudfish_call("clear_credentials")
+
+    async def mudfish_set_ping_target(self, target):
+        return await self._mudfish_call("set_ping_target", target)
+
+    async def mudfish_get_route(self):
+        return await self._mudfish_call("get_route")
+
+    async def mudfish_test_ping(self):
+        return await self._mudfish_call("test_ping")
+
+    # ---- Painel e perfis por jogo ----
+    async def get_snapshot(self):
+        """Métricas da conexão para o Painel (rota ativa, ping e estado de cada módulo)."""
+        if core_state is None:
+            return {"route": {}, "ping": None, "modules": {}}
+        target = self.mudfish.load()["ping_target"] if self.mudfish is not None else core_state.DEFAULT_TARGET
+        data = await core_state.snapshot(target)
+        if self.mudfish is not None:
+            data["modules"]["mudfish"] = await self.mudfish.get_status()
+        if self.wifi is not None:
+            try:
+                st = await self.wifi.get_status()
+                data["modules"]["wifi"] = {
+                    "connected": bool((st or {}).get("connected")),
+                    "live": (st or {}).get("live") or {},
+                }
+            except Exception:
+                data["modules"]["wifi"] = {"connected": False, "live": {}}
+        return data
+
+    async def get_current_game(self):
+        return self.profiles.current() if self.profiles is not None else {"appid": "", "name": ""}
+
+    async def set_game_module(self, appid, module, value):
+        """Salva se o jogo liga o Wi-Fi e/ou o Mudfish (independentes entre si e da rota)."""
+        data = _load()
+        if module in ("wifi", "mudfish") and isinstance(appid, str) and _APPID.match(appid):
+            cur = self.profiles.current() if self.profiles is not None else {}
+            game = data["games"].get(appid)
+            if game is None:
+                if len(data["games"]) >= MAX_GAMES:
+                    return data
+                name = cur.get("name") if cur.get("appid") == appid else ""
+                game = {"name": name or appid, "auto": False, "profile": data["profile"]}
+            game[module] = value is True
+            data["games"][appid] = game
+            data = sanitize_settings(data)
+            _save(data)
+        return data
+
     async def wifi_available(self):
         here = os.path.dirname(os.path.abspath(__file__))
         files = [n for n in ("wifi_mgr.py", "wifi_dispatcher.py") if not os.path.exists(os.path.join(here, n))]
@@ -1177,6 +1341,13 @@ class Plugin:
             error = ("arquivo ausente: " + ", ".join(files))[:200]
         return {"available": self.wifi is not None, "error": error}
 
+
+# Chaves do Wi-Fi que contam como "otimização ativa" (mesma regra do cartão do Painel).
+WIFI_ACTIVE_KEYS = (
+    "power_save_disabled", "buffer_tuning_enabled", "cake_enabled", "ipv6_disabled",
+    "bssid_lock_enabled", "band_preference_enabled", "dns_enabled", "streaming_mode_enabled",
+    "link_watchdog_enabled", "auto_fix_on_wake",
+)
 
 # Métodos do módulo Wi-Fi expostos ao frontend com o prefixo wifi_.
 WIFI_API = (

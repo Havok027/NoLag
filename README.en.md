@@ -30,6 +30,12 @@ For the project owner (once):
 2. Preconfigured: put the code on a line of the `relay-code.txt` file at the repository root. The build includes the file in the release and the plugin reads it by itself. Note: the code contains a private key; if the repository is public, anyone can use your relay.
 3. Alternative: paste the code under **Relays** (up to 4 relays).
 
+## Mudfish / Routes (independent module)
+
+**Routes** tab: installs the official Mudfish in a persistent folder (survives SteamOS updates, bound to `/opt/mudfish` with `mount --bind`), stores the login, turns the service on and off and shows port 8282, the active route and the ping before and after. "Open Mudfish panel" opens `http://127.0.0.1:8282` so you can pick the node. It works without Wi-Fi and without the NoLag route. Mudfish charges by traffic.
+
+The Dashboard has one switch for Wi-Fi and another for Mudfish, plus the **Connection** table (interface, IP, gateway, ping and jitter). Each saved game can turn Wi-Fi and/or Mudfish on by itself when it opens; on exit it only turns off what it turned on.
+
 ## Wi-Fi (independent module)
 
 **Wi-Fi** tab: local network optimizations that work on their own, without the NoLag route and without Mudfish.

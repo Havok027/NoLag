@@ -30,6 +30,12 @@ Para o dono do projeto (uma vez):
 2. Pré-configurado: coloque o código em uma linha do arquivo `relay-code.txt` na raiz do repositório. O build inclui o arquivo na release e o plugin lê sozinho. Atenção: o código contém uma chave privada; se o repositório for público, qualquer pessoa pode usar o seu relay.
 3. Alternativa: cole o código em **Relays** (até 4 relays).
 
+## Mudfish / Rotas (módulo independente)
+
+Aba **Rotas**: instala o Mudfish oficial numa pasta persistente (sobrevive a atualizações do SteamOS, ligada em `/opt/mudfish` com `mount --bind`), guarda o login, liga e desliga o serviço e mostra a porta 8282, a rota ativa e o ping antes e depois. O botão "Abrir painel do Mudfish" abre `http://127.0.0.1:8282` para escolher o nó. Funciona sem o Wi-Fi e sem a rota do NoLag. O Mudfish cobra por tráfego.
+
+No Painel há uma chave para o Wi-Fi e outra para o Mudfish, e a tabela **Conexão** (interface, IP, gateway, ping e jitter). Cada jogo salvo pode ligar o Wi-Fi e/ou o Mudfish sozinho ao abrir; ao sair, só desliga o que ele mesmo ligou.
+
 ## Wi-Fi (módulo independente)
 
 Aba **Wi-Fi**: otimizações da rede local que funcionam sozinhas, sem a rota do NoLag e sem o Mudfish.
