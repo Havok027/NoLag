@@ -25,7 +25,8 @@ import {
   mudfishSetOption,
   mudfishTestPing,
 } from "./api";
-import { Card, ChartLine, Collapsible, Help, LineChart } from "./components";
+import { FaCog, FaFileAlt, FaPercent, FaUser, FaWaveSquare } from "react-icons/fa";
+import { Box, Card, ChartLine, Collapsible, Help, LineChart, MiniCard, Ring } from "./components";
 import type { Texts } from "./i18n";
 
 const DASH = "—";
@@ -260,7 +261,9 @@ const CHART_MAX = 30;
 type Sample = { b: Metrics | null; t: Metrics | null };
 const avg = (xs: number[]) => (xs.length ? xs.reduce((x, y) => x + y, 0) / xs.length : null);
 
-/** Gráfico ao vivo do Painel: mede sempre "sem Mudfish" e, com ele ligado, também "com Mudfish", a cada 8 s. */
+const lossText = (m: Metrics | null | undefined) => (m && typeof m.loss === "number" ? `${+m.loss.toFixed(1)} %` : DASH);
+
+/** Telemetria do Painel: anel de ping com gráfico ao vivo e, abaixo, jitter e perda de pacotes (Com / Sem Mudfish). */
 export function LiveChart({ t, helpOn }: { t: Texts; helpOn: boolean }) {
   const [samples, setSamples] = useState<Sample[]>([]);
   const [live, setLive] = useState<MudfishLive | null>(null);
@@ -286,37 +289,77 @@ export function LiveChart({ t, helpOn }: { t: Texts; helpOn: boolean }) {
     };
   }, []);
 
-  const build = (key: string, label: string, color: string, pick: (x: Sample) => Metrics | null): ChartLine => {
+  const build = (key: string, label: string, color: string, dashed: boolean, pick: (x: Sample) => Metrics | null): ChartLine => {
     const ms = samples.map(pick);
     const pa = avg(ms.map((m) => m?.avg).filter((v): v is number => typeof v === "number"));
-    const ja = avg(ms.map((m) => m?.jitter).filter((v): v is number => typeof v === "number"));
     return {
       key,
       label,
       color,
+      dashed,
       values: ms.map((m) => (typeof m?.avg === "number" ? m.avg : null)),
-      avg: pa === null ? DASH : `${pa.toFixed(0)} ms · ${t.connJitter} ${ja === null ? DASH : ja.toFixed(1)} ms`,
+      avg: pa === null ? DASH : `${pa.toFixed(0)} ms`,
       best: false,
     };
   };
-  const without = build("off", t.chartWithout, "#9aa4b2", (x) => x.b);
+  const without = build("off", t.chartWithout, "#9aa4b2", true, (x) => x.b);
   const lines = [without];
-  if (live?.running && samples.some((x) => x.t !== null)) {
-    const withMf = build("on", t.chartWith, "#3ddc84", (x) => x.t);
-    const a = avg(without.values.filter((v): v is number => v !== null));
-    const b = avg(withMf.values.filter((v): v is number => v !== null));
-    if (a !== null && b !== null) {
-      if (b < a) withMf.best = true;
-      else if (a < b) without.best = true;
-    }
-    lines.push(withMf);
-  }
+  const withOn = !!live?.running && samples.some((x) => x.t !== null);
+  if (withOn) lines.push(build("on", t.chartWith, "#3ddc84", false, (x) => x.t));
+
+  const last = samples.length ? samples[samples.length - 1] : null;
+  const lastBase = last?.b ?? null;
+  const lastWith = withOn ? last?.t ?? null : null;
+  const main = lastWith ?? lastBase;
+  const ringColor = lastWith ? "#3ddc84" : "#7c8cff";
+  const pingNow = main && typeof main.avg === "number" ? main.avg : null;
+
   return (
     <>
-      <div style={{ fontWeight: 600, fontSize: 13, margin: "6px 0 10px" }}>{t.chartTitle}</div>
+      <div style={{ fontWeight: 700, fontSize: 14, margin: "6px 0 10px" }}>{t.chartTitle}</div>
       {live?.only_game && <div style={PILL}>{t.onlyGameBadge}</div>}
       {live?.full_vpn && <div style={WARN_BOX}>{t.mfFullVpnWarn}</div>}
-      <LineChart lines={lines} emptyText={t.chartEmpty} bestTag={t.chartBest} />
+      <Box style={{ padding: "12px 10px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "112px 1fr", gap: 10, alignItems: "center" }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+            <Ring value={pingNow} max={200} color={ringColor} unit="ms" sub={lastWith ? t.chartWith : t.chartWithout} />
+            {lastWith && (
+              <div style={{ fontSize: 11, color: "#9aa4b2", textAlign: "center" }}>
+                {t.chartWithout}: {msText(lastBase)}
+              </div>
+            )}
+          </div>
+          <div style={{ minWidth: 0 }}>
+            <LineChart lines={lines} emptyText={t.chartEmpty} bestTag={t.chartBest} compact />
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", fontSize: 10, opacity: 0.85, marginTop: 4 }}>
+              <span style={{ color: "#9aa4b2" }}>- - {t.chartWithout}</span>
+              {withOn && <span style={{ color: "#3ddc84" }}>— {t.chartWith}</span>}
+            </div>
+          </div>
+        </div>
+      </Box>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
+        <MiniCard
+          icon={<FaWaveSquare size={13} />}
+          title={`${t.connJitter} (ms)`}
+          value={jitterText(main)}
+          withLabel={t.chartWith}
+          withValue={jitterText(lastWith)}
+          withoutLabel={t.chartWithout}
+          withoutValue={jitterText(lastBase)}
+          withOn={!!lastWith}
+        />
+        <MiniCard
+          icon={<FaPercent size={12} />}
+          title={t.tmLoss}
+          value={lossText(main)}
+          withLabel={t.chartWith}
+          withValue={lossText(lastWith)}
+          withoutLabel={t.chartWithout}
+          withoutValue={lossText(lastBase)}
+          withOn={!!lastWith}
+        />
+      </div>
       {live?.running && !live.tunnel_iface && !live.full_vpn && <div style={SMALL}>{t.chartNoTunnel}</div>}
       <Help show={helpOn} text={t.hChart} />
     </>
@@ -554,7 +597,11 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
         </>
       )}
       {route?.full_vpn && <div style={WARN_BOX}>{t.mfFullVpnWarn}</div>}
-      <Collapsible title={t.mfAccTitle} collapsed={isCollapsed("mudfishAcc")} onToggle={(v) => toggleSection("mudfishAcc", v)}>
+      <Collapsible
+        title={t.mfAccTitle}
+        icon={<FaUser size={14} />}
+        summary={status?.login_done ? t.mfAccConnected : t.mfAccWaiting}
+        collapsed={isCollapsed("mudfishAcc")} onToggle={(v) => toggleSection("mudfishAcc", v)}>
         <div style={SMALL}>{t.mfAccDesc}</div>
         <PanelSectionRow>
           <TextField label={t.mfUser} value={user} onChange={(e) => setUser(e.target.value)} />
@@ -581,7 +628,11 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
         )}
         <Help show={helpOn} text={t.hMfAcc} />
       </Collapsible>
-      <Collapsible title={t.mfAdvTitle} collapsed={isCollapsed("mudfishAdv")} onToggle={(v) => toggleSection("mudfishAdv", v)}>
+      <Collapsible
+        title={t.mfAdvTitle}
+        icon={<FaCog size={14} />}
+        summary={`${t.mfPort} 8282`}
+        collapsed={isCollapsed("mudfishAdv")} onToggle={(v) => toggleSection("mudfishAdv", v)}>
         <Card
           rows={[
             [t.mfAdvWebui, status?.webui || "http://127.0.0.1:8282"],
@@ -633,7 +684,11 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
             {t.mfPingTest}
           </ButtonItem>
         </PanelSectionRow>
-        <Collapsible title={t.mfLogsTitle} collapsed={isCollapsed("mudfishLogs")} onToggle={(v) => toggleSection("mudfishLogs", v)}>
+        <Collapsible
+          title={t.mfLogsTitle}
+          icon={<FaFileAlt size={14} />}
+          summary={logs ? undefined : t.sumCollapsed}
+          collapsed={isCollapsed("mudfishLogs")} onToggle={(v) => toggleSection("mudfishLogs", v)}>
           <PanelSectionRow>
             <ButtonItem layout="inline" label={t.mfLogsTitle} onClick={loadLogs}>
               {t.mfLogsLoad}

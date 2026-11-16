@@ -20,7 +20,8 @@ import {
   wifiSetStreaming,
   wifiSetWatchdog,
 } from "./api";
-import { Card, Collapsible, Help } from "./components";
+import { FaBolt, FaGamepad, FaSlidersH, FaWifi } from "react-icons/fa";
+import { Box, Card, Collapsible, Help } from "./components";
 import type { Texts } from "./i18n";
 
 const DASH = "—";
@@ -204,7 +205,11 @@ export function WifiTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
       <div style={{ fontSize: 11, opacity: 0.7, textAlign: "center", marginBottom: 12 }}>{t.wifiIndep}</div>
       <Help show={helpOn} text={t.hWifiStatus} />
 
-      <Collapsible title={t.wifiSecMain} collapsed={isCollapsed("wifiMain")} onToggle={(v) => toggleSection("wifiMain", v)}>
+      <Collapsible
+        title={t.wifiSecMain}
+        icon={<FaWifi size={14} />}
+        summary={`${activeCount(status)} ${t.sumActive}`}
+        collapsed={isCollapsed("wifiMain")} onToggle={(v) => toggleSection("wifiMain", v)}>
         <PanelSectionRow>
           <ToggleField
             label={t.wifiPowerSave}
@@ -247,7 +252,11 @@ export function WifiTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
         <Help show={helpOn} text={t.hWifiCake} />
       </Collapsible>
 
-      <Collapsible title={t.wifiSecAdv} collapsed={isCollapsed("wifiAdv")} onToggle={(v) => toggleSection("wifiAdv", v)}>
+      <Collapsible
+        title={t.wifiSecAdv}
+        icon={<FaSlidersH size={14} />}
+        summary={t.sumCollapsed}
+        collapsed={isCollapsed("wifiAdv")} onToggle={(v) => toggleSection("wifiAdv", v)}>
         <PanelSectionRow>
           <ToggleField
             label={t.wifiIpv6}
@@ -268,6 +277,7 @@ export function WifiTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
           />
         </PanelSectionRow>
         <Help show={helpOn} text={t.hWifiLock} />
+        <Box>
         <PanelSectionRow>
           <DropdownItem
             label={t.wifiBand}
@@ -278,7 +288,9 @@ export function WifiTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
             onChange={(opt) => run(() => (opt.data === "off" ? wifiSetBand(false, cfg?.band_preference || "a") : wifiSetBand(true, String(opt.data))))}
           />
         </PanelSectionRow>
+        </Box>
         <Help show={helpOn} text={t.hWifiBand} />
+        <Box>
         <PanelSectionRow>
           <DropdownItem
             label={t.wifiDns}
@@ -289,10 +301,15 @@ export function WifiTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
             onChange={(opt) => run(() => (opt.data === "off" ? wifiSetDns(false, dnsValue === "off" ? "cloudflare" : dnsValue, "") : wifiSetDns(true, String(opt.data), "")))}
           />
         </PanelSectionRow>
+        </Box>
         <Help show={helpOn} text={t.hWifiDns} />
       </Collapsible>
 
-      <Collapsible title={t.wifiSecStream} collapsed={isCollapsed("wifiStream")} onToggle={(v) => toggleSection("wifiStream", v)}>
+      <Collapsible
+        title={t.wifiSecStream}
+        icon={<FaGamepad size={14} />}
+        summary={t.sumCollapsed}
+        collapsed={isCollapsed("wifiStream")} onToggle={(v) => toggleSection("wifiStream", v)}>
         <PanelSectionRow>
           <ToggleField
             label={t.wifiStreaming}
@@ -315,7 +332,11 @@ export function WifiTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
         <Help show={helpOn} text={t.hWifiWatchdog} />
       </Collapsible>
 
-      <Collapsible title={t.wifiSecActions} collapsed={isCollapsed("wifiActions")} onToggle={(v) => toggleSection("wifiActions", v)}>
+      <Collapsible
+        title={t.wifiSecActions}
+        icon={<FaBolt size={14} />}
+        summary={t.sumCollapsed}
+        collapsed={isCollapsed("wifiActions")} onToggle={(v) => toggleSection("wifiActions", v)}>
         <PanelSectionRow>
           <ButtonItem layout="below" disabled={busy || !status} onClick={() => run(() => wifiOptimizeSafe(), applied(t))}>
             {t.wifiOptimizeAll}

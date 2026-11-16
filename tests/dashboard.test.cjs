@@ -85,3 +85,27 @@ test("v0.11.2: Painel tem botão Abrir painel do Mudfish sempre visível, e a ab
   for (const w of ["Abrir painel do Mudfish abre", "Open Mudfish panel button", "Abrir panel de Mudfish abre"]) assert.ok(i18n.includes(w), w);
 });
 
+test("v0.11.3: acordeões com ícone, resumo e seta; containers unificados; dropdowns dentro de Box", () => {
+  const src = (f) => fs.readFileSync(path.join(__dirname, "..", "src", f), "utf8");
+  const comp = src("components.tsx");
+  assert.ok(comp.includes("export function Collapsible") && comp.includes("summary?: string") && comp.includes("icon?: ReactNode"));
+  assert.ok(comp.includes("rgba(255, 255, 255, 0.12)") && comp.includes("rgba(255, 255, 255, 0.04)") && comp.includes("borderRadius: 10"));
+  for (const f of ["MudfishTab.tsx", "ConfTab.tsx", "WifiTab.tsx", "Content.tsx"]) {
+    const s = src(f);
+    const n = (s.match(/<Collapsible/g) || []).length;
+    assert.strictEqual((s.match(/summary=/g) || []).length, n, f);
+    assert.strictEqual((s.match(/icon=/g) || []).length - (s.match(/<MiniCard/g) || []).length, n, f);
+  }
+  assert.ok(/<Box>\s*<PanelSectionRow>\s*<DropdownItem/.test(src("ConfTab.tsx")));
+  assert.strictEqual((src("WifiTab.tsx").match(/<Box>/g) || []).length, 2);
+});
+
+test("v0.11.3: Painel tem anel de ping, gráfico com duas curvas e mini-cartões de jitter e perda", () => {
+  const mud = fs.readFileSync(path.join(__dirname, "..", "src", "MudfishTab.tsx"), "utf8");
+  const comp = fs.readFileSync(path.join(__dirname, "..", "src", "components.tsx"), "utf8");
+  assert.ok(mud.includes("<Ring") && (mud.match(/<MiniCard/g) || []).length === 2 && mud.includes("t.tmLoss"));
+  assert.ok(mud.includes('gridTemplateColumns: "1fr 1fr"') && mud.includes("gap: 8"));
+  assert.ok(mud.includes("#3ddc84") && mud.includes("dashed") && comp.includes("strokeDasharray"));
+  assert.ok(mud.includes("t.chartWith") && mud.includes("t.chartWithout"));
+});
+

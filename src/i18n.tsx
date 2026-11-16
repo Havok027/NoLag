@@ -182,6 +182,10 @@ export interface Texts {
   confDiagTitle: string;
   hConfDiag: string;
   chartTitle: string;
+  sumCollapsed: string;
+  sumActive: string;
+  sumGames: string;
+  tmLoss: string;
   chartWith: string;
   chartWithout: string;
   chartEmpty: string;
@@ -410,6 +414,10 @@ export const TEXTS: Record<Lang, Texts> = {
     confDiagTitle: "Diagnóstico",
     hConfDiag: "Mostra o estado da instalação e captura o que o painel do Mudfish expõe, para mapear a API local.\nNão gasta créditos.",
     chartTitle: "Ping ao vivo",
+    sumCollapsed: "Recolhido",
+    sumActive: "ativos",
+    sumGames: "jogos",
+    tmLoss: "Perda de pacotes",
     chartWith: "Com Mudfish",
     chartWithout: "Sem Mudfish",
     chartEmpty: "Aguardando medições…",
@@ -636,6 +644,10 @@ export const TEXTS: Record<Lang, Texts> = {
     confDiagTitle: "Diagnostics",
     hConfDiag: "Shows the install state and captures what the Mudfish panel exposes, to map the local API.\nIt does not use credits.",
     chartTitle: "Live ping",
+    sumCollapsed: "Collapsed",
+    sumActive: "active",
+    sumGames: "games",
+    tmLoss: "Packet loss",
     chartWith: "With Mudfish",
     chartWithout: "Without Mudfish",
     chartEmpty: "Waiting for measurements…",
@@ -862,6 +874,10 @@ export const TEXTS: Record<Lang, Texts> = {
     confDiagTitle: "Diagnóstico",
     hConfDiag: "Muestra el estado de la instalación y captura lo que expone el panel de Mudfish, para mapear la API local.\nNo gasta créditos.",
     chartTitle: "Ping en vivo",
+    sumCollapsed: "Contraído",
+    sumActive: "activos",
+    sumGames: "juegos",
+    tmLoss: "Pérdida de paquetes",
     chartWith: "Con Mudfish",
     chartWithout: "Sin Mudfish",
     chartEmpty: "Esperando mediciones…",

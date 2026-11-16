@@ -1,8 +1,9 @@
 import { Focusable } from "@decky/ui";
-import { ReactNode, useRef } from "react";
-import { FaCheck, FaChevronDown, FaChevronUp, FaCog, FaRoute, FaTachometerAlt } from "react-icons/fa";
+import { ReactNode, useRef, useState } from "react";
+import type { CSSProperties } from "react";
+import { FaCheck, FaChevronDown, FaChevronRight, FaCog, FaRoute, FaTachometerAlt } from "react-icons/fa";
 
-const LINE = "rgba(42, 167, 201, 0.35)";
+const LINE = "rgba(255, 255, 255, 0.10)";
 const ACCENT = "#2aa7c9";
 
 export type BadgeTone = "good" | "warn" | "bad" | "off";
@@ -94,11 +95,11 @@ export function Card(props: { badge?: string; tone?: BadgeTone; rows: [string, s
   return (
     <div
       style={{
-        border: `1px solid ${ACCENT}`,
+        border: "1px solid rgba(255, 255, 255, 0.12)",
         borderRadius: 10,
-        background: "rgba(14, 50, 90, 0.75)",
+        background: "rgba(255, 255, 255, 0.04)",
         overflow: "hidden",
-        marginBottom: 12,
+        marginBottom: 10,
         boxSizing: "border-box",
         width: "100%",
       }}
@@ -150,31 +151,55 @@ export function SectionTitle({ title }: { title: string }) {
   );
 }
 
+/** Container unificado: borda fina, fundo translúcido, cantos de 10 px. */
+export const BOX: CSSProperties = {
+  border: "1px solid rgba(255, 255, 255, 0.12)",
+  background: "rgba(255, 255, 255, 0.04)",
+  borderRadius: 10,
+  boxSizing: "border-box",
+  width: "100%",
+  marginBottom: 10,
+};
+
+export function Box({ children, style }: { children: ReactNode; style?: CSSProperties }) {
+  return <div style={{ ...BOX, padding: "6px 8px", ...style }}>{children}</div>;
+}
+
+const FOCUS_BORDER = "1px solid rgba(124, 140, 255, 0.95)";
+const FOCUS_GLOW = "0 0 0 2px rgba(124, 140, 255, 0.35)";
+
+/** Seção recolhível. Fechada: ícone e nome à esquerda; resumo e seta à direita. Aberta: controles no mesmo container. */
 export function Collapsible(props: {
   title: string;
   collapsed: boolean;
   onToggle: (collapsed: boolean) => void;
   children: ReactNode;
+  icon?: ReactNode;
+  summary?: string;
 }) {
   const tap = useTap(() => props.onToggle(!props.collapsed));
+  const [focused, setFocused] = useState(false);
   return (
-    <div style={{ marginBottom: 12 }}>
-      <SectionTitle title={props.title} />
+    <div style={{ ...BOX, overflow: "hidden", border: focused ? FOCUS_BORDER : BOX.border, boxShadow: focused ? FOCUS_GLOW : "none" }}>
       <Focusable
         onActivate={tap}
         onClick={tap}
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          padding: "8px 0",
-          marginBottom: 8,
-          borderRadius: 20,
-          background: "linear-gradient(180deg, #4a5fd6 0%, #3a49b8 100%)",
-        }}
+        onGamepadFocus={() => setFocused(true)}
+        onGamepadBlur={() => setFocused(false)}
+        style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 12px", fontSize: 14, fontWeight: 700 }}
       >
-        {props.collapsed ? <FaChevronDown size={14} /> : <FaChevronUp size={14} />}
+        {props.icon ? <span style={{ display: "flex", flexShrink: 0, color: ACCENT }}>{props.icon}</span> : null}
+        <span style={{ flex: 1, minWidth: 0, overflowWrap: "anywhere" }}>{props.title}</span>
+        {props.summary ? (
+          <span style={{ fontSize: 12, fontWeight: 600, opacity: 0.75, textAlign: "right", maxWidth: "45%", overflowWrap: "anywhere" }}>
+            {props.summary}
+          </span>
+        ) : null}
+        <span style={{ display: "flex", flexShrink: 0, opacity: 0.85 }}>
+          {props.collapsed ? <FaChevronRight size={12} /> : <FaChevronDown size={12} />}
+        </span>
       </Focusable>
-      {!props.collapsed && props.children}
+      {!props.collapsed && <div style={{ padding: "8px 8px 4px", borderTop: `1px solid ${LINE}` }}>{props.children}</div>}
     </div>
   );
 }
@@ -266,15 +291,16 @@ export interface ChartLine {
   values: (number | null)[];
   avg: string;
   best: boolean;
+  dashed?: boolean;
 }
 
-export function LineChart(props: { lines: ChartLine[]; emptyText: string; bestTag: string }) {
-  const W = 300;
-  const H = 110;
+export function LineChart(props: { lines: ChartLine[]; emptyText: string; bestTag: string; compact?: boolean }) {
+  const W = props.compact ? 200 : 300;
+  const H = props.compact ? 100 : 110;
   const PAD = 6;
   const nums = props.lines.flatMap((l) => l.values.filter((v): v is number => v !== null));
   if (!nums.length) {
-    return <div style={{ textAlign: "center", fontSize: 13, opacity: 0.8, padding: "14px 0" }}>{props.emptyText}</div>;
+    return <div style={{ textAlign: "center", fontSize: 13, opacity: 0.8, padding: props.compact ? "30px 0" : "14px 0" }}>{props.emptyText}</div>;
   }
   let lo = Math.min(...nums);
   let hi = Math.max(...nums);
@@ -300,17 +326,18 @@ export function LineChart(props: { lines: ChartLine[]; emptyText: string; bestTa
     return d;
   };
   return (
-    <div style={{ marginBottom: 12 }}>
-      <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ display: "block", background: "rgba(14, 50, 90, 0.5)", borderRadius: 8 }}>
+    <div style={{ marginBottom: props.compact ? 0 : 12 }}>
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ display: "block", background: props.compact ? "transparent" : "rgba(255,255,255,0.04)", borderRadius: 8 }}>
         {[0, 0.5, 1].map((f) => (
           <line key={f} x1={PAD} x2={W - PAD} y1={PAD + f * (H - PAD * 2)} y2={PAD + f * (H - PAD * 2)} stroke="rgba(255,255,255,0.12)" strokeWidth={1} />
         ))}
         <text x={W - PAD} y={PAD + 9} fontSize={9} fill="rgba(255,255,255,0.7)" textAnchor="end">{`${hi.toFixed(0)} ms`}</text>
         <text x={W - PAD} y={H - PAD - 2} fontSize={9} fill="rgba(255,255,255,0.7)" textAnchor="end">{`${lo.toFixed(0)} ms`}</text>
         {props.lines.map((l) => (
-          <path key={l.key} d={pathOf(l.values)} fill="none" stroke={l.color} strokeWidth={l.best ? 3 : 2} strokeLinejoin="round" strokeLinecap="round" />
+          <path key={l.key} d={pathOf(l.values)} fill="none" stroke={l.color} strokeWidth={l.best ? 3 : 2} strokeDasharray={l.dashed ? "4 3" : undefined} strokeLinejoin="round" strokeLinecap="round" />
         ))}
       </svg>
+      {!props.compact && (
       <div style={{ marginTop: 8 }}>
         {props.lines.map((l) => (
           <div key={l.key} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, padding: "3px 2px" }}>
@@ -320,6 +347,69 @@ export function LineChart(props: { lines: ChartLine[]; emptyText: string; bestTa
             <span style={{ fontWeight: 600 }}>{l.avg}</span>
           </div>
         ))}
+      </div>
+      )}
+    </div>
+  );
+}
+
+/** Medidor circular (anel) com o valor em destaque no centro. */
+export function Ring(props: { value: number | null; max: number; color: string; unit: string; sub?: string }) {
+  const R = 46;
+  const C = 2 * Math.PI * R;
+  const frac = props.value === null ? 0 : Math.max(0.04, Math.min(1, props.value / props.max));
+  return (
+    <div style={{ position: "relative", width: 112, height: 112, flexShrink: 0 }}>
+      <svg viewBox="0 0 112 112" width={112} height={112} style={{ display: "block" }}>
+        <circle cx={56} cy={56} r={R} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth={9} />
+        <circle
+          cx={56}
+          cy={56}
+          r={R}
+          fill="none"
+          stroke={props.color}
+          strokeWidth={9}
+          strokeLinecap="round"
+          strokeDasharray={`${(frac * C).toFixed(1)} ${C.toFixed(1)}`}
+          transform="rotate(-90 56 56)"
+        />
+      </svg>
+      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+        <span style={{ fontSize: 26, fontWeight: 800, lineHeight: 1.05, color: props.color }}>
+          {props.value === null ? "—" : props.value.toFixed(0)}
+        </span>
+        <span style={{ fontSize: 11, opacity: 0.8 }}>{props.unit}</span>
+        {props.sub ? <span style={{ fontSize: 9, opacity: 0.65, marginTop: 1 }}>{props.sub}</span> : null}
+      </div>
+    </div>
+  );
+}
+
+/** Mini-card de telemetria: ícone, valor atual e comparação Com / Sem Mudfish. */
+export function MiniCard(props: {
+  icon: ReactNode;
+  title: string;
+  value: string;
+  withLabel: string;
+  withValue: string;
+  withoutLabel: string;
+  withoutValue: string;
+  withOn: boolean;
+}) {
+  return (
+    <div style={{ ...BOX, marginBottom: 0, padding: "10px 10px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, opacity: 0.85 }}>
+        <span style={{ display: "flex", color: ACCENT }}>{props.icon}</span>
+        <span>{props.title}</span>
+      </div>
+      <div style={{ fontSize: 22, fontWeight: 800, margin: "4px 0 6px" }}>{props.value}</div>
+      <div style={{ fontSize: 11, display: "flex", justifyContent: "space-between", gap: 6, color: props.withOn ? "#3ddc84" : "inherit", opacity: props.withOn ? 1 : 0.6 }}>
+        <span>{props.withLabel}</span>
+        <span style={{ fontWeight: 700 }}>{props.withValue}</span>
+      </div>
+      <div style={{ fontSize: 11, display: "flex", justifyContent: "space-between", gap: 6, color: "#9aa4b2" }}>
+        <span>{props.withoutLabel}</span>
+        <span style={{ fontWeight: 700 }}>{props.withoutValue}</span>
       </div>
     </div>
   );

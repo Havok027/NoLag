@@ -1,6 +1,7 @@
 import { Focusable, PanelSection } from "@decky/ui";
 import { useEffect, useRef, useState } from "react";
 import { CurrentGame, GameProfile, deleteGame, getCurrentGame, getSettings, setGameModule, setSettings } from "./api";
+import { FaNetworkWired } from "react-icons/fa";
 import { Collapsible, Footer } from "./components";
 import { HelpToggle, TAB_KEYS, TabKey, TabNav } from "./TabNav";
 import { ConfTab } from "./ConfTab";
@@ -111,7 +112,7 @@ export function Content() {
           <LiveChart t={t} helpOn={helpOn} />
           <MudfishButton t={t} helpOn={helpOn} />
           <MfWarning t={t} helpOn={helpOn} />
-          <Collapsible title={t.connTitle} collapsed={isCollapsed("conn")} onToggle={(v) => toggleSection("conn", v)}>
+          <Collapsible title={t.connTitle} icon={<FaNetworkWired size={14} />} summary={t.sumCollapsed} collapsed={isCollapsed("conn")} onToggle={(v) => toggleSection("conn", v)}>
             <ConnCard t={t} helpOn={helpOn} />
           </Collapsible>
           <WifiButton t={t} />

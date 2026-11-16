@@ -1,7 +1,8 @@
 import { ButtonItem, DropdownItem, PanelSectionRow, ToggleField } from "@decky/ui";
 import { useState } from "react";
 import { CurrentGame, GameProfile, mudfishProbeApi, mudfishSetOption } from "./api";
-import { Card, Collapsible, Help } from "./components";
+import { FaGamepad, FaHeartbeat } from "react-icons/fa";
+import { Box, Card, Collapsible, Help } from "./components";
 import { LANGS, LANG_NAMES, Lang, Texts } from "./i18n";
 import { MfWarning, mudfishErrorFull, useMudfish } from "./MudfishTab";
 
@@ -48,6 +49,7 @@ export function ConfTab(p: Props) {
 
   return (
     <>
+      <Box>
       <PanelSectionRow>
         <DropdownItem
           label={t.language}
@@ -56,6 +58,7 @@ export function ConfTab(p: Props) {
           onChange={(opt) => p.onLang(opt.data as Lang)}
         />
       </PanelSectionRow>
+      </Box>
       <Help show={helpOn} text={t.hLang} />
       <MfWarning t={t} helpOn={helpOn} />
       <PanelSectionRow>
@@ -78,7 +81,11 @@ export function ConfTab(p: Props) {
         />
       </PanelSectionRow>
       <Help show={helpOn} text={t.hConfKeepOn} />
-      <Collapsible title={t.gamesTitle} collapsed={p.isCollapsed("confGames")} onToggle={(v) => p.toggleSection("confGames", v)}>
+      <Collapsible
+        title={t.gamesTitle}
+        icon={<FaGamepad size={14} />}
+        summary={`${Object.keys(p.games).length} ${t.sumGames}`}
+        collapsed={p.isCollapsed("confGames")} onToggle={(v) => p.toggleSection("confGames", v)}>
         <Help show={helpOn} text={t.hGameModules} />
         {p.current.appid && (
           <>
@@ -123,7 +130,11 @@ export function ConfTab(p: Props) {
           </div>
         ))}
       </Collapsible>
-      <Collapsible title={t.confDiagTitle} collapsed={p.isCollapsed("confDiag")} onToggle={(v) => p.toggleSection("confDiag", v)}>
+      <Collapsible
+        title={t.confDiagTitle}
+        icon={<FaHeartbeat size={14} />}
+        summary={status?.running ? t.mfRunning : t.mfStopped}
+        collapsed={p.isCollapsed("confDiag")} onToggle={(v) => p.toggleSection("confDiag", v)}>
         <Card rows={diag} />
         <PanelSectionRow>
           <ButtonItem
