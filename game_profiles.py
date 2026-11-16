@@ -1,4 +1,7 @@
-"""Perfis por jogo: ao abrir um jogo salvo, liga Wi-Fi e/ou Mudfish; ao sair, desfaz só o que ligou.
+"""Perfis por jogo: ao abrir um jogo salvo, liga Wi-Fi e/ou Mudfish; ao sair, desfaz o que ligou.
+
+Proteção de créditos: o Mudfish só liga aqui se a opção "ao abrir jogo" (aba Conf) estiver ativa, e é
+encerrado ao fechar QUALQUER jogo detectado, mesmo que tenha sido ligado à mão.
 
 Fala com os módulos só pelo core_state. Cada ação é isolada: se um módulo falhar ou estiver
 indisponível, o outro continua normalmente.
@@ -56,6 +59,10 @@ class GameProfiles:
         done, self.started = sorted(self.started), set()
         for mod in done:
             await core_state.bus.call(mod, "disable")
+        if "mudfish" not in done and core_state.bus.has("mudfish", "disable") and await self._is_active("mudfish"):
+            r = await core_state.bus.call("mudfish", "disable")  # ligado à mão ou por outro caminho: encerra também
+            if r["ok"] and not (isinstance(r["result"], dict) and r["result"].get("ok") is False):
+                done.append("mudfish")
         if done:
             await core_state.bus.emit("game_stopped", {"modules": done})
 

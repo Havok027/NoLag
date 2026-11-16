@@ -6,6 +6,15 @@ Segue o guia oficial do SteamOS (docs.mudfish.net, "Instalação e utilização 
   - execução: `/opt/mudfish/<versão>/bin/mudrun-headless` (sem flags) e login em http://127.0.0.1:8282.
 Como o SteamOS é imutável, a pasta persistente fica em DECKY_PLUGIN_RUNTIME_DIR/mudfish e é ligada
 em /opt/mudfish com mount --bind. Toda falha devolve um código e o motivo exato em "detail".
+
+Fluxo guiado: instalar -> entrar no painel (login) -> ativar. Auto Selection (padrão ligado) e Multi-Path
+(padrão desligado) são guardados em mudfish.json e aplicados pela API local; os endpoints dela ainda não são
+documentados pelo Mudfish, então a aplicação só roda depois de mapeados (probe_api captura o que o painel expõe).
+
+Proteção de créditos (o Mudfish cobra por tráfego): o serviço nasce sempre desligado; só liga sozinho se o usuário
+ativar "keep_on" (ao reiniciar) ou "auto_on_game" (ao abrir jogo) na aba Conf, e é encerrado ao fechar qualquer
+jogo. Ligar manualmente nunca ativa essas opções. O plugin só inicia o serviço; o roteamento por jogo
+(split-tunneling) é configurado no painel do Mudfish e nunca como VPN total do sistema.
 """
 import asyncio
 import json
@@ -36,8 +45,13 @@ DETAIL_MAX = 400
 LOG_MAX = 200_000
 _VERSION = re.compile(r"^\d+\.\d+\.\d+$")
 _RELEASE_RX = re.compile(r"mudfish-(\d+\.\d+\.\d+)-linux-x86_64\.sh")
-_USER_MAX = 64
-_PASS_MAX = 128
+OPTION_KEYS = ("auto_selection", "multipath", "auto_on_game", "keep_on")
+_TUNNEL_DEV = re.compile(r"^(tun|tap|ppp|mudfish|mud)", re.I)
+PROBE_MAX_REQUESTS = 6
+PROBE_MAX_BYTES = 200_000
+_SRC_RX = re.compile(r"""(?:src|href)=["']([^"'#?]+\.(?:js|json))["']""", re.I)
+_API_RX = re.compile(r"""["'](/[A-Za-z0-9_\-./]{2,80})["']""")
+_API_WORDS = ("api", "json", "node", "fast", "status", "login", "item", "route", "config", "log")
 
 
 def _tail(text, limit=DETAIL_MAX):
@@ -59,24 +73,17 @@ def _ver_key(v):
     return tuple(int(x) for x in v.split("."))
 
 
-def clean_user(value):
-    text = "".join(ch for ch in str(value or "") if ch.isprintable())[:_USER_MAX].strip()
-    return text if text and not text.startswith("-") else ""
-
-
-def clean_password(value):
-    text = str(value or "")[:_PASS_MAX]
-    return text if text and all(ch.isprintable() for ch in text) else ""
-
-
 def sanitize_settings(raw):
-    data = {"user": "", "password": "", "keep_on": False, "ping_target": core_state.DEFAULT_TARGET,
-            "ping_before": None, "ping_after": None}
+    """Só guarda o que o módulo usa. Usuário e senha de versões antigas são descartados."""
+    data = {"login_done": False, "keep_on": False, "auto_on_game": False, "auto_selection": True,
+            "multipath": False, "ping_target": core_state.DEFAULT_TARGET, "ping_before": None, "ping_after": None}
     if not isinstance(raw, dict):
         return data
-    data["user"] = clean_user(raw.get("user"))
-    data["password"] = clean_password(raw.get("password"))
+    data["login_done"] = raw.get("login_done") is True
     data["keep_on"] = raw.get("keep_on") is True
+    data["auto_on_game"] = raw.get("auto_on_game") is True
+    data["auto_selection"] = raw.get("auto_selection") is not False  # padrão: ligado
+    data["multipath"] = raw.get("multipath") is True
     data["ping_target"] = core_state.clean_target(raw.get("ping_target"))
     for key in ("ping_before", "ping_after"):
         m = raw.get(key)
@@ -86,6 +93,11 @@ def sanitize_settings(raw):
             if ok(avg) and ok(jit) and isinstance(loss, (int, float)) and not isinstance(loss, bool):
                 data[key] = {"avg": avg, "jitter": jit, "loss": loss}
     return data
+
+
+def _lines_tail(text, count=12, width=160):
+    lines = [ln.strip()[:width] for ln in str(text or "").splitlines() if ln.strip()]
+    return "\n".join(lines[-count:])
 
 
 def parse_release_versions(html):
@@ -133,6 +145,58 @@ def port_open(port=PORT, host="127.0.0.1"):
         s.close()
 
 
+class MudfishApi:
+    """Cliente da API local (127.0.0.1:8282). Só GET, só no próprio aparelho.
+
+    Os endpoints do Mudfish não são documentados. `ENDPOINTS` fica vazio até serem mapeados a partir das
+    respostas reais (probe_api): sem isso, nenhum perfil é aplicado e o motivo aparece na tela.
+    """
+    ENDPOINTS = {}  # ex.: {"nodes": "/...", "fastconnect": "/..."} depois de mapeado
+
+    def __init__(self, host="127.0.0.1", port=PORT):
+        self.base = "http://%s:%d" % (host, port)
+
+    def mapped(self):
+        return bool(self.ENDPOINTS)
+
+    def _get(self, path):
+        req = urllib.request.Request(self.base + path, headers={"User-Agent": "NoLag"})
+        with urllib.request.urlopen(req, timeout=3) as r:  # noqa: S310 - só 127.0.0.1
+            body = r.read(PROBE_MAX_BYTES)
+            return r.status, r.headers.get("Content-Type", ""), body
+
+    def apply(self, options):
+        """(ok, motivo) para {"auto_selection": bool, "multipath": bool}. Sem endpoints mapeados, não adivinha."""
+        if not self.mapped():
+            return False, "api_unmapped"
+        return False, "api_unmapped"
+
+    def probe(self):
+        """Lê a página do painel e os scripts dela, para descobrir quais caminhos a API usa."""
+        seen, queue, rows, found = set(), ["/"], [], set()
+        while queue and len(rows) < PROBE_MAX_REQUESTS:
+            path = queue.pop(0)
+            if path in seen:
+                continue
+            seen.add(path)
+            try:
+                status, ctype, body = self._get(path)
+            except Exception as e:
+                rows.append({"path": path, "status": 0, "type": "", "bytes": 0, "error": _err(e), "head": ""})
+                continue
+            text = body.decode("utf-8", "replace")
+            rows.append({"path": path, "status": status, "type": ctype, "bytes": len(body), "error": "",
+                         "head": text[:300]})
+            for m in _SRC_RX.findall(text):
+                if m.startswith("/") and m not in seen:
+                    queue.append(m)
+            for m in _API_RX.findall(text):
+                low = m.lower()
+                if any(w in low for w in _API_WORDS) and not low.endswith((".js", ".css", ".png", ".svg", ".ico")):
+                    found.add(m)
+        return rows, sorted(found)[:60]
+
+
 class MudfishManager:
     def __init__(self, settings_dir=None, runtime_dir=None, mount_point=MOUNT_POINT, runner=None):
         self.settings_dir = settings_dir or decky.DECKY_PLUGIN_SETTINGS_DIR
@@ -144,6 +208,8 @@ class MudfishManager:
         self.phase = "off"  # off | installing | starting | running | stopping | error
         self.error = ""
         self.detail = ""  # motivo exato da última falha, mostrado na tela
+        self.api = MudfishApi()
+        self.option_state = ""  # "" | applied | api_unmapped | failed
         self.owned = False  # ligado por perfil de jogo (não persiste ao reiniciar)
 
     # ---------- arquivos ----------
@@ -244,8 +310,12 @@ class MudfishManager:
             "phase": self.phase,
             "error": self.error,
             "detail": self.detail,
-            "user": cfg["user"],
-            "has_password": bool(cfg["password"]),
+            "auto_selection": cfg["auto_selection"],
+            "multipath": cfg["multipath"],
+            "auto_on_game": cfg["auto_on_game"],
+            "option_state": self.option_state,
+            "login_done": cfg["login_done"],
+            "step": "install" if not version else ("login" if not cfg["login_done"] else "activate"),
             "keep_on": cfg["keep_on"],
             "ping_target": cfg["ping_target"],
             "ping_before": cfg["ping_before"],
@@ -449,13 +519,13 @@ class MudfishManager:
         return {"ok": False, "error": code, "detail": detail}
 
     # ---------- daemon ----------
-    async def start(self, persist=True):
+    async def start(self):
         if self.lock.locked():
             return {"ok": False, "error": "busy"}
         async with self.lock:
-            return await self._start_locked(persist)
+            return await self._start_locked()
 
-    async def _start_locked(self, persist):
+    async def _start_locked(self):
         if self._alive():
             self._set("running")
             return {"ok": True, "error": ""}
@@ -499,10 +569,8 @@ class MudfishManager:
             tail = self._log_tail()
             await self._kill()
             return self._fail("start_failed", "a porta %d não abriu em %d s. Log: %s" % (PORT, START_WAIT, tail or "vazio"))
-        if persist:
-            cfg["keep_on"] = True
-            self.save(cfg)
-        self._set("running")
+        self._set("running")  # ligar nunca ativa o keep_on: só a aba Conf faz isso
+        await self._apply_options(cfg)
         return {"ok": True, "error": ""}
 
     async def _kill(self):
@@ -527,43 +595,50 @@ class MudfishManager:
             except Exception:
                 pass
 
-    async def _stop_locked(self, persist=True):
+    async def _stop_locked(self):
         self._set("stopping")
         await self._kill()
-        if persist:
-            cfg = self.load()
-            cfg["keep_on"] = False
-            self.save(cfg)
+        self.option_state = ""
         self._set("off")
 
-    async def stop(self, persist=True):
+    async def stop(self):
         async with self.lock:
-            await self._stop_locked(persist)
+            await self._stop_locked()
         return {"ok": True, "error": ""}
 
     async def set_enabled(self, enabled):
         return await (self.start() if enabled is True else self.stop())
 
     # ---------- configuração ----------
-    async def set_credentials(self, user, password):
-        cfg = self.load()
-        u = clean_user(user)
-        if not u:
-            return {"ok": False, "error": "bad_user"}
-        cfg["user"] = u
-        if password not in (None, ""):
-            p = clean_password(password)
-            if not p:
-                return {"ok": False, "error": "bad_password"}
-            cfg["password"] = p
-        if not cfg["password"]:
-            return {"ok": False, "error": "bad_password"}
-        self.save(cfg)
-        return {"ok": True, "error": ""}
+    async def _apply_options(self, cfg):
+        """Aplica Auto Selection e Multi-Path pela API local. Nunca derruba o serviço se falhar."""
+        opts = {"auto_selection": cfg["auto_selection"], "multipath": cfg["multipath"]}
+        try:
+            ok, why = await asyncio.to_thread(self.api.apply, opts)
+        except Exception as e:  # pragma: no cover - defensivo
+            ok, why = False, _err(e)
+        self.option_state = "applied" if ok else ("api_unmapped" if why == "api_unmapped" else "failed")
+        if not ok:
+            self._log_install("opções %s não aplicadas: %s" % (opts, why))
+        self._publish()
+        return ok, why
 
-    async def clear_credentials(self):
+    async def set_option(self, key, value):
+        """Liga ou desliga uma opção guardada (auto_selection, multipath, auto_on_game, keep_on)."""
+        if key not in OPTION_KEYS or not isinstance(value, bool):
+            return {"ok": False, "error": "bad_option"}
         cfg = self.load()
-        cfg["user"], cfg["password"] = "", ""
+        cfg[key] = value
+        self.save(cfg)
+        applied = False
+        if key in ("auto_selection", "multipath") and self._alive():
+            applied, _why = await self._apply_options(cfg)
+        return {"ok": True, "error": "", "key": key, "value": value, "applied": applied, "state": self.option_state}
+
+    async def confirm_login(self, done):
+        """O login é feito no painel (porta 8282); aqui só guarda que o usuário já entrou."""
+        cfg = self.load()
+        cfg["login_done"] = done is True
         self.save(cfg)
         return {"ok": True, "error": ""}
 
@@ -579,6 +654,8 @@ class MudfishManager:
         cfg = self.load()
         info = await core_state.route_get(cfg["ping_target"])
         info["running"] = self._alive()
+        # Aviso de VPN total: com o Mudfish ligado, a rota até um destino qualquer não pode passar pelo túnel.
+        info["full_vpn"] = bool(info["running"] and _TUNNEL_DEV.match(info.get("dev") or ""))
         return info
 
     async def test_ping(self):
@@ -590,6 +667,35 @@ class MudfishManager:
         self.save(cfg)
         return {"ok": m is not None, "which": "after" if running else "before", "metrics": m}
 
+    # ---------- logs e diagnóstico da API ----------
+    async def get_logs(self):
+        def read(path):
+            try:
+                with open(path, "rb") as f:
+                    f.seek(0, os.SEEK_END)
+                    f.seek(max(0, f.tell() - 4000))
+                    return _lines_tail(f.read().decode("utf-8", "replace"))
+            except OSError:
+                return ""
+        service = await asyncio.to_thread(read, self.log_path)
+        install = await asyncio.to_thread(read, self.install_log_path)
+        return {"ok": True, "error": "", "service": service, "install": install}
+
+    async def probe_api(self):
+        """Captura o que o painel local expõe e grava em mudfish-api.json (para mapear a API)."""
+        if not await asyncio.to_thread(port_open):
+            return {"ok": False, "error": "port_closed"}
+        rows, found = await asyncio.to_thread(self.api.probe)
+        path = os.path.join(self.runtime_dir, "mudfish-api.json")
+        try:
+            os.makedirs(self.runtime_dir, exist_ok=True)
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump({"time": time.strftime("%Y-%m-%d %H:%M:%S"), "requests": rows, "paths": found},
+                          f, ensure_ascii=False, indent=2)
+        except OSError as e:
+            return {"ok": False, "error": "write_failed", "detail": _err(e)}
+        return {"ok": True, "error": "", "requests": len(rows), "paths": len(found), "file": path}
+
     # ---------- ciclo de vida e barramento ----------
     def register(self):
         core_state.bus.register(
@@ -599,14 +705,18 @@ class MudfishManager:
         self._publish()
 
     async def _game_on(self):
-        r = await self.start(persist=False)
+        """Só liga sozinho se o usuário ativou "ao abrir jogo" na aba Conf (padrão: desligado)."""
+        if not self.load()["auto_on_game"]:
+            return {"ok": False, "error": "auto_off"}
+        r = await self.start()
         self.owned = bool(r.get("ok"))
         return r
 
     async def _game_off(self):
-        if self.owned:
-            self.owned = False
-            return await self.stop(persist=False)
+        """Ao fechar o jogo, encerra o Mudfish sempre (ligado por perfil ou à mão) para zerar o tráfego."""
+        self.owned = False
+        if self._alive():
+            return await self.stop()
         return {"ok": True, "error": ""}
 
     async def _main(self):
@@ -616,8 +726,12 @@ class MudfishManager:
                 ok, why = await self._ensure_mount()
                 if not ok:
                     decky.logger.error(f"NoLag Mudfish: montagem no boot falhou: {why}")
-            if self.load()["keep_on"] and not self._alive():
-                await self.start()
+            if self.load()["keep_on"]:
+                if not self._alive():
+                    await self.start()
+            elif self._alive():
+                await self._kill()  # sobra de uma sessão anterior: sempre nasce desligado
+                self._set("off")
         except Exception as e:
             decky.logger.error(f"NoLag Mudfish: falha ao iniciar: {e}")
 

@@ -1,12 +1,12 @@
 {
   "name": "nolag",
-  "version": "0.9.1",
-  "description": "NoLag: rotas de rede gratuitas e automáticas por jogo e otimização de Wi-Fi para o Decky Loader.",
+  "version": "0.10.0",
+  "description": "NoLag: otimização de Wi-Fi e rota por jogo com o Mudfish para o Decky Loader.",
   "type": "module",
   "scripts": {
     "build": "rollup -c",
     "watch": "rollup -c -w",
-    "test": "node --test tests/frontend.test.cjs tests/mudfish.test.cjs && python3 -m unittest discover -s tests -p 'test_*.py'"
+    "test": "node --test tests/*.cjs && python3 -m unittest discover -s tests -p 'test_*.py'"
   },
   "license": "BSD-3-Clause",
   "dependencies": {

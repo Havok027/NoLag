@@ -2,43 +2,27 @@
 
 **Português** | [English](README.en.md) | [Español](README.es.md)
 
-Plugin para o Decky Loader (Steam Deck, Legion Go e similares com SteamOS) que escolhe automaticamente, de forma gratuita, a melhor rota de rede até o servidor do jogo.
+Plugin para o Decky Loader (Steam Deck, Legion Go e similares com SteamOS e Bazzite) que reduz a latência e estabiliza a rede: otimizações de Wi-Fi e rota por jogo com o Mudfish. Os dois módulos funcionam separados.
 
-## Como usar
+## Abas
 
-Ligue a **Rota automática** e abra o jogo. Só isso: o plugin detecta o servidor sozinho e já vem com a **Sensibilidade** em Equilibrado.
+- **Painel:** duas chaves rápidas (Wi-Fi e Mudfish), o gráfico ao vivo de ping e jitter com e sem o Mudfish e a tabela Conexão.
+- **Wi-Fi:** otimizações da rede local (abaixo).
+- **Mudfish:** fluxo guiado em 3 passos (instalar, entrar no painel, ativar), **Auto Selection** (ligado por padrão), **Multi-Path** (desligado), botão para abrir o painel `http://127.0.0.1:8282` e Opções Avançadas (rota, ping antes e depois, logs).
+- **Conf:** ativar ao abrir jogo (desligado por padrão), manter ligado ao reiniciar (desligado por padrão), perfis por jogo com chaves de Wi-Fi e Mudfish, idioma (PT, EN, ES) e diagnóstico.
 
-- O **Painel** mostra ping, jitter e perda ao vivo, a rota em uso e, em **Diagnóstico**, o que o plugin vê do jogo. Troque de aba por toque, A ou L1/R1; as setas recolhem as seções.
-- O **Painel** também traz a **Qualidade** da conexão e um **gráfico ao vivo** com uma linha por rota. O botão **Y** mostra ou oculta a ajuda de cada opção.
-- Sem relay, o plugin só monitora ping, jitter e perda até o servidor do jogo.
-- Ligue a chave uma vez dentro do jogo: o NoLag salva o perfil dele, liga sozinho nas próximas vezes e desliga ao sair. Gerencie em Rotas > Perfis de jogos.
-- Com relay, ele também testa os caminhos alternativos e usa o melhor.
+## Mudfish: proteção de créditos
 
-## Relay automático (recomendado)
+O Mudfish cobra por tráfego. Por isso o NoLag **sempre começa com o Mudfish desligado**, ao ligar o console e ao abrir um jogo, a menos que você ative a opção na aba Conf. Ao fechar qualquer jogo, o Mudfish é encerrado na hora. Ligar à mão nunca ativa a opção de manter ligado.
 
-O usuário só liga a chave. O plugin gera a própria chave WireGuard, se cadastra sozinho nos relays listados no `relay-code.txt` e passa a medir e usar o melhor caminho.
-
-Para o dono do projeto (uma vez):
-1. Num servidor gratuito (ex.: Oracle Cloud Always Free, Ubuntu), coloque `relay-server.sh` e `enroll_server.py` na mesma pasta e rode `sudo bash relay-server.sh NoLag-BR`.
-2. Na Oracle, libere UDP 51820 e TCP 8077 na Security List.
-3. Cole a linha `nolag2:...` impressa no fim em uma linha do `relay-code.txt` na raiz do repositório. Esse código não tem chave privada e pode ficar em repositório público.
-4. O servidor só encaminha UDP e ping, com limite de velocidade por aparelho, e bloqueia redes internas.
-
-## Relays (opcional)
-
-1. Em um servidor Linux gratuito (por exemplo, Oracle Cloud Always Free, Ubuntu), rode `sudo bash relay-setup.sh` (arquivo deste repositório). Ele instala o WireGuard e imprime um código. Na Oracle, libere também a porta UDP 51820 na Security List.
-2. Pré-configurado: coloque o código em uma linha do arquivo `relay-code.txt` na raiz do repositório. O build inclui o arquivo na release e o plugin lê sozinho. Atenção: o código contém uma chave privada; se o repositório for público, qualquer pessoa pode usar o seu relay.
-3. Alternativa: cole o código em **Relays** (até 4 relays).
-
-## Mudfish / Rotas (módulo independente)
-
-Aba **Rotas**: instala o Mudfish oficial numa pasta persistente (sobrevive a atualizações do SteamOS, ligada em `/opt/mudfish` com `mount --bind`), segue o guia oficial do SteamOS (instalador com `sh`, serviço `mudrun-headless` sem flags, login no painel), mostra o motivo exato quando a instalação falha, liga e desliga o serviço e mostra a porta 8282, a rota ativa e o ping antes e depois. O botão "Abrir painel do Mudfish" abre `http://127.0.0.1:8282` para escolher o nó. Funciona sem o Wi-Fi e sem a rota do NoLag. O Mudfish cobra por tráfego.
-
-No Painel há uma chave para o Wi-Fi e outra para o Mudfish, e a tabela **Conexão** (interface, IP, gateway, ping e jitter). Cada jogo salvo pode ligar o Wi-Fi e/ou o Mudfish sozinho ao abrir; ao sair, só desliga o que ele mesmo ligou.
+- **Nunca baixe nada com o Mudfish ligado** (jogos, atualizações, arquivos): o tráfego é cobrado.
+- Use só o roteamento por jogo no painel do Mudfish. **Não ative VPN total do sistema.** O NoLag avisa se o tráfego do sistema parecer passar pelo túnel.
+- **Multi-Path** melhora estabilidade e jitter, mas gasta mais créditos.
+- A instalação segue o guia oficial do SteamOS (instalador com `sh`, serviço `mudrun-headless` sem flags, login no painel) numa pasta persistente ligada em `/opt/mudfish`, e mostra o motivo exato quando algo falha. A API local do Mudfish não é documentada: Auto Selection e Multi-Path ficam salvos e o app avisa quando é preciso ativá-los no painel.
 
 ## Wi-Fi (módulo independente)
 
-Aba **Wi-Fi**: otimizações da rede local que funcionam sozinhas, sem a rota do NoLag e sem o Mudfish.
+Aba **Wi-Fi**: otimizações da rede local que funcionam sozinhas, sem o Mudfish.
 
 - Desligar a economia de energia, corrigir ao acordar, buffers de rede maiores, fila CAKE, IPv6, trava no ponto de acesso, banda preferida e DNS.
 - Modo streaming (liga os ajustes só durante um stream) e correção de streams travados.
@@ -47,16 +31,9 @@ Aba **Wi-Fi**: otimizações da rede local que funcionam sozinhas, sem a rota do
 - Não envia nada para a internet. Se o WiFi Optimizer original estiver instalado, desligue um dos dois.
 - Módulo derivado do WiFi Optimizer 0.25.0 (Arcada Labs, BSD 3-Clause): veja `THIRD_PARTY_NOTICES.md`.
 
-## Como funciona
-
-- O plugin acha o jogo aberto pelo Steam e observa (só leitura) para qual IP ele envia dados.
-- Desvia só o tráfego para o IP do servidor pelo melhor caminho. Se o relay piorar, volta para a rota direta. Ao fechar o jogo, desligar ou descarregar o plugin, tudo é removido.
-- Endereços privados nunca são desviados.
-- Com relays, usa `ip`, `wg`, `iptables` e `ping`.
-
 ## Idiomas
 
-Português, English e Español (Config. > Idioma).
+Português, English e Español (Conf > Idioma).
 
 ## Desenvolvimento
 

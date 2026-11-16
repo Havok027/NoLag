@@ -1,3 +1,13 @@
+## v0.10.0
+
+- Rota interna antiga do NoLag removida por completo (lógica, interface e testes). O Mudfish passa a ser a única rota; o Wi-Fi não foi alterado.
+- Quatro abas: Painel, Wi-Fi, Mudfish e Conf. O Painel tem só duas chaves rápidas (Wi-Fi e Mudfish), um gráfico ao vivo de ping e jitter com e sem o Mudfish e o card de status.
+- Aba Mudfish: fluxo guiado em três passos (instalar, entrar no painel, ativar), Seleção automática (Auto Selection, ligada por padrão), Multi-Path (desligado), botão para abrir o painel local e Opções Avançadas recolhíveis com rota, ping antes e depois e logs. A API local do Mudfish não é documentada: as duas opções ficam salvas e a tela avisa quando é preciso ativá-las no painel.
+- Aba Conf: ativar ao abrir jogo e manter ligado ao reiniciar (as duas desligadas por padrão), perfis por jogo com chaves independentes de Wi-Fi e Mudfish, idioma e diagnóstico.
+- Proteção de créditos: o Mudfish sempre começa desligado, ligar à mão nunca ativa o manter ligado, e ele é encerrado ao fechar qualquer jogo. Avisos visíveis para nunca baixar nada com o Mudfish ligado e não usar VPN total, com alerta se o tráfego do sistema parecer passar pelo túnel.
+- Ajuda contextual nos três idiomas: o que melhora (estabilidade e jitter) e o que custa (créditos extras no Multi-Path, downloads e VPN total).
+- Testes atualizados e novos para as opções, a proteção de créditos e as quatro abas.
+
 ## v0.9.1
 
 - Mudfish: instalação corrigida para seguir o guia oficial do SteamOS: o instalador roda com `sh` (extração numa pasta temporária própria, sem depender do /tmp), grava em /opt/mudfish/<versão>/bin e o serviço abre com `mudrun-headless` sem flags; o login é feito no painel (porta 8282).
