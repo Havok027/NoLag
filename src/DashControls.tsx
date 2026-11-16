@@ -1,4 +1,4 @@
-import { Focusable, PanelSectionRow } from "@decky/ui";
+import { ButtonItem, Focusable, Navigation, PanelSectionRow } from "@decky/ui";
 import { useRef } from "react";
 import type { CSSProperties } from "react";
 import { wifiReset, wifiOptimizeSafe, mudfishSetEnabled } from "./api";
@@ -68,6 +68,14 @@ export function MudfishButton({ t, helpOn }: { t: Texts; helpOn: boolean }) {
   const working = status?.phase === "installing" || status?.phase === "starting" || status?.phase === "stopping";
   const ready = !!status?.installed;
   const label = !ready && !running ? t.btnMfSetup : running ? t.btnMfOn : t.btnMfOff;
+  const openWeb = () => {
+    try {
+      Navigation.CloseSideMenus();
+      Navigation.NavigateToExternalWeb(status?.webui || "http://127.0.0.1:8282");
+    } catch {
+      /* sem navegador interno, nada a fazer */
+    }
+  };
   return (
     <>
       <ActionButton
@@ -76,6 +84,18 @@ export function MudfishButton({ t, helpOn }: { t: Texts; helpOn: boolean }) {
         disabled={busy || working || !status || (!ready && !running)}
         onPress={() => run(() => mudfishSetEnabled(!running), running ? t.mfOff : t.mfOn)}
       />
+      <PanelSectionRow>
+        <ButtonItem
+          layout="inline"
+          label={t.mfOpenWeb}
+          description={t.mfOpenWebDesc}
+          disabled={!status?.port_open}
+          onClick={openWeb}
+        >
+          {t.mfOpenWeb}
+        </ButtonItem>
+      </PanelSectionRow>
+      <div style={{ height: 10 }} />
       <Help show={helpOn} text={t.hDashBtns} />
     </>
   );

@@ -74,3 +74,14 @@ test("a rota interna antiga não existe mais no frontend", () => {
     }
   }
 });
+
+test("v0.11.2: Painel tem botão Abrir painel do Mudfish sempre visível, e a aba Mudfish mantém o dela", () => {
+  const dash = fs.readFileSync(path.join(__dirname, "..", "src", "DashControls.tsx"), "utf8");
+  assert.ok(dash.includes("t.mfOpenWeb") && dash.includes("NavigateToExternalWeb") && dash.includes("http://127.0.0.1:8282"));
+  const i = dash.indexOf("label={t.mfOpenWeb}");
+  assert.ok(!/(running|installed|ready|session|login_done)\s*&&/.test(dash.slice(i - 120, i)));
+  assert.ok(fs.readFileSync(path.join(__dirname, "..", "src", "MudfishTab.tsx"), "utf8").includes("label={t.mfOpenWeb}"));
+  const i18n = fs.readFileSync(path.join(__dirname, "..", "src", "i18n.tsx"), "utf8");
+  for (const w of ["Abrir painel do Mudfish abre", "Open Mudfish panel button", "Abrir panel de Mudfish abre"]) assert.ok(i18n.includes(w), w);
+});
+
