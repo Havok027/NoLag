@@ -33,14 +33,14 @@ def read(name):
 
 class GamesTests(unittest.TestCase):
     def test_game_flags_are_kept_and_sanitized(self):
-        g = main.clean_games({"10": {"name": "A", "auto": True, "profile": "stable", "wifi": True, "mudfish": "sim"}})
+        g = main.clean_games({"10": {"name": "A", "auto": True, "profile": "stable", "wifi": True, "mudfish": "sim"}})  # auto/profile antigos caem
         self.assertTrue(g["10"]["wifi"])
         self.assertNotIn("mudfish", g["10"])
         old = main.clean_games({"11": {"name": "B", "auto": False, "profile": "balanced"}})
-        self.assertEqual(old["11"], {"name": "B", "auto": False, "profile": "balanced"})  # perfis antigos seguem iguais
+        self.assertEqual(old["11"], {"name": "B"})  # perfis antigos continuam válidos, sem os campos da rota
 
     def test_sections_for_new_ui(self):
-        for k in ("mudfishMain", "mudfishLogin", "mudfishNet", "conn"):
+        for k in ("mudfishMain", "mudfishAdv", "mudfishLogs", "conn"):
             self.assertIn(k, main.SECTIONS)
 
     def test_set_game_module_creates_and_updates(self):
@@ -67,8 +67,8 @@ class RouterTests(unittest.TestCase):
     def test_methods_exist(self):
         p = main.Plugin()
         for name in ("mudfish_available", "mudfish_get_status", "mudfish_install", "mudfish_set_enabled",
-                     "mudfish_set_credentials", "mudfish_clear_credentials", "mudfish_set_ping_target",
-                     "mudfish_get_route", "mudfish_test_ping", "get_snapshot", "get_current_game", "set_game_module"):
+                     "mudfish_set_option", "mudfish_confirm_login", "mudfish_set_ping_target",
+                     "mudfish_get_route", "mudfish_test_ping", "mudfish_get_logs", "mudfish_probe_api", "get_snapshot", "get_current_game", "set_game_module"):
             self.assertTrue(callable(getattr(p, name)), name)
 
     def test_plugin_works_without_mudfish_module(self):
@@ -77,8 +77,7 @@ class RouterTests(unittest.TestCase):
         self.assertFalse(run(p.mudfish_available())["available"])
         self.assertEqual(run(p.mudfish_install())["error"], "mudfish_unavailable")
         self.assertEqual(run(p.mudfish_get_status())["error"], "mudfish_unavailable")
-        self.assertEqual(run(p.status_or_off())["phase"] if hasattr(p, "status_or_off") else "off", "off")
-        self.assertEqual(run(p.get_status())["phase"], "off")  # rota NoLag segue normal
+        self.assertFalse(hasattr(p, "get_status"))  # a rota interna não existe mais
 
     def test_wifi_keeps_working_when_mudfish_is_off(self):
         p = main.Plugin()

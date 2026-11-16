@@ -1,5 +1,5 @@
-export type TabKey = "dash" | "wifi" | "routes" | "settings";
-export const TAB_KEYS: TabKey[] = ["dash", "wifi", "routes", "settings"];
+export type TabKey = "dash" | "wifi" | "mudfish" | "conf";
+export const TAB_KEYS: TabKey[] = ["dash", "wifi", "mudfish", "conf"];
 
 interface Props {
   labels: Record<TabKey, string>;

@@ -1,20 +1,14 @@
 import { callable } from "@decky/api";
 import type { Lang } from "./i18n";
 
-export type Profile = "stable" | "balanced" | "aggressive";
-
 export interface GameProfile {
   name: string;
-  auto: boolean;
-  profile: Profile;
   wifi?: boolean;
   mudfish?: boolean;
 }
 
 export interface Settings {
   language: Lang;
-  enabled: boolean;
-  profile: Profile;
   collapsed: Record<string, boolean>;
   games: Record<string, GameProfile>;
 }
@@ -25,62 +19,11 @@ export interface Metrics {
   loss: number;
 }
 
-export interface RelayStatus {
-  name: string;
-  iface: string;
-  endpoint: string;
-  valid: boolean;
-  error: string;
-  metrics: Metrics | null;
-  score: number | null;
-}
-
-export interface Diag {
-  pids: number;
-  ports: number;
-  seen: number;
-  top: [string, number][];
-}
-
-export interface Status {
-  phase: "off" | "starting" | "waiting" | "running" | "error";
-  active: string;
-  game: string;
-  appid: string;
-  target: string;
-  direct: Metrics | null;
-  direct_score: number | null;
-  relays: RelayStatus[];
-  error: string;
-  detail: string;
-  notice: string;
-  diag: Diag;
-  history: Record<string, (number | null)[]>;
-}
-
-export interface Relay {
-  name: string;
-  endpoint: string;
-  builtin: boolean;
-}
-
-export interface AddRelayResult {
-  ok: boolean;
-  error: string;
-  relays: Relay[];
-}
-
 export const getSettings = callable<[], Settings>("get_settings");
 export const setSettings = callable<[Partial<Settings>], Settings>("set_settings");
-export const setRouteEnabled = callable<[boolean], Status>("set_enabled");
-export const getStatus = callable<[], Status>("get_status");
-export const getRelays = callable<[], Relay[]>("get_relays");
-export const addRelay = callable<[string], AddRelayResult>("add_relay");
-export const removeRelay = callable<[string], Relay[]>("remove_relay");
-export const setGameAuto = callable<[string, boolean], Settings>("set_game_auto");
 export const deleteGame = callable<[string], Settings>("delete_game");
 
-// ---- Módulo Wi-Fi (independente da rota e do Mudfish) ----
+// ---- Módulo Wi-Fi (independente do Mudfish) ----
 
 export interface WifiResult {
   success: boolean;
@@ -140,7 +83,7 @@ export const wifiSetWatchdog = callable<[enabled: boolean], WifiResult>("wifi_se
 export const wifiOptimizeSafe = callable<[], WifiOptimizeResult>("wifi_optimize_safe");
 export const wifiReset = callable<[], WifiResult>("wifi_reset_settings");
 
-// ---- Módulo Mudfish (independente do Wi-Fi e da rota) ----
+// ---- Módulo Mudfish (independente do Wi-Fi) ----
 
 export interface MudfishResult {
   ok: boolean;
@@ -159,8 +102,12 @@ export interface MudfishStatus {
   phase: "off" | "installing" | "starting" | "running" | "stopping" | "error";
   error: string;
   detail?: string;
-  user?: string;
-  has_password?: boolean;
+  auto_selection?: boolean;
+  multipath?: boolean;
+  auto_on_game?: boolean;
+  option_state?: "" | "applied" | "api_unmapped" | "failed";
+  login_done?: boolean;
+  step?: "install" | "login" | "activate";
   keep_on?: boolean;
   ping_target?: string;
   ping_before?: Metrics | null;
@@ -173,6 +120,7 @@ export interface RouteInfo {
   src: string;
   via: string;
   target?: string;
+  full_vpn?: boolean;
 }
 
 export interface MudfishPing {
@@ -199,8 +147,15 @@ export const mudfishAvailable = callable<[], { available: boolean; error: string
 export const mudfishGetStatus = callable<[], MudfishStatus>("mudfish_get_status");
 export const mudfishInstall = callable<[], MudfishResult>("mudfish_install");
 export const mudfishSetEnabled = callable<[enabled: boolean], MudfishResult>("mudfish_set_enabled");
-export const mudfishSetCredentials = callable<[user: string, password: string], MudfishResult>("mudfish_set_credentials");
-export const mudfishClearCredentials = callable<[], MudfishResult>("mudfish_clear_credentials");
+export type MudfishOption = "auto_selection" | "multipath" | "auto_on_game" | "keep_on";
+export const mudfishSetOption = callable<[key: MudfishOption, value: boolean], MudfishResult & { applied?: boolean; state?: string }>(
+  "mudfish_set_option"
+);
+export const mudfishConfirmLogin = callable<[done: boolean], MudfishResult>("mudfish_confirm_login");
+export const mudfishGetLogs = callable<[], { ok: boolean; service: string; install: string }>("mudfish_get_logs");
+export const mudfishProbeApi = callable<[], { ok: boolean; error: string; detail?: string; requests?: number; paths?: number; file?: string }>(
+  "mudfish_probe_api"
+);
 export const mudfishSetPingTarget = callable<[target: string], { ok: boolean; target: string }>("mudfish_set_ping_target");
 export const mudfishGetRoute = callable<[], RouteInfo & { running: boolean }>("mudfish_get_route");
 export const mudfishTestPing = callable<[], MudfishPing>("mudfish_test_ping");

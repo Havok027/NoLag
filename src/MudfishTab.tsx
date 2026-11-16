@@ -1,6 +1,7 @@
 import { toaster } from "@decky/api";
 import { ButtonItem, Navigation, PanelSectionRow, TextField, ToggleField } from "@decky/ui";
 import { useEffect, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import {
   Metrics,
   MudfishPing,
@@ -10,16 +11,18 @@ import {
   Snapshot,
   getSnapshot,
   mudfishAvailable,
-  mudfishClearCredentials,
+  mudfishConfirmLogin,
+  mudfishGetLogs,
   mudfishGetRoute,
   mudfishGetStatus,
   mudfishInstall,
-  mudfishSetCredentials,
+  mudfishProbeApi,
   mudfishSetEnabled,
   mudfishSetPingTarget,
+  mudfishSetOption,
   mudfishTestPing,
 } from "./api";
-import { Card, Collapsible, Help } from "./components";
+import { Card, ChartLine, Collapsible, Help, LineChart } from "./components";
 import type { Texts } from "./i18n";
 
 const DASH = "—";
@@ -37,8 +40,6 @@ export function mudfishError(t: Texts, code: string): string {
   switch (code) {
     case "not_installed":
       return t.mfErrNotInstalled;
-    case "no_credentials":
-      return t.mfErrNoCreds;
     case "mount_failed":
       return t.mfErrMount;
     case "download_failed":
@@ -53,10 +54,10 @@ export function mudfishError(t: Texts, code: string): string {
       return t.mfErrBusy;
     case "unsupported_arch":
       return t.mfErrArch;
-    case "bad_user":
-      return t.mfErrBadUser;
-    case "bad_password":
-      return t.mfErrBadPass;
+    case "bad_option":
+      return t.mfErrBadOption;
+    case "port_closed":
+      return t.mfErrPortClosed;
     default:
       return t.mfErrGeneric;
   }
@@ -237,21 +238,111 @@ function pingRows(t: Texts, s: MudfishStatus | null): [string, string][] {
   ];
 }
 
+const WARN_BOX: CSSProperties = {
+  fontSize: 12,
+  padding: "8px 10px",
+  margin: "0 0 8px 0",
+  borderRadius: 8,
+  border: "1px solid rgba(255,200,0,0.7)",
+  background: "rgba(255,200,0,0.12)",
+  color: "#ffd84a",
+  wordBreak: "break-word",
+};
+
+/** Aviso fixo de créditos: sem downloads com o Mudfish ligado e sem VPN total. */
+export function MfWarning({ t, helpOn }: { t: Texts; helpOn: boolean }) {
+  return (
+    <>
+      <div style={WARN_BOX}>
+        <div style={{ fontWeight: 700, marginBottom: 2 }}>{t.mfWarnTitle}</div>
+        <div>{t.mfWarnDownload}</div>
+        <div>{t.mfWarnSplit}</div>
+      </div>
+      <Help show={helpOn} text={t.hMfWarn} />
+    </>
+  );
+}
+
+const CHART_MAX = 30;
+const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
+
+/** Gráfico ao vivo do Painel: ping e jitter com e sem o Mudfish, a cada 8 s. */
+export function LiveChart({ t, helpOn }: { t: Texts; helpOn: boolean }) {
+  const [samples, setSamples] = useState<{ ping: number | null; jit: number | null; on: boolean }[]>([]);
+  const [warn, setWarn] = useState(false);
+  const alive = useRef(true);
+
+  useEffect(() => {
+    alive.current = true;
+    const tick = async () => {
+      try {
+        const s = await getSnapshot();
+        if (!alive.current || !s) return;
+        const on = !!s.modules?.mudfish?.running;
+        setWarn(on && !!s.route?.full_vpn);
+        setSamples((cur) => [...cur, { ping: s.ping?.avg ?? null, jit: s.ping?.jitter ?? null, on }].slice(-CHART_MAX));
+      } catch {
+        /* mantém o gráfico como está */
+      }
+    };
+    tick();
+    const id = setInterval(tick, SNAP_MS);
+    return () => {
+      alive.current = false;
+      clearInterval(id);
+    };
+  }, []);
+
+  const build = (on: boolean, key: string, label: string, color: string): ChartLine => {
+    const mine = samples.filter((x) => x.on === on);
+    const pa = avg(mine.map((x) => x.ping).filter((v): v is number => v !== null));
+    const ja = avg(mine.map((x) => x.jit).filter((v): v is number => v !== null));
+    return {
+      key,
+      label,
+      color,
+      values: samples.map((x) => (x.on === on ? x.ping : null)),
+      avg: pa === null ? DASH : `${pa.toFixed(0)} ms · ${t.connJitter} ${ja === null ? DASH : ja.toFixed(1)} ms`,
+      best: false,
+    };
+  };
+  const without = build(false, "off", t.chartWithout, "#9aa4b2");
+  const withMf = build(true, "on", t.chartWith, "#3ddc84");
+  const mean = (l: ChartLine) => avg(l.values.filter((v): v is number => v !== null));
+  const a = mean(without);
+  const b = mean(withMf);
+  if (a !== null && b !== null) {
+    if (b < a) withMf.best = true;
+    else if (a < b) without.best = true;
+  }
+  return (
+    <>
+      <div style={{ fontWeight: 600, fontSize: 13, margin: "4px 0" }}>{t.chartTitle}</div>
+      {warn && <div style={WARN_BOX}>{t.mfFullVpnWarn}</div>}
+      <LineChart lines={[without, withMf]} emptyText={t.chartEmpty} bestTag={t.chartBest} />
+      <Help show={helpOn} text={t.hChart} />
+    </>
+  );
+}
+
+const SMALL: CSSProperties = { fontSize: 11, opacity: 0.7, textAlign: "center", marginBottom: 6, wordBreak: "break-word" };
+const MONO: CSSProperties = { fontSize: 10, opacity: 0.8, whiteSpace: "pre-wrap", wordBreak: "break-word", marginBottom: 8 };
+
+/** Aba Rotas: fluxo guiado (instalar, entrar, ativar), perfil de desempenho e opções avançadas. */
 export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
   const { available, loadError, status, busy, note, run, refresh } = useMudfish(t);
-  const [user, setUser] = useState("");
-  const [pass, setPass] = useState("");
   const [target, setTarget] = useState("");
   const [route, setRoute] = useState<RouteInfo | null>(null);
   const [testing, setTesting] = useState(false);
   const [pingNote, setPingNote] = useState("");
+  const [logs, setLogs] = useState<{ service: string; install: string } | null>(null);
+  const [probeNote, setProbeNote] = useState("");
   const timer = useRef<number | undefined>(undefined);
   const filled = useRef(false);
 
   useEffect(() => {
     if (status && !filled.current) {
       filled.current = true;
-      setUser(status.user ?? "");
       setTarget(status.ping_target ?? "");
     }
   }, [status]);
@@ -269,9 +360,7 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
     return (
       <>
         <Card rows={[[t.mfUnavailable, DASH]]} />
-        {loadError && (
-          <div style={{ fontSize: 11, opacity: 0.7, textAlign: "center", wordBreak: "break-word" }}>{loadError}</div>
-        )}
+        {loadError && <div style={SMALL}>{loadError}</div>}
       </>
     );
   }
@@ -279,29 +368,27 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
   const badge = mfBadge(t, status);
   const working = status?.phase === "installing" || status?.phase === "starting" || status?.phase === "stopping";
   const installed = !!status?.installed;
+  const step = status?.step ?? "install";
+  const done = (v: boolean) => (v ? t.mfDone : t.mfPending);
+
   const rows: [string, string][] = [
-    [t.mfInstalledRow, installed ? `${t.mfInstalledYes} · ${status?.version ?? ""}` : t.mfInstalledNo],
-    [t.mfDaemon, status?.running ? t.mfRunning : t.mfStopped],
-    [t.mfPort, status?.port_open ? t.mfPortOpen : t.mfPortClosed],
+    [t.mfStepInstall, installed ? `${t.mfDone} · ${status?.version ?? ""}` : t.mfPending],
+    [t.mfStepLogin, done(!!status?.login_done)],
+    [t.mfStepActivate, done(!!status?.running)],
   ];
   if (status?.phase === "error" && status.error) rows.push([t.mfBadgeError, mudfishErrorFull(t, status.error, status.detail)]);
 
-  const saveLogin = () =>
-    run(async () => {
-      const r = await mudfishSetCredentials(user, pass);
-      if (r.ok) setPass("");
-      return r;
-    }, t.mfLoginSaved);
-
-  const clearLogin = () =>
-    run(async () => {
-      const r = await mudfishClearCredentials();
-      if (r.ok) {
-        setUser("");
-        setPass("");
-      }
-      return r;
-    }, t.mfLoginCleared);
+  const hint = step === "install" ? t.mfHintInstall : step === "login" ? t.mfHintLogin : t.mfHintActivate;
+  const optNote =
+    status?.option_state === "applied"
+      ? t.mfOptApplied
+      : status?.option_state === "api_unmapped"
+      ? t.mfOptPending
+      : status?.option_state === "failed"
+      ? t.mfOptFailed
+      : "";
+  const autoSel = status?.auto_selection !== false;
+  const multipath = status?.multipath === true;
 
   const changeTarget = (value: string) => {
     setTarget(value);
@@ -341,29 +428,48 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
     }
   };
 
+  const loadLogs = () =>
+    mudfishGetLogs()
+      .then((r) => setLogs({ service: r?.service ?? "", install: r?.install ?? "" }))
+      .catch(() => setLogs({ service: "", install: "" }));
+
+  const probe = async () => {
+    setProbeNote(t.mfProbing);
+    let msg = t.mfProbeFail;
+    try {
+      const r = await mudfishProbeApi();
+      if (r?.ok) msg = `${t.mfProbeOk}: ${r.requests ?? 0} / ${r.paths ?? 0}`;
+      else msg = `${t.mfProbeFail}: ${mudfishErrorFull(t, r?.error ?? "", r?.detail)}`;
+    } catch {
+      /* mantém o aviso de falha */
+    }
+    setProbeNote(msg);
+  };
+
+  if (status && status.arch_ok === false) return <Card rows={[[t.mfErrArch, DASH]]} />;
+
   return (
     <>
+      <MfWarning t={t} helpOn={helpOn} />
       <Card badge={badge.text} tone={badge.tone} rows={rows} />
-      {status?.phase === "installing" && (
-        <div style={{ fontSize: 11, opacity: 0.7, textAlign: "center", marginBottom: 6 }}>{t.mfInstalling}</div>
+      {status?.phase === "installing" && <div style={SMALL}>{t.mfInstalling}</div>}
+      {status?.phase !== "installing" && note && <div style={SMALL}>{note}</div>}
+      <div style={SMALL}>{hint}</div>
+      {step === "install" && (
+        <PanelSectionRow>
+          <ButtonItem
+            layout="inline"
+            label={t.mfInstall}
+            description={t.mfInstallDesc}
+            disabled={busy || working}
+            onClick={() => run(() => mudfishInstall(), t.mfInstallOk)}
+          >
+            {t.mfInstall}
+          </ButtonItem>
+        </PanelSectionRow>
       )}
-      {status?.phase !== "installing" && note && <div style={{ fontSize: 11, opacity: 0.7, textAlign: "center", marginBottom: 6 }}>{note}</div>}
-      {status && status.arch_ok === false ? (
-        <Card rows={[[t.mfErrArch, DASH]]} />
-      ) : (
+      {step === "login" && (
         <>
-          <PanelSectionRow>
-            <ButtonItem
-              layout="inline"
-              label={installed ? t.mfUpdate : t.mfInstall}
-              description={t.mfInstallDesc}
-              disabled={busy || working}
-              onClick={() => run(() => mudfishInstall(), t.mfInstallOk)}
-            >
-              {installed ? t.mfUpdate : t.mfInstall}
-            </ButtonItem>
-          </PanelSectionRow>
-          <Help show={helpOn} text={t.hMfInstall} />
           <PanelSectionRow>
             <ToggleField
               label={t.mfToggle}
@@ -373,41 +479,6 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
               onChange={(v) => run(() => mudfishSetEnabled(v), v ? t.mfOn : t.mfOff)}
             />
           </PanelSectionRow>
-          <Help show={helpOn} text={t.hMfToggle} />
-          <Collapsible
-            title={t.mfLoginTitle}
-            collapsed={isCollapsed("mudfishLogin")}
-            onToggle={(v) => toggleSection("mudfishLogin", v)}
-          >
-            <PanelSectionRow>
-              <TextField label={t.mfUser} description={t.mfUserDesc} value={user} onChange={(e) => setUser(e.target.value)} />
-            </PanelSectionRow>
-            <PanelSectionRow>
-              <TextField
-                label={t.mfPass}
-                description={status?.has_password ? t.mfPassSaved : t.mfPassEmpty}
-                bIsPassword
-                value={pass}
-                onChange={(e) => setPass(e.target.value)}
-              />
-            </PanelSectionRow>
-            <PanelSectionRow>
-              <ButtonItem layout="inline" label={t.mfLoginTitle} disabled={busy || !user.trim()} onClick={saveLogin}>
-                {t.mfSave}
-              </ButtonItem>
-            </PanelSectionRow>
-            <PanelSectionRow>
-              <ButtonItem
-                layout="inline"
-                label={t.mfLoginTitle}
-                disabled={busy || (!status?.user && !status?.has_password)}
-                onClick={clearLogin}
-              >
-                {t.mfClear}
-              </ButtonItem>
-            </PanelSectionRow>
-            <Help show={helpOn} text={t.hMfLogin} />
-          </Collapsible>
           <PanelSectionRow>
             <ButtonItem
               layout="inline"
@@ -419,42 +490,152 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
               {t.mfOpenWeb}
             </ButtonItem>
           </PanelSectionRow>
-          <Collapsible
-            title={t.mfNetTitle}
-            collapsed={isCollapsed("mudfishNet")}
-            onToggle={(v) => toggleSection("mudfishNet", v)}
-          >
-            <Card
-              rows={[
-                [t.mfRouteIface, route?.dev || DASH],
-                [t.mfRouteIp, route?.src || DASH],
-                [t.mfRouteGw, route?.via || DASH],
-                ...pingRows(t, status),
-              ]}
-            />
-            <PanelSectionRow>
-              <TextField
-                label={t.mfPingTarget}
-                description={t.mfPingTargetDesc}
-                value={target}
-                onChange={(e) => changeTarget(e.target.value)}
-              />
-            </PanelSectionRow>
-            <PanelSectionRow>
-              <ButtonItem
-                layout="inline"
-                label={t.mfPingTest}
-                description={pingNote || t.mfPingTestDesc}
-                disabled={testing}
-                onClick={testPing}
-              >
-                {t.mfPingTest}
-              </ButtonItem>
-            </PanelSectionRow>
-            <Help show={helpOn} text={t.hMfNet} />
-          </Collapsible>
+          <PanelSectionRow>
+            <ButtonItem
+              layout="inline"
+              label={t.mfLoginDone}
+              disabled={busy || !status?.running}
+              onClick={() => run(() => mudfishConfirmLogin(true), t.mfLoginConfirmed)}
+            >
+              {t.mfLoginDone}
+            </ButtonItem>
+          </PanelSectionRow>
         </>
       )}
+      {step === "activate" && (
+        <PanelSectionRow>
+          <ToggleField
+            label={t.mfToggle}
+            description={t.mfToggleDesc}
+            checked={!!status?.running}
+            disabled={busy || working || !installed}
+            onChange={(v) => run(() => mudfishSetEnabled(v), v ? t.mfOn : t.mfOff)}
+          />
+        </PanelSectionRow>
+      )}
+      <Help show={helpOn} text={t.hMfFlow} />
+      {installed && (
+        <>
+          <PanelSectionRow>
+            <ToggleField
+              label={t.mfAutoSel}
+              description={t.mfAutoSelDesc}
+              checked={autoSel}
+              disabled={busy}
+              onChange={(v) => run(() => mudfishSetOption("auto_selection", v), t.mfOptSaved)}
+            />
+          </PanelSectionRow>
+          <Help show={helpOn} text={t.hMfAutoSel} />
+          <PanelSectionRow>
+            <ToggleField
+              label={t.mfMultiPath}
+              description={t.mfMultiPathDesc}
+              checked={multipath}
+              disabled={busy}
+              onChange={(v) => run(() => mudfishSetOption("multipath", v), t.mfOptSaved)}
+            />
+          </PanelSectionRow>
+          <Help show={helpOn} text={t.hMfMultiPath} />
+          {optNote && <div style={SMALL}>{optNote}</div>}
+        </>
+      )}
+      {route?.full_vpn && <div style={WARN_BOX}>{t.mfFullVpnWarn}</div>}
+      <Collapsible title={t.mfAdvTitle} collapsed={isCollapsed("mudfishAdv")} onToggle={(v) => toggleSection("mudfishAdv", v)}>
+        <PanelSectionRow>
+          <ButtonItem
+            layout="inline"
+            label={installed ? t.mfUpdate : t.mfInstall}
+            description={t.mfInstallDesc}
+            disabled={busy || working}
+            onClick={() => run(() => mudfishInstall(), t.mfInstallOk)}
+          >
+            {installed ? t.mfUpdate : t.mfInstall}
+          </ButtonItem>
+        </PanelSectionRow>
+        <PanelSectionRow>
+          <ToggleField
+            label={t.mfToggle}
+            description={t.mfToggleDesc}
+            checked={!!status?.running}
+            disabled={busy || working || !installed}
+            onChange={(v) => run(() => mudfishSetEnabled(v), v ? t.mfOn : t.mfOff)}
+          />
+        </PanelSectionRow>
+        <PanelSectionRow>
+          <ButtonItem
+            layout="inline"
+            label={t.mfOpenWeb}
+            description={t.mfAdvPanelDesc}
+            disabled={!status?.port_open}
+            onClick={openWeb}
+          >
+            {t.mfOpenWeb}
+          </ButtonItem>
+        </PanelSectionRow>
+        {status?.login_done && (
+          <PanelSectionRow>
+            <ButtonItem
+              layout="inline"
+              label={t.mfLoginReset}
+              disabled={busy}
+              onClick={() => run(() => mudfishConfirmLogin(false), t.mfLoginResetDone)}
+            >
+              {t.mfLoginReset}
+            </ButtonItem>
+          </PanelSectionRow>
+        )}
+        <Card
+          rows={[
+            [t.mfDaemon, status?.running ? t.mfRunning : t.mfStopped],
+            [t.mfPort, status?.port_open ? t.mfPortOpen : t.mfPortClosed],
+            [t.mfRouteIface, route?.dev || DASH],
+            [t.mfRouteIp, route?.src || DASH],
+            [t.mfRouteGw, route?.via || DASH],
+            ...pingRows(t, status),
+          ]}
+        />
+        <PanelSectionRow>
+          <TextField
+            label={t.mfPingTarget}
+            description={t.mfPingTargetDesc}
+            value={target}
+            onChange={(e) => changeTarget(e.target.value)}
+          />
+        </PanelSectionRow>
+        <PanelSectionRow>
+          <ButtonItem
+            layout="inline"
+            label={t.mfPingTest}
+            description={pingNote || t.mfPingTestDesc}
+            disabled={testing}
+            onClick={testPing}
+          >
+            {t.mfPingTest}
+          </ButtonItem>
+        </PanelSectionRow>
+        <Help show={helpOn} text={t.hMfNet} />
+        <Collapsible title={t.mfLogsTitle} collapsed={isCollapsed("mudfishLogs")} onToggle={(v) => toggleSection("mudfishLogs", v)}>
+          <PanelSectionRow>
+            <ButtonItem layout="inline" label={t.mfLogsTitle} onClick={loadLogs}>
+              {t.mfLogsLoad}
+            </ButtonItem>
+          </PanelSectionRow>
+          {logs && (
+            <>
+              <div style={SMALL}>{t.mfLogService}</div>
+              <div style={MONO}>{logs.service || t.mfLogEmpty}</div>
+              <div style={SMALL}>{t.mfLogInstall}</div>
+              <div style={MONO}>{logs.install || t.mfLogEmpty}</div>
+            </>
+          )}
+        </Collapsible>
+        <PanelSectionRow>
+          <ButtonItem layout="inline" label={t.mfProbe} description={probeNote || t.mfProbeDesc} disabled={!status?.port_open} onClick={probe}>
+            {t.mfProbe}
+          </ButtonItem>
+        </PanelSectionRow>
+        <Help show={helpOn} text={t.hMfAdv} />
+      </Collapsible>
     </>
   );
 }

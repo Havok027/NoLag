@@ -38,7 +38,7 @@ test("i18n tem as mesmas chaves em pt, en e es", () => {
 
 test("todo t.chave usado nas telas existe no i18n", () => {
   const keys = langKeys(read("src/i18n.tsx")).pt;
-  for (const file of ["src/Content.tsx", "src/index.tsx"]) {
+  for (const file of ["src/Content.tsx", "src/index.tsx", "src/ConfTab.tsx", "src/MudfishTab.tsx"]) {
     for (const m of read(file).matchAll(/\bt\.(\w+)/g)) {
       assert.ok(keys.includes(m[1]), file + ": t." + m[1] + " sem tradução");
     }
@@ -64,10 +64,4 @@ test("READMEs nos 3 idiomas existem", () => {
 test("RELEASE_NOTES cita a versão atual", () => {
   const pkg = JSON.parse(read("package.json"));
   assert.ok(read("RELEASE_NOTES.md").includes("## v" + pkg.version));
-});
-
-test("relay-setup.sh existe e gera o código esperado pelo plugin", () => {
-  const sh = read("relay-setup.sh");
-  assert.ok(sh.includes("nolag1:"));
-  assert.ok(read("main.py").includes("nolag1:"));
 });

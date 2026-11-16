@@ -69,35 +69,23 @@ class GameProfileTests(unittest.TestCase):
         gp, seq = setup(w, m, {"10": {"wifi": True, "mudfish": False}})
         seq["cur"] = ("10", "Jogo")
         run(gp.tick())
-        self.assertEqual((w.log, m.log), (["on"], []))
+        self.assertEqual((w.log, m.log), (["on"], []))  # Mudfish não liga sem o perfil do jogo
         seq["cur"] = ("", "")
         run(gp.tick())
-        self.assertEqual((w.log, m.log), (["on", "off"], []))
+        self.assertEqual((w.log, m.log), (["on", "off"], []))  # desligado, nada a encerrar
+        self.assertFalse(m.active)
 
-    def test_both_modules_start_and_stop(self):
-        w, m = Fake(), Fake()
-        gp, seq = setup(w, m, {"10": {"wifi": True, "mudfish": True}})
-        seq["cur"] = ("10", "Jogo")
-        run(gp.tick())
-        self.assertTrue(w.active and m.active)
-        seq["cur"] = ("", "")
-        run(gp.tick())
-        self.assertFalse(w.active or m.active)
-
-    def test_one_failing_does_not_stop_the_other(self):
-        w, m = Fake(fail=True), Fake()
-        gp, seq = setup(w, m, {"10": {"wifi": True, "mudfish": True}})
-        seq["cur"] = ("10", "Jogo")
-        run(gp.tick())
-        self.assertTrue(m.active)
-        self.assertEqual(gp.started, {"mudfish"})
-
-    def test_missing_module_is_skipped(self):
-        m = Fake()
-        gp, seq = setup(None, m, {"10": {"wifi": True, "mudfish": True}})
-        seq["cur"] = ("10", "Jogo")
-        run(gp.tick())
-        self.assertTrue(m.active)
+    def test_mudfish_is_stopped_when_any_game_closes(self):
+        # Proteção de créditos: mesmo ligado à mão, e em jogo sem perfil salvo, o Mudfish cai ao fechar o jogo.
+        for games in ({"10": {"wifi": True}}, {}):
+            m = Fake(active=True)
+            gp, seq = setup(None, m, games)
+            seq["cur"] = ("10", "Jogo")
+            run(gp.tick())
+            seq["cur"] = ("", "")
+            run(gp.tick())
+            self.assertEqual(m.log, ["off"])
+            self.assertFalse(m.active)
 
     def test_does_not_turn_off_what_was_already_on(self):
         w = Fake(active=True)

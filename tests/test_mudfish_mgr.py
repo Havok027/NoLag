@@ -48,16 +48,28 @@ def fake_install(mgr, version="5.11.0"):
 
 class PureTests(unittest.TestCase):
     def test_settings_sanitized(self):
-        d = mudfish_mgr.sanitize_settings({"user": "-bad", "password": "a\nb", "keep_on": "x", "ping_target": "x y",
-                                           "ping_before": {"avg": "z", "jitter": 1, "loss": 0}})
-        self.assertEqual(d["user"], "")
-        self.assertEqual(d["password"], "")
+        d = mudfish_mgr.sanitize_settings({"keep_on": "x", "auto_on_game": 1, "auto_selection": "no", "multipath": "yes",
+                                           "ping_target": "x y", "ping_before": {"avg": "z", "jitter": 1, "loss": 0},
+                                           "user": "ana", "password": "s3nha", "profile": "aggressive"})
         self.assertFalse(d["keep_on"])
+        self.assertFalse(d["auto_on_game"])  # só True de verdade liga
+        self.assertTrue(d["auto_selection"])  # padrão ligado: só False de verdade desliga
+        self.assertFalse(d["multipath"])
         self.assertEqual(d["ping_target"], core_state.DEFAULT_TARGET)
         self.assertIsNone(d["ping_before"])
-        ok = mudfish_mgr.sanitize_settings({"user": "ana", "password": "s3nha", "ping_after": {"avg": 20.0, "jitter": 2.5, "loss": 0}})
-        self.assertEqual((ok["user"], ok["password"]), ("ana", "s3nha"))
+        for old in ("user", "password", "profile"):
+            self.assertNotIn(old, d)  # campos de versões antigas são descartados
+        ok = mudfish_mgr.sanitize_settings({"auto_selection": False, "multipath": True, "keep_on": True,
+                                            "auto_on_game": True, "ping_after": {"avg": 20.0, "jitter": 2.5, "loss": 0}})
+        self.assertEqual((ok["auto_selection"], ok["multipath"], ok["keep_on"], ok["auto_on_game"]), (False, True, True, True))
         self.assertEqual(ok["ping_after"]["avg"], 20.0)
+
+    def test_credit_defaults_are_safe(self):
+        d = mudfish_mgr.sanitize_settings(None)
+        self.assertFalse(d["keep_on"])
+        self.assertFalse(d["auto_on_game"])
+        self.assertFalse(d["multipath"])
+        self.assertTrue(d["auto_selection"])
 
     def test_release_versions(self):
         html = 'x mudfish-5.9.1-linux-x86_64.sh y mudfish-5.11.0-linux-x86_64.sh mudfish-5.10.2-linux-arm64.sh'
@@ -93,25 +105,40 @@ class ManagerTests(unittest.TestCase):
     def tearDown(self):
         mudfish_mgr.mounted = self._mounted
 
-    def test_status_never_leaks_password(self):
-        run(self.mgr.set_credentials("ana", "s3nha"))
+    def test_status_has_options_and_no_secrets(self):
         st = run(self.mgr.get_status())
-        self.assertEqual(st["user"], "ana")
-        self.assertTrue(st["has_password"])
-        self.assertNotIn("password", st)
-        self.assertNotIn("s3nha", str(st))
-        mode = stat.S_IMODE(os.stat(self.mgr._cfg_path()).st_mode)
-        self.assertEqual(mode, 0o600)
+        self.assertEqual((st["auto_selection"], st["multipath"], st["auto_on_game"], st["keep_on"]), (True, False, False, False))
+        for key in ("user", "password", "has_password", "profile"):
+            self.assertNotIn(key, st)
 
-    def test_credentials_validation_and_keep_password(self):
-        self.assertEqual(run(self.mgr.set_credentials("", "x"))["error"], "bad_user")
-        self.assertEqual(run(self.mgr.set_credentials("ana", ""))["error"], "bad_password")
-        self.assertTrue(run(self.mgr.set_credentials("ana", "s3nha"))["ok"])
-        self.assertTrue(run(self.mgr.set_credentials("bia", ""))["ok"])  # troca só o usuário
-        cfg = self.mgr.load()
-        self.assertEqual((cfg["user"], cfg["password"]), ("bia", "s3nha"))
-        run(self.mgr.clear_credentials())
-        self.assertEqual(self.mgr.load()["user"], "")
+    def test_set_option_validation_and_persistence(self):
+        self.assertEqual(run(self.mgr.set_option("evil", True))["error"], "bad_option")
+        self.assertEqual(run(self.mgr.set_option("multipath", "sim"))["error"], "bad_option")
+        r = run(self.mgr.set_option("multipath", True))
+        self.assertTrue(r["ok"])
+        self.assertFalse(r["applied"])  # desligado: só guarda
+        self.assertTrue(self.mgr.load()["multipath"])
+        self.assertTrue(run(self.mgr.set_option("auto_selection", False))["ok"])
+        self.assertFalse(self.mgr.load()["auto_selection"])
+        self.assertEqual(stat.S_IMODE(os.stat(self.mgr._cfg_path()).st_mode), 0o600)
+
+    def test_options_never_guess_the_api(self):
+        fake_install(self.mgr)
+        mudfish_mgr.port_open, old = (lambda *a, **k: True), mudfish_mgr.port_open
+        try:
+            async def go():
+                await self.mgr.start()
+                r = await self.mgr.set_option("multipath", True)
+                st = await self.mgr.get_status()
+                await self.mgr.stop()
+                return r, st
+            r, st = run(go())
+        finally:
+            mudfish_mgr.port_open = old
+        self.assertFalse(r["applied"])
+        self.assertEqual(r["state"], "api_unmapped")  # sem endpoints mapeados: não finge que aplicou
+        self.assertEqual(st["option_state"], "api_unmapped")
+        self.assertFalse(mudfish_mgr.MudfishApi().mapped())
 
     def test_start_requires_install_but_not_login(self):
         self.assertEqual(run(self.mgr.start())["error"], "not_installed")
@@ -126,9 +153,8 @@ class ManagerTests(unittest.TestCase):
         finally:
             mudfish_mgr.port_open = old
 
-    def test_start_and_stop_daemon(self):
+    def test_manual_start_and_stop_never_touch_keep_on(self):
         fake_install(self.mgr)
-        run(self.mgr.set_credentials("ana", "s3nha"))
         mudfish_mgr.port_open, old = (lambda *a, **k: True), mudfish_mgr.port_open
         try:
             async def go():
@@ -142,14 +168,13 @@ class ManagerTests(unittest.TestCase):
             mudfish_mgr.port_open = old
         self.assertTrue(r["ok"])
         self.assertTrue(alive)
-        self.assertTrue(keep)
+        self.assertFalse(keep)  # ligar à mão nunca ativa "manter ligado": créditos protegidos
         self.assertTrue(s["ok"])
         self.assertIsNone(proc)
         self.assertFalse(self.mgr.load()["keep_on"])
 
     def test_daemon_command_follows_official_guide(self):
         fake_install(self.mgr)
-        run(self.mgr.set_credentials("ana", "s3nha"))
         seen = {}
         orig = asyncio.create_subprocess_exec
 
@@ -170,25 +195,71 @@ class ManagerTests(unittest.TestCase):
         a = list(seen["args"])
         self.assertEqual(len(a), 1)  # guia oficial: mudrun-headless sem flags
         self.assertTrue(a[0].endswith("/bin/mudrun-headless"))
-        self.assertNotIn("s3nha", str(a))  # a senha nunca vai para a linha de comando
 
-    def test_game_profile_only_stops_what_it_started(self):
-        self.assertTrue(run(self.mgr._game_off())["ok"])  # nada ligado por jogo: nada a desligar
+    def test_game_on_is_off_by_default(self):
         fake_install(self.mgr)
-        run(self.mgr.set_credentials("ana", "s3nha"))
+        r = run(self.mgr._game_on())
+        self.assertFalse(r["ok"])
+        self.assertEqual(r["error"], "auto_off")
+        self.assertFalse(self.mgr._alive())  # nada ligou sozinho
+
+    def test_game_on_and_off_when_user_enabled_it(self):
+        fake_install(self.mgr)
+        run(self.mgr.set_option("auto_on_game", True))
         mudfish_mgr.port_open, old = (lambda *a, **k: True), mudfish_mgr.port_open
         try:
             async def go():
                 on = await self.mgr._game_on()
                 keep = self.mgr.load()["keep_on"]
+                alive_on = self.mgr._alive()
                 await self.mgr._game_off()
-                return on, keep, self.mgr._alive()
-            on, keep, alive = run(go())
+                return on, keep, alive_on, self.mgr._alive()
+            on, keep, alive_on, alive_off = run(go())
         finally:
             mudfish_mgr.port_open = old
         self.assertTrue(on["ok"])
+        self.assertTrue(alive_on)
         self.assertFalse(keep)  # perfil de jogo não persiste ao reiniciar
-        self.assertFalse(alive)
+        self.assertFalse(alive_off)
+
+    def test_game_off_stops_even_if_started_by_hand(self):
+        fake_install(self.mgr)
+        mudfish_mgr.port_open, old = (lambda *a, **k: True), mudfish_mgr.port_open
+        try:
+            async def go():
+                await self.mgr.start()  # ligado à mão
+                await self.mgr._game_off()
+                return self.mgr._alive()
+            self.assertFalse(run(go()))
+        finally:
+            mudfish_mgr.port_open = old
+
+    def test_boot_always_starts_off_unless_keep_on(self):
+        fake_install(self.mgr)
+        killed = []
+
+        async def fake_kill():
+            killed.append(True)
+
+        self.mgr._kill = fake_kill
+        self.mgr._alive = lambda: True  # sobra de uma sessão anterior
+        run(self.mgr._main())
+        self.assertEqual(killed, [True])  # keep_on desligado: derruba o que sobrou
+        core_state.bus.unregister("mudfish")
+
+    def test_full_vpn_warning(self):
+        async def fake(cmd, timeout=15):
+            return 0, "1.1.1.1 dev tun0 src 10.8.0.2 uid 0"
+
+        old = core_state.run
+        core_state.run = fake
+        try:
+            self.mgr._alive = lambda: True
+            self.assertTrue(run(self.mgr.get_route())["full_vpn"])
+            self.mgr._alive = lambda: False
+            self.assertFalse(run(self.mgr.get_route())["full_vpn"])  # desligado: sem aviso
+        finally:
+            core_state.run = old
 
     def test_ping_before_and_after(self):
         calls = []

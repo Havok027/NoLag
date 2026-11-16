@@ -43,7 +43,7 @@ test("aba Wi-Fi e cartão do Painel estão ligados no Content", () => {
   assert.ok(src.includes('tab === "wifi"') && src.includes("<WifiTab") && src.includes("<WifiCard"));
   assert.ok(src.includes("t.tabWifi") && src.includes("TAB_KEYS"));
   const nav = read("TabNav.tsx");
-  assert.ok(/TAB_KEYS: TabKey\[\] = \["dash", "wifi", "routes", "settings"\]/.test(nav));
+  assert.ok(/TAB_KEYS: TabKey\[\] = \["dash", "wifi", "mudfish", "conf"\]/.test(nav));
 });
 
 test("Wi-Fi não depende da rota: chamadas próprias e sem checar o status do NoLag", () => {

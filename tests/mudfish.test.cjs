@@ -11,49 +11,49 @@ const read = (f) => {
   throw new Error("arquivo não encontrado: " + f);
 };
 
-const KEYS = [
-  "mfBadgeOn", "mfBadgeOff", "mfBadgeBusy", "mfBadgeError", "mfBadgeMissing", "mfUnavailable", "mfStatusTitle",
-  "mfVersion", "mfInstalledRow", "mfInstalledYes", "mfInstalledNo", "mfDaemon", "mfRunning", "mfStopped", "mfPort",
-  "mfPortOpen", "mfPortClosed", "mfInstall", "mfUpdate", "mfInstallDesc", "mfInstalling", "mfInstallOk", "mfToggle",
-  "mfToggleDesc", "mfCardToggle", "mfCardToggleDesc", "mfOn", "mfOff", "mfLoginTitle", "mfUser", "mfUserDesc",
-  "mfPass", "mfPassSaved", "mfPassEmpty", "mfSave", "mfClear", "mfLoginSaved", "mfLoginCleared", "mfOpenWeb",
-  "mfOpenWebDesc", "mfNetTitle", "mfRouteIface", "mfRouteIp", "mfRouteGw", "mfPingTarget", "mfPingTargetDesc",
-  "mfPingBefore", "mfPingAfter", "mfPingTest", "mfPingTestDesc", "mfPingTesting", "mfPingFail", "mfRefresh",
-  "mfErrNotInstalled", "mfErrNoCreds", "mfErrMount", "mfErrDownload", "mfErrInstall", "mfErrStart", "mfErrExited",
-  "mfErrBusy", "mfErrArch", "mfErrBadUser", "mfErrBadPass", "mfErrGeneric", "mfToastOk", "mfToastFail",
-  "hMfInstall", "hMfLogin", "hMfToggle", "hMfNet", "gameWifi", "gameMudfish", "gameModulesDesc", "gameCurrent",
-  "gameAddCurrent", "hGameModules", "connTitle", "connWifi", "connMudfish", "connIface", "connIp", "connRoute",
-  "connPing", "connJitter", "connHint", "hConn",
-];
-
-test("textos do Mudfish e do Painel existem nos 3 idiomas, sem repetir chave", () => {
+test("todo texto usado nas telas do Mudfish e da Conf existe 3 vezes no i18n (pt, en, es) e na interface", () => {
   const src = read("i18n.tsx");
-  for (const key of KEYS) {
+  const used = new Set();
+  for (const f of ["MudfishTab.tsx", "ConfTab.tsx", "Content.tsx"]) {
+    for (const m of read(f).matchAll(/\bt\.(\w+)/g)) used.add(m[1]);
+  }
+  assert.ok(used.size > 60);
+  for (const key of used) {
     const count = (src.match(new RegExp("^\\s+" + key + ': "', "gm")) || []).length;
     assert.strictEqual(count, 3, key);
     assert.ok(new RegExp("^\\s+" + key + ": string;", "m").test(src), "interface " + key);
   }
 });
 
-test("Painel tem chaves separadas para Wi-Fi e Mudfish e a tabela Conexão", () => {
-  const src = read("Content.tsx");
-  assert.ok(src.includes("<WifiCard") && src.includes("<MudfishCard") && src.includes("<ConnCard"));
-  assert.ok(src.includes('isCollapsed("conn")'));
+test("textos de perfis antigos e da rota interna foram removidos", () => {
+  const src = read("i18n.tsx");
+  for (const key of ["profileStable", "profileBalanced", "profileAggressive", "mfProfile", "tabRoutes", "hProfile", "hRelays"]) {
+    assert.ok(!new RegExp("^\\s+" + key + ":", "m").test(src), key);
+  }
 });
 
-test("aba Rotas mostra o Mudfish e os perfis por jogo com wifi e mudfish separados", () => {
-  const src = read("Content.tsx");
-  assert.ok(src.includes("<MudfishTab"));
-  assert.ok(src.includes('changeGameModule(appid, "wifi"') && src.includes('changeGameModule(appid, "mudfish"'));
-  assert.ok(src.includes("setGameModule"));
-});
-
-test("aba Mudfish tem instalar, login, liga/desliga, WebUI, rota e ping", () => {
+test("aba Mudfish tem fluxo guiado, Auto Selection, Multi-Path, WebUI, rota e ping", () => {
   const src = read("MudfishTab.tsx");
-  for (const s of ["mudfishInstall", "mudfishSetCredentials", "mudfishSetEnabled", "NavigateToExternalWeb",
-    "http://127.0.0.1:8282", "mudfishGetRoute", "mudfishTestPing", "t.mfPingBefore", "t.mfPingAfter", "bIsPassword"]) {
+  for (const s of ["mudfishInstall", "mudfishConfirmLogin", "mudfishSetEnabled", 'mudfishSetOption("auto_selection"',
+    'mudfishSetOption("multipath"', "NavigateToExternalWeb", "http://127.0.0.1:8282", "mudfishGetRoute", "mudfishTestPing",
+    "t.mfPingBefore", "t.mfPingAfter", "mudfishGetLogs", "t.mfAdvTitle", "t.mfAutoSel", "t.mfMultiPath"]) {
     assert.ok(src.includes(s), s);
   }
+  assert.ok(src.includes("hMfAutoSel") && src.includes("hMfMultiPath") && src.includes("hMfWarn"));
+});
+
+test("Auto Selection começa ligado e Multi-Path desligado quando o backend ainda não respondeu", () => {
+  const src = read("MudfishTab.tsx");
+  assert.ok(src.includes("status?.auto_selection !== false"));
+  assert.ok(src.includes("status?.multipath === true"));
+});
+
+test("avisos de crédito: sem downloads e sem VPN total, visíveis na UI", () => {
+  const src = read("MudfishTab.tsx");
+  assert.ok(src.includes("t.mfWarnDownload") && src.includes("t.mfWarnSplit") && src.includes("t.mfFullVpnWarn"));
+  const i18n = read("i18n.tsx");
+  assert.ok(/mfWarnDownload: ".*(baixe|baixar).*"/i.test(i18n) && /mfWarnSplit: ".*VPN total/i.test(i18n));
+  assert.ok(read("api.ts").includes("full_vpn"));
 });
 
 test("Mudfish e Wi-Fi não dependem um do outro no frontend", () => {
@@ -61,33 +61,27 @@ test("Mudfish e Wi-Fi não dependem um do outro no frontend", () => {
   const wifi = read("WifiTab.tsx");
   assert.ok(!/from "\.\/WifiTab"/.test(mud) && !/wifi[A-Z]\w+\(/.test(mud));
   assert.ok(!/mudfish/i.test(wifi) && !/MudfishTab/.test(wifi));
-  assert.ok(!mud.includes("getStatus(") && !mud.includes("setRouteEnabled"));
 });
 
-test("senha nunca volta do backend para a tela", () => {
+test("nenhum segredo trafega: sem usuário nem senha no status", () => {
   const api = read("api.ts");
   const iface = api.match(/export interface MudfishStatus \{[\s\S]*?\n\}/)[0];
-  assert.ok(!/\bpassword\b\??:/.test(iface));
-  assert.ok(iface.includes("has_password"));
+  assert.ok(!/\bpassword\b\??:/.test(iface) && !iface.includes("has_password"));
+  assert.ok(!api.includes("mudfish_set_credentials") && !api.includes("mudfish_set_profile"));
 });
 
 test("api.ts expõe todos os métodos do roteador do main.py", () => {
   const api = read("api.ts");
   const py = read("main.py");
   for (const name of ["mudfish_available", "mudfish_get_status", "mudfish_install", "mudfish_set_enabled",
-    "mudfish_set_credentials", "mudfish_clear_credentials", "mudfish_set_ping_target", "mudfish_get_route",
-    "mudfish_test_ping", "get_snapshot", "get_current_game", "set_game_module"]) {
+    "mudfish_set_option", "mudfish_confirm_login", "mudfish_set_ping_target", "mudfish_get_route", "mudfish_test_ping",
+    "mudfish_get_logs", "mudfish_probe_api", "get_snapshot", "get_current_game", "set_game_module"]) {
     assert.ok(api.includes('"' + name + '"'), "api " + name);
     assert.ok(py.includes("async def " + name + "("), "main " + name);
   }
 });
 
-test("seções novas são salvas pelo backend", () => {
-  const py = read("main.py");
-  for (const k of ["mudfishMain", "mudfishLogin", "mudfishNet", "conn"]) assert.ok(py.includes('"' + k + '"'), k);
-});
-
-test("build.yml empacota todos os .py novos", () => {
+test("build.yml empacota todos os .py", () => {
   let yml = "";
   for (const p of [path.join(__dirname, "..", ".github", "workflows", "build.yml"), path.join(__dirname, "..", "build.yml")]) {
     if (fs.existsSync(p)) { yml = fs.readFileSync(p, "utf8"); break; }

@@ -9,97 +9,15 @@ export const LANG_NAMES: Record<Lang, string> = {
 };
 
 export interface Texts {
-  status: string;
-  state: string;
-  stateOff: string;
-  stateStarting: string;
-  stateRunning: string;
-  stateError: string;
-  waitGame: string;
-  waitTraffic: string;
-  game: string;
-  server: string;
-  activeRoute: string;
-  routeDirect: string;
-  direct: string;
-  metricsHint: string;
-  notice: string;
-  noticeNoRelays: string;
-  noticeTools: string;
-  noticeSetup: string;
-  route: string;
-  enable: string;
-  enableDesc: string;
-  profile: string;
-  profileDesc: string;
-  profileStable: string;
-  profileBalanced: string;
-  profileAggressive: string;
-  relaysTitle: string;
-  relaysNone: string;
-  relayCode: string;
-  relayCodeDesc: string;
-  relayAdded: string;
-  relayBad: string;
-  relayLimit: string;
-  relayRemove: string;
-  relayBuiltin: string;
-  relayInvalid: string;
-  errToolsMissing: string;
-  errSniff: string;
-  errUnexpected: string;
-  settings: string;
   language: string;
   createdBy: string;
   tabDash: string;
-  tabRoutes: string;
   tabHint: string;
-  badgeActive: string;
-  badgeWaiting: string;
-  badgeOff: string;
-  badgeError: string;
-  badgeStarting: string;
-  pingNow: string;
-  jitter: string;
-  loss: string;
-  liveRoutes: string;
-  inUse: string;
-  noLive: string;
-  diagTitle: string;
-  diagProcs: string;
-  diagPorts: string;
-  diagPackets: string;
-  diagTop: string;
-  diagHint: string;
-  relaysCount: string;
-  chartTitle: string;
-  chartBest: string;
-  chartEmpty: string;
-  best: string;
-  quality: string;
-  qualGood: string;
-  qualFair: string;
-  qualBad: string;
   helpBtn: string;
-  helpLegend: string;
-  hStatus: string;
-  hPing: string;
-  hEnable: string;
-  hRoutes: string;
-  hChart: string;
-  hDiag: string;
-  hProfile: string;
-  hRelays: string;
-  hRelayCode: string;
   hLang: string;
   gamesTitle: string;
   gamesNone: string;
-  gameProfile: string;
-  gameSavedAuto: string;
-  gameSavedManual: string;
-  gameNotSaved: string;
   gameDelete: string;
-  hGames: string;
   tabWifi: string;
   wifiBadgeOn: string;
   wifiBadgeOff: string;
@@ -164,7 +82,6 @@ export interface Texts {
   wifiFailed: string;
   hWifiStatus: string;
   hWifiActions: string;
-  noticeEnroll: string;
   mfBadgeOn: string;
   mfBadgeOff: string;
   mfBadgeBusy: string;
@@ -172,9 +89,6 @@ export interface Texts {
   mfBadgeMissing: string;
   mfUnavailable: string;
   mfStatusTitle: string;
-  mfVersion: string;
-  mfInstalledRow: string;
-  mfInstalledYes: string;
   mfInstalledNo: string;
   mfDaemon: string;
   mfRunning: string;
@@ -193,19 +107,8 @@ export interface Texts {
   mfCardToggleDesc: string;
   mfOn: string;
   mfOff: string;
-  mfLoginTitle: string;
-  mfUser: string;
-  mfUserDesc: string;
-  mfPass: string;
-  mfPassSaved: string;
-  mfPassEmpty: string;
-  mfSave: string;
-  mfClear: string;
-  mfLoginSaved: string;
-  mfLoginCleared: string;
   mfOpenWeb: string;
   mfOpenWebDesc: string;
-  mfNetTitle: string;
   mfRouteIface: string;
   mfRouteIp: string;
   mfRouteGw: string;
@@ -219,7 +122,6 @@ export interface Texts {
   mfPingFail: string;
   mfRefresh: string;
   mfErrNotInstalled: string;
-  mfErrNoCreds: string;
   mfErrMount: string;
   mfErrDownload: string;
   mfErrInstall: string;
@@ -227,14 +129,68 @@ export interface Texts {
   mfErrExited: string;
   mfErrBusy: string;
   mfErrArch: string;
-  mfErrBadUser: string;
-  mfErrBadPass: string;
   mfErrGeneric: string;
+  tabMudfish: string;
+  tabConf: string;
+  mfAutoSel: string;
+  mfAutoSelDesc: string;
+  mfMultiPath: string;
+  mfMultiPathDesc: string;
+  mfOptSaved: string;
+  mfOptApplied: string;
+  mfOptPending: string;
+  mfOptFailed: string;
+  mfErrBadOption: string;
+  mfWarnTitle: string;
+  mfWarnDownload: string;
+  mfWarnSplit: string;
+  mfFullVpnWarn: string;
+  hMfWarn: string;
+  hMfAutoSel: string;
+  hMfMultiPath: string;
+  confAutoGame: string;
+  confAutoGameDesc: string;
+  hConfAutoGame: string;
+  confKeepOn: string;
+  confKeepOnDesc: string;
+  hConfKeepOn: string;
+  confDiagTitle: string;
+  hConfDiag: string;
+  chartTitle: string;
+  chartWith: string;
+  chartWithout: string;
+  chartEmpty: string;
+  chartBest: string;
+  hChart: string;
+  mfStepInstall: string;
+  mfStepLogin: string;
+  mfStepActivate: string;
+  mfDone: string;
+  mfPending: string;
+  mfHintInstall: string;
+  mfHintLogin: string;
+  mfHintActivate: string;
+  mfLoginDone: string;
+  mfLoginConfirmed: string;
+  mfLoginReset: string;
+  mfLoginResetDone: string;
+  mfAdvTitle: string;
+  mfAdvPanelDesc: string;
+  mfLogsTitle: string;
+  mfLogsLoad: string;
+  mfLogService: string;
+  mfLogInstall: string;
+  mfLogEmpty: string;
+  mfProbe: string;
+  mfProbeDesc: string;
+  mfProbing: string;
+  mfProbeOk: string;
+  mfProbeFail: string;
+  mfErrPortClosed: string;
+  hMfFlow: string;
+  hMfAdv: string;
   mfToastOk: string;
   mfToastFail: string;
-  hMfInstall: string;
-  hMfLogin: string;
-  hMfToggle: string;
   hMfNet: string;
   gameWifi: string;
   gameMudfish: string;
@@ -256,97 +212,15 @@ export interface Texts {
 
 export const TEXTS: Record<Lang, Texts> = {
   pt: {
-    status: "Status",
-    state: "Estado",
-    stateOff: "Desligado",
-    stateStarting: "Iniciando",
-    stateRunning: "Ativo",
-    stateError: "Erro",
-    waitGame: "Aguardando jogo",
-    waitTraffic: "Aguardando tráfego do jogo",
-    game: "Jogo",
-    server: "Servidor",
-    activeRoute: "Rota atual",
-    routeDirect: "Direta",
-    direct: "Direta",
-    metricsHint: "ping · jitter · perda",
-    notice: "Aviso",
-    noticeNoRelays: "Sem relay: só monitorando o ping",
-    noticeTools: "Relays desativados, faltam",
-    noticeSetup: "Relays não iniciaram, só monitorando",
-    route: "Rota",
-    enable: "Rota automática",
-    enableDesc: "Liga o NoLag neste jogo. Ele desliga sozinho ao sair.",
-    profile: "Sensibilidade",
-    profileDesc: "Quanto de ganho é preciso para trocar de rota",
-    profileStable: "Estável",
-    profileBalanced: "Equilibrado",
-    profileAggressive: "Agressivo",
-    relaysTitle: "Relays",
-    relaysNone: "Nenhum relay",
-    relayCode: "Código do relay (opcional)",
-    relayCodeDesc: "Cole o código gerado pelo relay-setup.sh",
-    relayAdded: "Relay adicionado",
-    relayBad: "Código inválido",
-    relayLimit: "Limite de 4 relays",
-    relayRemove: "Remover",
-    relayBuiltin: "Incluído",
-    relayInvalid: "Falhou ao iniciar",
-    errToolsMissing: "Faltam ferramentas",
-    errSniff: "Não foi possível observar o tráfego do jogo",
-    errUnexpected: "Erro inesperado, veja o log",
-    settings: "Config.",
     language: "Idioma",
     createdBy: "Criado por Havok",
     tabDash: "Painel",
-    tabRoutes: "Rotas",
     tabHint: "L1 / R1 · trocar guia",
-    badgeActive: "ATIVO",
-    badgeWaiting: "AGUARDANDO",
-    badgeOff: "DESLIGADO",
-    badgeError: "ERRO",
-    badgeStarting: "INICIANDO",
-    pingNow: "Ping atual",
-    jitter: "Jitter",
-    loss: "Perda",
-    liveRoutes: "Rotas ao vivo",
-    inUse: "em uso",
-    noLive: "Sem medição ainda",
-    diagTitle: "Diagnóstico",
-    diagProcs: "Processos do jogo",
-    diagPorts: "Portas UDP do jogo",
-    diagPackets: "Pacotes UDP vistos",
-    diagTop: "Mais frequentes",
-    diagHint: "Em menus costuma não haver tráfego UDP até o servidor. Entre em uma partida.",
-    relaysCount: "Relays",
-    chartTitle: "Gráfico ao vivo",
-    chartBest: "Melhor agora",
-    chartEmpty: "Coletando dados…",
-    best: "MELHOR",
-    quality: "Qualidade",
-    qualGood: "Ótima",
-    qualFair: "Regular",
-    qualBad: "Ruim",
     helpBtn: "Ajuda",
-    helpLegend: "Ajuda",
-    hStatus: "Mostra o que o NoLag está fazendo agora. Verde: funcionando. Amarelo: esperando você abrir um jogo e entrar em uma partida.",
-    hPing: "Ping é o tempo de resposta até o servidor do jogo: quanto menor, melhor. Jitter é a oscilação do ping: quanto menor, mais estável. Perda é a parte dos dados que se perde: o ideal é 0%. Qualidade resume tudo em Ótima, Regular ou Ruim.",
-    hEnable: "Ligue a chave uma vez dentro do jogo. O NoLag acha o servidor sozinho, salva o perfil e, nas próximas vezes, liga sozinho ao abrir o jogo. Ao sair do jogo, ele desliga e remove tudo da rede.",
-    hRoutes: "Compara o caminho direto da sua internet com os relays (caminhos alternativos), se você tiver. A rota marcada como em uso é a que o jogo está usando agora.",
-    hChart: "Cada linha é uma rota e o eixo mostra o ping em ms. Linha mais baixa = ping menor = melhor. A etiqueta MELHOR marca a rota mais rápida nos últimos instantes.",
-    hDiag: "Use só se algo não funcionar. Mostra o que o plugin enxerga do jogo. Durante uma partida, os pacotes UDP vistos devem aumentar.",
-    hProfile: "Define o quanto uma rota precisa ser melhor para o plugin trocar. Estável: troca pouco, só com ganho grande. Equilibrado: recomendado para a maioria. Agressivo: troca com ganho pequeno, então pode trocar mais vezes.",
-    hRelays: "Relay é um servidor que serve de caminho alternativo. Os relays do NoLag são cadastrados sozinhos quando você liga a chave: você não precisa fazer nada aqui. Esta área é só para quem tem um relay próprio.",
-    hRelayCode: "Só para relay próprio: cole aqui o código que o seu relay gerou.",
     hLang: "Idioma da interface do plugin.",
     gamesTitle: "Perfis de jogos",
     gamesNone: "Nenhum jogo salvo ainda",
-    gameProfile: "Perfil do jogo",
-    gameSavedAuto: "Salvo: liga sozinho",
-    gameSavedManual: "Salvo: ligar à mão",
-    gameNotSaved: "Ainda não salvo",
     gameDelete: "Excluir",
-    hGames: "Ao ligar a chave dentro de um jogo, o NoLag salva um perfil dele e passa a ligar sozinho sempre que você abrir esse jogo. Aqui você pode desativar o início automático de um jogo ou excluir o perfil.",
     tabWifi: "Wi-Fi",
     wifiBadgeOn: "Otimizado",
     wifiBadgeOff: "Padrão",
@@ -411,7 +285,6 @@ export const TEXTS: Record<Lang, Texts> = {
     wifiFailed: "Não foi possível aplicar",
     hWifiStatus: "Resumo do Wi-Fi agora. As otimizações daqui não dependem da rota do NoLag nem do Mudfish.",
     hWifiActions: "Aplicar liga os ajustes seguros de uma vez. Restaurar devolve tudo ao padrão do sistema.",
-    noticeEnroll: "Não foi possível registrar no relay; só monitorando o ping",
     mfBadgeOn: "Ativo",
     mfBadgeOff: "Desligado",
     mfBadgeBusy: "Aguarde",
@@ -419,9 +292,6 @@ export const TEXTS: Record<Lang, Texts> = {
     mfBadgeMissing: "Sem instalação",
     mfUnavailable: "O módulo Mudfish não carregou",
     mfStatusTitle: "Mudfish",
-    mfVersion: "Versão",
-    mfInstalledRow: "Instalação",
-    mfInstalledYes: "Instalado",
     mfInstalledNo: "Não instalado",
     mfDaemon: "Serviço",
     mfRunning: "Rodando",
@@ -435,24 +305,13 @@ export const TEXTS: Record<Lang, Texts> = {
     mfInstalling: "Instalando, pode levar um minuto…",
     mfInstallOk: "Mudfish instalado",
     mfToggle: "Mudfish ligado",
-    mfToggleDesc: "Inicia o serviço com o login salvo. Mudfish cobra por tráfego.",
+    mfToggleDesc: "Liga o serviço do Mudfish. O Mudfish cobra por tráfego.",
     mfCardToggle: "Rotas (Mudfish)",
     mfCardToggleDesc: "Liga ou desliga o Mudfish",
     mfOn: "Mudfish ligado",
     mfOff: "Mudfish desligado",
-    mfLoginTitle: "Login do Mudfish",
-    mfUser: "Usuário",
-    mfUserDesc: "Conta do Mudfish guardada neste aparelho (o login é feito no painel)",
-    mfPass: "Senha",
-    mfPassSaved: "Senha salva. Digite outra só para trocar.",
-    mfPassEmpty: "Digite a senha do Mudfish",
-    mfSave: "Salvar login",
-    mfClear: "Apagar login",
-    mfLoginSaved: "Login salvo",
-    mfLoginCleared: "Login apagado",
     mfOpenWeb: "Abrir painel do Mudfish",
     mfOpenWebDesc: "Escolha o nó e veja o saldo em 127.0.0.1:8282",
-    mfNetTitle: "Rota e ping",
     mfRouteIface: "Interface",
     mfRouteIp: "IP local",
     mfRouteGw: "Gateway",
@@ -466,7 +325,6 @@ export const TEXTS: Record<Lang, Texts> = {
     mfPingFail: "Sem resposta do alvo",
     mfRefresh: "Atualizar",
     mfErrNotInstalled: "Instale o Mudfish primeiro",
-    mfErrNoCreds: "Salve o usuário e a senha antes de ligar",
     mfErrMount: "Não foi possível montar a pasta persistente",
     mfErrDownload: "Falha ao baixar o instalador",
     mfErrInstall: "A instalação falhou",
@@ -474,21 +332,75 @@ export const TEXTS: Record<Lang, Texts> = {
     mfErrExited: "O Mudfish fechou ao iniciar",
     mfErrBusy: "Outra ação em andamento",
     mfErrArch: "Só funciona em aparelhos x86_64",
-    mfErrBadUser: "Usuário inválido",
-    mfErrBadPass: "Senha inválida",
     mfErrGeneric: "Não foi possível concluir",
+    tabMudfish: "Mudfish",
+    tabConf: "Conf",
+    mfAutoSel: "Seleção automática",
+    mfAutoSelDesc: "O Mudfish escolhe o nó mais rápido sozinho (recomendado)",
+    mfMultiPath: "Multi-Path",
+    mfMultiPathDesc: "Envia o tráfego do jogo por mais de um caminho contra picos de lag",
+    mfOptSaved: "Preferência salva",
+    mfOptApplied: "Aplicado no Mudfish",
+    mfOptPending: "Salvo. O Mudfish ainda não permite aplicar isso de fora: ative a mesma opção no painel",
+    mfOptFailed: "Salvo, mas não foi possível aplicar no Mudfish",
+    mfErrBadOption: "Opção inválida",
+    mfWarnTitle: "Cuidado com os créditos",
+    mfWarnDownload: "Nunca baixe jogos, atualizações ou arquivos com o Mudfish ligado: o tráfego é cobrado.",
+    mfWarnSplit: "Use só o roteamento por jogo no painel do Mudfish. Não ative VPN total do sistema.",
+    mfFullVpnWarn: "Atenção: o tráfego do sistema parece passar pelo Mudfish (VPN total). Desligue e use só o modo por jogo.",
+    hMfWarn: "O Mudfish cobra por tráfego. Ligado só enquanto joga e com roteamento por jogo, gasta pouco. Downloads e VPN total gastam seus créditos rápido.",
+    hMfAutoSel: "Melhora: escolhe o nó de menor ping sem você testar. Custo: pode trocar de nó no meio da partida, com uma pequena oscilação.",
+    hMfMultiPath: "Melhora: estabilidade e jitter, porque o tráfego segue por caminhos redundantes. Custo: gasta mais créditos (o tráfego é duplicado). Use só quando o lag atrapalha.",
+    confAutoGame: "Ativar ao abrir jogo",
+    confAutoGameDesc: "Liga o Mudfish sozinho nos jogos marcados. Desligado por padrão",
+    hConfAutoGame: "Desligado, o Mudfish nunca liga sozinho. Ligado, abre só nos jogos marcados com a chave Mudfish e é encerrado ao fechar qualquer jogo. Gasta créditos enquanto o jogo estiver aberto.",
+    confKeepOn: "Manter ligado ao reiniciar",
+    confKeepOnDesc: "Religa o Mudfish quando o Decky reinicia. Desligado por padrão",
+    hConfKeepOn: "Cuidado: ligado, o Mudfish volta a gastar créditos mesmo sem jogo aberto. Prefira deixar desligado.",
+    confDiagTitle: "Diagnóstico",
+    hConfDiag: "Mostra o estado da instalação e captura o que o painel do Mudfish expõe, para mapear a API local. Não gasta créditos.",
+    chartTitle: "Ping ao vivo",
+    chartWith: "Com Mudfish",
+    chartWithout: "Sem Mudfish",
+    chartEmpty: "Aguardando medições…",
+    chartBest: "MELHOR",
+    hChart: "Compara o ping médio e o jitter com e sem o Mudfish, medidos a cada 8 s no alvo configurado. Ligue e desligue o Mudfish para ver a diferença.",
+    mfStepInstall: "1. Instalar",
+    mfStepLogin: "2. Entrar na conta",
+    mfStepActivate: "3. Ativar a rota",
+    mfDone: "Feito",
+    mfPending: "Pendente",
+    mfHintInstall: "Passo 1: toque em Instalar Mudfish. Só precisa fazer uma vez.",
+    mfHintLogin: "Passo 2: ligue o serviço, abra o painel do Mudfish, entre na sua conta e volte aqui.",
+    mfHintActivate: "Tudo pronto. Use a chave para ativar a rota e escolha o perfil.",
+    mfLoginDone: "Já entrei na minha conta",
+    mfLoginConfirmed: "Login confirmado",
+    mfLoginReset: "Refazer login",
+    mfLoginResetDone: "O login será pedido de novo",
+    mfAdvTitle: "Opções avançadas",
+    mfAdvPanelDesc: "Escolha o nó e o FastConnect no painel do Mudfish",
+    mfLogsTitle: "Logs",
+    mfLogsLoad: "Ver logs",
+    mfLogService: "Serviço",
+    mfLogInstall: "Instalação",
+    mfLogEmpty: "Sem registros",
+    mfProbe: "Capturar API do painel",
+    mfProbeDesc: "Salva as respostas do painel local para mapear nós e FastConnect",
+    mfProbing: "Capturando…",
+    mfProbeOk: "API capturada (respostas / caminhos)",
+    mfProbeFail: "Não foi possível capturar",
+    mfErrPortClosed: "O painel do Mudfish não está aberto: ligue o serviço",
+    hMfFlow: "O fluxo tem 3 passos: instalar, entrar na conta pelo painel do Mudfish e ativar a rota. Cada passo aparece sozinho.",
+    hMfAdv: "Aqui ficam a escolha manual de nó e FastConnect (pelo painel), ping antes e depois, logs e a captura da API.",
     mfToastOk: "Mudfish: tudo certo",
     mfToastFail: "Mudfish: não deu certo",
-    hMfInstall: "Baixa o Mudfish oficial e guarda na pasta do plugin, então ele continua instalado depois de atualizar o SteamOS.",
-    hMfLogin: "Como no guia oficial do SteamOS, o serviço abre sem flags e o login é feito no painel do Mudfish (porta 8282). Os dados guardados ficam só neste aparelho.",
-    hMfToggle: "Liga o serviço do Mudfish. Depois escolha o nó no painel do Mudfish.",
     hMfNet: "Compare o ping com o Mudfish desligado e ligado para ver se a rota ajuda.",
     gameWifi: "Wi-Fi",
     gameMudfish: "Mudfish",
     gameModulesDesc: "Liga ao abrir o jogo; só desliga o que ele mesmo ligou",
     gameCurrent: "Jogo aberto",
     gameAddCurrent: "Salvar jogo aberto",
-    hGameModules: "Cada jogo salvo pode ligar o Wi-Fi e o Mudfish por conta própria, sem depender da rota do NoLag.",
+    hGameModules: "Cada jogo salvo pode ligar o Wi-Fi e o Mudfish por conta própria ao abrir.",
     connTitle: "Conexão",
     connWifi: "Wi-Fi",
     connMudfish: "Mudfish",
@@ -501,97 +413,15 @@ export const TEXTS: Record<Lang, Texts> = {
     hConn: "Fotografia da conexão agora: por qual interface sai o tráfego e como está o ping até o alvo.",
   },
   en: {
-    status: "Status",
-    state: "State",
-    stateOff: "Off",
-    stateStarting: "Starting",
-    stateRunning: "Active",
-    stateError: "Error",
-    waitGame: "Waiting for a game",
-    waitTraffic: "Waiting for game traffic",
-    game: "Game",
-    server: "Server",
-    activeRoute: "Current route",
-    routeDirect: "Direct",
-    direct: "Direct",
-    metricsHint: "ping · jitter · loss",
-    notice: "Notice",
-    noticeNoRelays: "No relay: only monitoring ping",
-    noticeTools: "Relays disabled, missing",
-    noticeSetup: "Relays did not start, only monitoring",
-    route: "Route",
-    enable: "Automatic route",
-    enableDesc: "Turns NoLag on for this game. It turns off by itself when you leave.",
-    profile: "Sensitivity",
-    profileDesc: "How much gain is needed to switch route",
-    profileStable: "Stable",
-    profileBalanced: "Balanced",
-    profileAggressive: "Aggressive",
-    relaysTitle: "Relays",
-    relaysNone: "No relays",
-    relayCode: "Relay code (optional)",
-    relayCodeDesc: "Paste the code printed by relay-setup.sh",
-    relayAdded: "Relay added",
-    relayBad: "Invalid code",
-    relayLimit: "Limit of 4 relays",
-    relayRemove: "Remove",
-    relayBuiltin: "Included",
-    relayInvalid: "Failed to start",
-    errToolsMissing: "Missing tools",
-    errSniff: "Could not observe the game traffic",
-    errUnexpected: "Unexpected error, check the log",
-    settings: "Settings",
     language: "Language",
     createdBy: "Created by Havok",
     tabDash: "Dashboard",
-    tabRoutes: "Routes",
     tabHint: "L1 / R1 · switch tab",
-    badgeActive: "ACTIVE",
-    badgeWaiting: "WAITING",
-    badgeOff: "OFF",
-    badgeError: "ERROR",
-    badgeStarting: "STARTING",
-    pingNow: "Current ping",
-    jitter: "Jitter",
-    loss: "Loss",
-    liveRoutes: "Live routes",
-    inUse: "in use",
-    noLive: "No measurement yet",
-    diagTitle: "Diagnostics",
-    diagProcs: "Game processes",
-    diagPorts: "Game UDP ports",
-    diagPackets: "UDP packets seen",
-    diagTop: "Most frequent",
-    diagHint: "Menus usually have no UDP traffic to the server. Join a match.",
-    relaysCount: "Relays",
-    chartTitle: "Live chart",
-    chartBest: "Best now",
-    chartEmpty: "Collecting data…",
-    best: "BEST",
-    quality: "Quality",
-    qualGood: "Great",
-    qualFair: "Fair",
-    qualBad: "Poor",
     helpBtn: "Help",
-    helpLegend: "Help",
-    hStatus: "Shows what NoLag is doing right now. Green: working. Yellow: waiting for you to open a game and join a match.",
-    hPing: "Ping is the response time to the game server: lower is better. Jitter is how much the ping wobbles: lower is steadier. Loss is the share of data that gets lost: ideally 0%. Quality sums it all up as Great, Fair or Poor.",
-    hEnable: "Turn the switch on once inside the game. NoLag finds the server by itself, saves the profile and, next time, turns on by itself when you open the game. When you leave the game, it turns off and removes everything from the network.",
-    hRoutes: "Compares your direct internet path with relays (alternative paths), if you have any. The route marked in use is the one the game is using now.",
-    hChart: "Each line is a route and the axis shows ping in ms. Lower line = lower ping = better. The BEST tag marks the fastest route lately.",
-    hDiag: "Use only if something does not work. It shows what the plugin sees from the game. During a match, the UDP packets seen should go up.",
-    hProfile: "Sets how much better a route must be before the plugin switches. Stable: switches rarely, only for a big gain. Balanced: recommended for most people. Aggressive: switches for a small gain, so it may switch more often.",
-    hRelays: "A relay is a server that works as an alternative path. NoLag relays are registered by themselves when you turn the switch on: you do not need to do anything here. This area is only for people with their own relay.",
-    hRelayCode: "Only for your own relay: paste the code your relay generated.",
     hLang: "Plugin interface language.",
     gamesTitle: "Game profiles",
     gamesNone: "No saved game yet",
-    gameProfile: "Game profile",
-    gameSavedAuto: "Saved: starts by itself",
-    gameSavedManual: "Saved: manual start",
-    gameNotSaved: "Not saved yet",
     gameDelete: "Delete",
-    hGames: "When you turn the switch on inside a game, NoLag saves a profile for it and turns on by itself every time you open that game. Here you can disable auto start for a game or delete its profile.",
     tabWifi: "Wi-Fi",
     wifiBadgeOn: "Optimized",
     wifiBadgeOff: "Default",
@@ -656,7 +486,6 @@ export const TEXTS: Record<Lang, Texts> = {
     wifiFailed: "Could not apply",
     hWifiStatus: "Wi-Fi summary right now. These optimizations do not depend on the NoLag route or Mudfish.",
     hWifiActions: "Apply turns on the safe tweaks at once. Restore puts everything back to the system default.",
-    noticeEnroll: "Could not register with the relay; only monitoring ping",
     mfBadgeOn: "Active",
     mfBadgeOff: "Off",
     mfBadgeBusy: "Wait",
@@ -664,9 +493,6 @@ export const TEXTS: Record<Lang, Texts> = {
     mfBadgeMissing: "Not installed",
     mfUnavailable: "The Mudfish module did not load",
     mfStatusTitle: "Mudfish",
-    mfVersion: "Version",
-    mfInstalledRow: "Install",
-    mfInstalledYes: "Installed",
     mfInstalledNo: "Not installed",
     mfDaemon: "Service",
     mfRunning: "Running",
@@ -680,24 +506,13 @@ export const TEXTS: Record<Lang, Texts> = {
     mfInstalling: "Installing, this can take a minute…",
     mfInstallOk: "Mudfish installed",
     mfToggle: "Mudfish on",
-    mfToggleDesc: "Starts the service with the saved login. Mudfish charges by traffic.",
+    mfToggleDesc: "Turns the Mudfish service on. Mudfish charges by traffic.",
     mfCardToggle: "Routes (Mudfish)",
     mfCardToggleDesc: "Turns Mudfish on or off",
     mfOn: "Mudfish is on",
     mfOff: "Mudfish is off",
-    mfLoginTitle: "Mudfish login",
-    mfUser: "User",
-    mfUserDesc: "Mudfish account kept on this device (sign in on the panel)",
-    mfPass: "Password",
-    mfPassSaved: "Password saved. Type another only to change it.",
-    mfPassEmpty: "Type your Mudfish password",
-    mfSave: "Save login",
-    mfClear: "Clear login",
-    mfLoginSaved: "Login saved",
-    mfLoginCleared: "Login cleared",
     mfOpenWeb: "Open Mudfish panel",
     mfOpenWebDesc: "Pick the node and see your balance at 127.0.0.1:8282",
-    mfNetTitle: "Route and ping",
     mfRouteIface: "Interface",
     mfRouteIp: "Local IP",
     mfRouteGw: "Gateway",
@@ -711,7 +526,6 @@ export const TEXTS: Record<Lang, Texts> = {
     mfPingFail: "No reply from the target",
     mfRefresh: "Refresh",
     mfErrNotInstalled: "Install Mudfish first",
-    mfErrNoCreds: "Save the user and password before turning on",
     mfErrMount: "Could not mount the persistent folder",
     mfErrDownload: "Could not download the installer",
     mfErrInstall: "The installation failed",
@@ -719,21 +533,75 @@ export const TEXTS: Record<Lang, Texts> = {
     mfErrExited: "Mudfish closed on start",
     mfErrBusy: "Another action is running",
     mfErrArch: "Only works on x86_64 devices",
-    mfErrBadUser: "Invalid user",
-    mfErrBadPass: "Invalid password",
     mfErrGeneric: "Could not complete",
+    tabMudfish: "Mudfish",
+    tabConf: "Conf",
+    mfAutoSel: "Auto Selection",
+    mfAutoSelDesc: "Mudfish picks the fastest node by itself (recommended)",
+    mfMultiPath: "Multi-Path",
+    mfMultiPathDesc: "Sends game traffic over more than one path against lag spikes",
+    mfOptSaved: "Preference saved",
+    mfOptApplied: "Applied in Mudfish",
+    mfOptPending: "Saved. Mudfish does not allow applying this from outside yet: turn on the same option in its panel",
+    mfOptFailed: "Saved, but it could not be applied in Mudfish",
+    mfErrBadOption: "Invalid option",
+    mfWarnTitle: "Mind your credits",
+    mfWarnDownload: "Never download games, updates or files while Mudfish is on: traffic is billed.",
+    mfWarnSplit: "Use only per-game routing in the Mudfish panel. Do not enable full-system VPN.",
+    mfFullVpnWarn: "Warning: system traffic seems to go through Mudfish (full VPN). Turn it off and use per-game mode only.",
+    hMfWarn: "Mudfish bills by traffic. On only while you play and with per-game routing, it costs little. Downloads and full VPN burn credits fast.",
+    hMfAutoSel: "Improves: picks the lowest-ping node without you testing. Cost: it may switch nodes mid-match, with a small hiccup.",
+    hMfMultiPath: "Improves: stability and jitter, since traffic follows redundant paths. Cost: uses more credits (traffic is duplicated). Use it only when lag hurts.",
+    confAutoGame: "Turn on when a game opens",
+    confAutoGameDesc: "Turns Mudfish on by itself in the marked games. Off by default",
+    hConfAutoGame: "Off, Mudfish never turns on by itself. On, it opens only in games marked with the Mudfish switch and is stopped when any game closes. It uses credits while the game is open.",
+    confKeepOn: "Keep on after restart",
+    confKeepOnDesc: "Turns Mudfish back on when Decky restarts. Off by default",
+    hConfKeepOn: "Careful: when on, Mudfish uses credits again even with no game open. Prefer leaving it off.",
+    confDiagTitle: "Diagnostics",
+    hConfDiag: "Shows the install state and captures what the Mudfish panel exposes, to map the local API. It does not use credits.",
+    chartTitle: "Live ping",
+    chartWith: "With Mudfish",
+    chartWithout: "Without Mudfish",
+    chartEmpty: "Waiting for measurements…",
+    chartBest: "BEST",
+    hChart: "Compares average ping and jitter with and without Mudfish, measured every 8 s on the configured target. Turn Mudfish on and off to see the difference.",
+    mfStepInstall: "1. Install",
+    mfStepLogin: "2. Sign in",
+    mfStepActivate: "3. Turn on the route",
+    mfDone: "Done",
+    mfPending: "Pending",
+    mfHintInstall: "Step 1: tap Install Mudfish. You only need to do this once.",
+    mfHintLogin: "Step 2: turn the service on, open the Mudfish panel, sign in to your account and come back here.",
+    mfHintActivate: "All set. Use the switch to turn the route on and pick a profile.",
+    mfLoginDone: "I'm signed in",
+    mfLoginConfirmed: "Sign-in confirmed",
+    mfLoginReset: "Redo sign-in",
+    mfLoginResetDone: "Sign-in will be asked again",
+    mfAdvTitle: "Advanced options",
+    mfAdvPanelDesc: "Pick the node and FastConnect on the Mudfish panel",
+    mfLogsTitle: "Logs",
+    mfLogsLoad: "View logs",
+    mfLogService: "Service",
+    mfLogInstall: "Installation",
+    mfLogEmpty: "No entries",
+    mfProbe: "Capture panel API",
+    mfProbeDesc: "Saves the local panel's responses so nodes and FastConnect can be mapped",
+    mfProbing: "Capturing…",
+    mfProbeOk: "API captured (responses / paths)",
+    mfProbeFail: "Could not capture",
+    mfErrPortClosed: "The Mudfish panel is not open: turn the service on",
+    hMfFlow: "The flow has 3 steps: install, sign in on the Mudfish panel and turn the route on. Each step shows up by itself.",
+    hMfAdv: "Manual node and FastConnect choice (on the panel), ping before and after, logs and the API capture live here.",
     mfToastOk: "Mudfish: all good",
     mfToastFail: "Mudfish: it did not work",
-    hMfInstall: "Downloads the official Mudfish and keeps it in the plugin folder, so it stays installed after a SteamOS update.",
-    hMfLogin: "As in the official SteamOS guide, the service starts without flags and you sign in on the Mudfish panel (port 8282). Saved data stays on this device only.",
-    hMfToggle: "Starts the Mudfish service. Then pick the node in the Mudfish panel.",
     hMfNet: "Compare the ping with Mudfish off and on to see if the route helps.",
     gameWifi: "Wi-Fi",
     gameMudfish: "Mudfish",
     gameModulesDesc: "Turns on when the game opens; only turns off what it turned on",
     gameCurrent: "Open game",
     gameAddCurrent: "Save open game",
-    hGameModules: "Each saved game can turn on Wi-Fi and Mudfish on its own, without depending on the NoLag route.",
+    hGameModules: "Each saved game can turn on Wi-Fi and Mudfish on its own when it opens.",
     connTitle: "Connection",
     connWifi: "Wi-Fi",
     connMudfish: "Mudfish",
@@ -746,97 +614,15 @@ export const TEXTS: Record<Lang, Texts> = {
     hConn: "A snapshot of the connection now: which interface the traffic uses and the ping to the target.",
   },
   es: {
-    status: "Estado",
-    state: "Situación",
-    stateOff: "Apagado",
-    stateStarting: "Iniciando",
-    stateRunning: "Activo",
-    stateError: "Error",
-    waitGame: "Esperando un juego",
-    waitTraffic: "Esperando tráfico del juego",
-    game: "Juego",
-    server: "Servidor",
-    activeRoute: "Ruta actual",
-    routeDirect: "Directa",
-    direct: "Directa",
-    metricsHint: "ping · jitter · pérdida",
-    notice: "Aviso",
-    noticeNoRelays: "Sin relay: solo monitoreando el ping",
-    noticeTools: "Relays desactivados, faltan",
-    noticeSetup: "Los relays no iniciaron, solo monitoreando",
-    route: "Ruta",
-    enable: "Ruta automática",
-    enableDesc: "Activa NoLag en este juego. Se apaga solo al salir.",
-    profile: "Sensibilidad",
-    profileDesc: "Cuánta mejora hace falta para cambiar de ruta",
-    profileStable: "Estable",
-    profileBalanced: "Equilibrado",
-    profileAggressive: "Agresivo",
-    relaysTitle: "Relays",
-    relaysNone: "Sin relays",
-    relayCode: "Código del relay (opcional)",
-    relayCodeDesc: "Pega el código generado por relay-setup.sh",
-    relayAdded: "Relay añadido",
-    relayBad: "Código inválido",
-    relayLimit: "Límite de 4 relays",
-    relayRemove: "Quitar",
-    relayBuiltin: "Incluido",
-    relayInvalid: "Falló al iniciar",
-    errToolsMissing: "Faltan herramientas",
-    errSniff: "No se pudo observar el tráfico del juego",
-    errUnexpected: "Error inesperado, revisa el log",
-    settings: "Config.",
     language: "Idioma",
     createdBy: "Creado por Havok",
     tabDash: "Panel",
-    tabRoutes: "Rutas",
     tabHint: "L1 / R1 · cambiar pestaña",
-    badgeActive: "ACTIVO",
-    badgeWaiting: "ESPERANDO",
-    badgeOff: "APAGADO",
-    badgeError: "ERROR",
-    badgeStarting: "INICIANDO",
-    pingNow: "Ping actual",
-    jitter: "Jitter",
-    loss: "Pérdida",
-    liveRoutes: "Rutas en vivo",
-    inUse: "en uso",
-    noLive: "Sin medición aún",
-    diagTitle: "Diagnóstico",
-    diagProcs: "Procesos del juego",
-    diagPorts: "Puertos UDP del juego",
-    diagPackets: "Paquetes UDP vistos",
-    diagTop: "Más frecuentes",
-    diagHint: "En los menús suele no haber tráfico UDP al servidor. Entra en una partida.",
-    relaysCount: "Relays",
-    chartTitle: "Gráfico en vivo",
-    chartBest: "Mejor ahora",
-    chartEmpty: "Recopilando datos…",
-    best: "MEJOR",
-    quality: "Calidad",
-    qualGood: "Óptima",
-    qualFair: "Regular",
-    qualBad: "Mala",
     helpBtn: "Ayuda",
-    helpLegend: "Ayuda",
-    hStatus: "Muestra lo que NoLag está haciendo ahora. Verde: funcionando. Amarillo: esperando que abras un juego y entres en una partida.",
-    hPing: "Ping es el tiempo de respuesta hasta el servidor del juego: cuanto menor, mejor. Jitter es la oscilación del ping: cuanto menor, más estable. Pérdida es la parte de los datos que se pierde: lo ideal es 0%. Calidad lo resume en Óptima, Regular o Mala.",
-    hEnable: "Activa el interruptor una vez dentro del juego. NoLag encuentra el servidor solo, guarda el perfil y la próxima vez se activa solo al abrir el juego. Al salir del juego, se apaga y quita todo de la red.",
-    hRoutes: "Compara el camino directo de tu internet con los relays (caminos alternativos), si tienes. La ruta marcada en uso es la que el juego usa ahora.",
-    hChart: "Cada línea es una ruta y el eje muestra el ping en ms. Línea más baja = menos ping = mejor. La etiqueta MEJOR marca la ruta más rápida últimamente.",
-    hDiag: "Úsalo solo si algo no funciona. Muestra lo que el plugin ve del juego. Durante una partida, los paquetes UDP vistos deben aumentar.",
-    hProfile: "Define cuánto mejor debe ser una ruta para que el plugin cambie. Estable: cambia poco, solo con gran mejora. Equilibrado: recomendado para la mayoría. Agresivo: cambia con poca mejora, así que puede cambiar más veces.",
-    hRelays: "Un relay es un servidor que sirve de camino alternativo. Los relays de NoLag se registran solos al activar el interruptor: no tienes que hacer nada aquí. Esta área es solo para quien tiene un relay propio.",
-    hRelayCode: "Solo para relay propio: pega aquí el código que generó tu relay.",
     hLang: "Idioma de la interfaz del plugin.",
     gamesTitle: "Perfiles de juegos",
     gamesNone: "Aún no hay juegos guardados",
-    gameProfile: "Perfil del juego",
-    gameSavedAuto: "Guardado: se activa solo",
-    gameSavedManual: "Guardado: inicio manual",
-    gameNotSaved: "Aún no guardado",
     gameDelete: "Eliminar",
-    hGames: "Al activar el interruptor dentro de un juego, NoLag guarda un perfil y se activa solo cada vez que abres ese juego. Aquí puedes desactivar el inicio automático de un juego o eliminar su perfil.",
     tabWifi: "Wi-Fi",
     wifiBadgeOn: "Optimizado",
     wifiBadgeOff: "Predeterminado",
@@ -901,7 +687,6 @@ export const TEXTS: Record<Lang, Texts> = {
     wifiFailed: "No se pudo aplicar",
     hWifiStatus: "Resumen del Wi-Fi ahora. Estas optimizaciones no dependen de la ruta de NoLag ni de Mudfish.",
     hWifiActions: "Aplicar activa los ajustes seguros de una vez. Restaurar devuelve todo a lo predeterminado del sistema.",
-    noticeEnroll: "No se pudo registrar en el relay; solo monitoreando el ping",
     mfBadgeOn: "Activo",
     mfBadgeOff: "Apagado",
     mfBadgeBusy: "Espera",
@@ -909,9 +694,6 @@ export const TEXTS: Record<Lang, Texts> = {
     mfBadgeMissing: "Sin instalar",
     mfUnavailable: "El módulo Mudfish no cargó",
     mfStatusTitle: "Mudfish",
-    mfVersion: "Versión",
-    mfInstalledRow: "Instalación",
-    mfInstalledYes: "Instalado",
     mfInstalledNo: "No instalado",
     mfDaemon: "Servicio",
     mfRunning: "En marcha",
@@ -925,24 +707,13 @@ export const TEXTS: Record<Lang, Texts> = {
     mfInstalling: "Instalando, puede tardar un minuto…",
     mfInstallOk: "Mudfish instalado",
     mfToggle: "Mudfish activado",
-    mfToggleDesc: "Inicia el servicio con el acceso guardado. Mudfish cobra por tráfico.",
+    mfToggleDesc: "Enciende el servicio de Mudfish. Mudfish cobra por tráfico.",
     mfCardToggle: "Rutas (Mudfish)",
     mfCardToggleDesc: "Activa o desactiva Mudfish",
     mfOn: "Mudfish activado",
     mfOff: "Mudfish apagado",
-    mfLoginTitle: "Acceso a Mudfish",
-    mfUser: "Usuario",
-    mfUserDesc: "Cuenta de Mudfish guardada en este equipo (el acceso se hace en el panel)",
-    mfPass: "Contraseña",
-    mfPassSaved: "Contraseña guardada. Escribe otra solo para cambiarla.",
-    mfPassEmpty: "Escribe tu contraseña de Mudfish",
-    mfSave: "Guardar acceso",
-    mfClear: "Borrar acceso",
-    mfLoginSaved: "Acceso guardado",
-    mfLoginCleared: "Acceso borrado",
     mfOpenWeb: "Abrir panel de Mudfish",
     mfOpenWebDesc: "Elige el nodo y mira tu saldo en 127.0.0.1:8282",
-    mfNetTitle: "Ruta y ping",
     mfRouteIface: "Interfaz",
     mfRouteIp: "IP local",
     mfRouteGw: "Puerta de enlace",
@@ -956,7 +727,6 @@ export const TEXTS: Record<Lang, Texts> = {
     mfPingFail: "Sin respuesta del destino",
     mfRefresh: "Actualizar",
     mfErrNotInstalled: "Instala Mudfish primero",
-    mfErrNoCreds: "Guarda usuario y contraseña antes de activar",
     mfErrMount: "No se pudo montar la carpeta persistente",
     mfErrDownload: "Error al descargar el instalador",
     mfErrInstall: "La instalación falló",
@@ -964,21 +734,75 @@ export const TEXTS: Record<Lang, Texts> = {
     mfErrExited: "Mudfish se cerró al iniciar",
     mfErrBusy: "Otra acción en curso",
     mfErrArch: "Solo funciona en equipos x86_64",
-    mfErrBadUser: "Usuario no válido",
-    mfErrBadPass: "Contraseña no válida",
     mfErrGeneric: "No se pudo completar",
+    tabMudfish: "Mudfish",
+    tabConf: "Conf",
+    mfAutoSel: "Selección automática",
+    mfAutoSelDesc: "Mudfish elige el nodo más rápido solo (recomendado)",
+    mfMultiPath: "Multi-Path",
+    mfMultiPathDesc: "Envía el tráfico del juego por más de un camino contra picos de lag",
+    mfOptSaved: "Preferencia guardada",
+    mfOptApplied: "Aplicado en Mudfish",
+    mfOptPending: "Guardado. Mudfish aún no permite aplicarlo desde fuera: activa la misma opción en su panel",
+    mfOptFailed: "Guardado, pero no se pudo aplicar en Mudfish",
+    mfErrBadOption: "Opción no válida",
+    mfWarnTitle: "Cuidado con los créditos",
+    mfWarnDownload: "Nunca descargues juegos, actualizaciones ni archivos con Mudfish activo: el tráfico se cobra.",
+    mfWarnSplit: "Usa solo el enrutamiento por juego en el panel de Mudfish. No actives VPN total del sistema.",
+    mfFullVpnWarn: "Atención: el tráfico del sistema parece pasar por Mudfish (VPN total). Apágalo y usa solo el modo por juego.",
+    hMfWarn: "Mudfish cobra por tráfico. Activo solo mientras juegas y con enrutamiento por juego, gasta poco. Las descargas y la VPN total gastan créditos rápido.",
+    hMfAutoSel: "Mejora: elige el nodo de menor ping sin que pruebes. Costo: puede cambiar de nodo en plena partida, con una pequeña oscilación.",
+    hMfMultiPath: "Mejora: estabilidad y jitter, porque el tráfico sigue caminos redundantes. Costo: gasta más créditos (el tráfico se duplica). Úsalo solo cuando el lag molesta.",
+    confAutoGame: "Activar al abrir un juego",
+    confAutoGameDesc: "Activa Mudfish solo en los juegos marcados. Desactivado por defecto",
+    hConfAutoGame: "Apagado, Mudfish nunca se activa solo. Activo, se abre solo en los juegos marcados con el interruptor Mudfish y se detiene al cerrar cualquier juego. Gasta créditos mientras el juego está abierto.",
+    confKeepOn: "Mantener activo al reiniciar",
+    confKeepOnDesc: "Reactiva Mudfish cuando Decky se reinicia. Desactivado por defecto",
+    hConfKeepOn: "Cuidado: activo, Mudfish vuelve a gastar créditos aun sin juego abierto. Mejor déjalo apagado.",
+    confDiagTitle: "Diagnóstico",
+    hConfDiag: "Muestra el estado de la instalación y captura lo que expone el panel de Mudfish, para mapear la API local. No gasta créditos.",
+    chartTitle: "Ping en vivo",
+    chartWith: "Con Mudfish",
+    chartWithout: "Sin Mudfish",
+    chartEmpty: "Esperando mediciones…",
+    chartBest: "MEJOR",
+    hChart: "Compara el ping medio y el jitter con y sin Mudfish, medidos cada 8 s en el destino configurado. Enciende y apaga Mudfish para ver la diferencia.",
+    mfStepInstall: "1. Instalar",
+    mfStepLogin: "2. Iniciar sesión",
+    mfStepActivate: "3. Activar la ruta",
+    mfDone: "Listo",
+    mfPending: "Pendiente",
+    mfHintInstall: "Paso 1: toca Instalar Mudfish. Solo hace falta una vez.",
+    mfHintLogin: "Paso 2: enciende el servicio, abre el panel de Mudfish, inicia sesión y vuelve aquí.",
+    mfHintActivate: "Todo listo. Usa el interruptor para activar la ruta y elige el perfil.",
+    mfLoginDone: "Ya inicié sesión",
+    mfLoginConfirmed: "Sesión confirmada",
+    mfLoginReset: "Repetir inicio de sesión",
+    mfLoginResetDone: "Se pedirá iniciar sesión otra vez",
+    mfAdvTitle: "Opciones avanzadas",
+    mfAdvPanelDesc: "Elige el nodo y FastConnect en el panel de Mudfish",
+    mfLogsTitle: "Logs",
+    mfLogsLoad: "Ver logs",
+    mfLogService: "Servicio",
+    mfLogInstall: "Instalación",
+    mfLogEmpty: "Sin registros",
+    mfProbe: "Capturar API del panel",
+    mfProbeDesc: "Guarda las respuestas del panel local para mapear nodos y FastConnect",
+    mfProbing: "Capturando…",
+    mfProbeOk: "API capturada (respuestas / rutas)",
+    mfProbeFail: "No se pudo capturar",
+    mfErrPortClosed: "El panel de Mudfish no está abierto: enciende el servicio",
+    hMfFlow: "El flujo tiene 3 pasos: instalar, iniciar sesión en el panel de Mudfish y activar la ruta. Cada paso aparece solo.",
+    hMfAdv: "Aquí están la elección manual de nodo y FastConnect (en el panel), ping antes y después, logs y la captura de la API.",
     mfToastOk: "Mudfish: todo bien",
     mfToastFail: "Mudfish: no funcionó",
-    hMfInstall: "Descarga Mudfish oficial y lo guarda en la carpeta del plugin, así sigue instalado tras actualizar SteamOS.",
-    hMfLogin: "Como en la guía oficial de SteamOS, el servicio inicia sin flags y el acceso se hace en el panel de Mudfish (puerto 8282). Los datos guardados quedan solo en este equipo.",
-    hMfToggle: "Inicia el servicio de Mudfish. Luego elige el nodo en el panel de Mudfish.",
     hMfNet: "Compara el ping con Mudfish apagado y activado para ver si la ruta ayuda.",
     gameWifi: "Wi-Fi",
     gameMudfish: "Mudfish",
     gameModulesDesc: "Se activa al abrir el juego; solo apaga lo que activó",
     gameCurrent: "Juego abierto",
     gameAddCurrent: "Guardar juego abierto",
-    hGameModules: "Cada juego guardado puede activar Wi-Fi y Mudfish por su cuenta, sin depender de la ruta de NoLag.",
+    hGameModules: "Cada juego guardado puede activar Wi-Fi y Mudfish por su cuenta al abrirse.",
     connTitle: "Conexión",
     connWifi: "Wi-Fi",
     connMudfish: "Mudfish",
