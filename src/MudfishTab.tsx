@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import {
   Metrics,
+  MudfishLive,
   MudfishPing,
   MudfishResult,
   MudfishStatus,
@@ -11,12 +12,15 @@ import {
   Snapshot,
   getSnapshot,
   mudfishAvailable,
+  mudfishClearCredentials,
   mudfishConfirmLogin,
+  mudfishGetLive,
+  mudfishResetSession,
+  mudfishSetCredentials,
   mudfishGetLogs,
   mudfishGetRoute,
   mudfishGetStatus,
   mudfishInstall,
-  mudfishProbeApi,
   mudfishSetEnabled,
   mudfishSetPingTarget,
   mudfishSetOption,
@@ -56,6 +60,8 @@ export function mudfishError(t: Texts, code: string): string {
       return t.mfErrArch;
     case "bad_option":
       return t.mfErrBadOption;
+    case "bad_credentials":
+      return t.mfErrBadCreds;
     case "port_closed":
       return t.mfErrPortClosed;
     default:
@@ -150,32 +156,6 @@ export function useMudfish(t: Texts) {
   return { available, loadError, status, busy, note, run, refresh };
 }
 
-/** Cartão do Painel: liga e desliga o Mudfish, independente do Wi-Fi e da rota. */
-export function MudfishCard({ t }: { t: Texts }) {
-  const { available, status, busy, run } = useMudfish(t);
-  if (available === false) return <Card rows={[[t.mfStatusTitle, t.wifiBadgeUnavailable]]} />;
-  const badge = mfBadge(t, status);
-  const working = status?.phase === "installing" || status?.phase === "starting" || status?.phase === "stopping";
-  return (
-    <>
-      <Card
-        badge={badge.text}
-        tone={badge.tone}
-        rows={[[t.mfStatusTitle, status?.running ? t.mfRunning : status?.installed ? t.mfStopped : t.mfInstalledNo]]}
-      />
-      <PanelSectionRow>
-        <ToggleField
-          label={t.mfCardToggle}
-          description={t.mfCardToggleDesc}
-          checked={!!status?.running}
-          disabled={busy || working || !status?.installed}
-          onChange={(v) => run(() => mudfishSetEnabled(v), v ? t.mfOn : t.mfOff)}
-        />
-      </PanelSectionRow>
-    </>
-  );
-}
-
 /** Tabela de métricas da conexão no Painel, sob demanda e a cada poucos segundos. */
 export function ConnCard({ t, helpOn }: { t: Texts; helpOn: boolean }) {
   const [snap, setSnap] = useState<Snapshot | null>(null);
@@ -263,24 +243,36 @@ export function MfWarning({ t, helpOn }: { t: Texts; helpOn: boolean }) {
   );
 }
 
-const CHART_MAX = 30;
-const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
+const PILL: CSSProperties = {
+  display: "inline-block",
+  fontSize: 11,
+  fontWeight: 700,
+  padding: "3px 10px",
+  margin: "0 0 6px 0",
+  borderRadius: 12,
+  color: "#eafff3",
+  background: "rgba(31, 143, 85, 0.75)",
+  border: "1px solid #3ddc84",
+};
 
-/** Gráfico ao vivo do Painel: ping e jitter com e sem o Mudfish, a cada 8 s. */
+const CHART_MAX = 30;
+type Sample = { b: Metrics | null; t: Metrics | null };
+const avg = (xs: number[]) => (xs.length ? xs.reduce((x, y) => x + y, 0) / xs.length : null);
+
+/** Gráfico ao vivo do Painel: mede sempre "sem Mudfish" e, com ele ligado, também "com Mudfish", a cada 8 s. */
 export function LiveChart({ t, helpOn }: { t: Texts; helpOn: boolean }) {
-  const [samples, setSamples] = useState<{ ping: number | null; jit: number | null; on: boolean }[]>([]);
-  const [warn, setWarn] = useState(false);
+  const [samples, setSamples] = useState<Sample[]>([]);
+  const [live, setLive] = useState<MudfishLive | null>(null);
   const alive = useRef(true);
 
   useEffect(() => {
     alive.current = true;
     const tick = async () => {
       try {
-        const s = await getSnapshot();
-        if (!alive.current || !s) return;
-        const on = !!s.modules?.mudfish?.running;
-        setWarn(on && !!s.route?.full_vpn);
-        setSamples((cur) => [...cur, { ping: s.ping?.avg ?? null, jit: s.ping?.jitter ?? null, on }].slice(-CHART_MAX));
+        const r = await mudfishGetLive();
+        if (!alive.current || !r || r.ok === false) return;
+        setLive(r);
+        setSamples((cur) => [...cur, { b: r.base ?? null, t: r.tunnel ?? null }].slice(-CHART_MAX));
       } catch {
         /* mantém o gráfico como está */
       }
@@ -293,33 +285,38 @@ export function LiveChart({ t, helpOn }: { t: Texts; helpOn: boolean }) {
     };
   }, []);
 
-  const build = (on: boolean, key: string, label: string, color: string): ChartLine => {
-    const mine = samples.filter((x) => x.on === on);
-    const pa = avg(mine.map((x) => x.ping).filter((v): v is number => v !== null));
-    const ja = avg(mine.map((x) => x.jit).filter((v): v is number => v !== null));
+  const build = (key: string, label: string, color: string, pick: (x: Sample) => Metrics | null): ChartLine => {
+    const ms = samples.map(pick);
+    const pa = avg(ms.map((m) => m?.avg).filter((v): v is number => typeof v === "number"));
+    const ja = avg(ms.map((m) => m?.jitter).filter((v): v is number => typeof v === "number"));
     return {
       key,
       label,
       color,
-      values: samples.map((x) => (x.on === on ? x.ping : null)),
+      values: ms.map((m) => (typeof m?.avg === "number" ? m.avg : null)),
       avg: pa === null ? DASH : `${pa.toFixed(0)} ms · ${t.connJitter} ${ja === null ? DASH : ja.toFixed(1)} ms`,
       best: false,
     };
   };
-  const without = build(false, "off", t.chartWithout, "#9aa4b2");
-  const withMf = build(true, "on", t.chartWith, "#3ddc84");
-  const mean = (l: ChartLine) => avg(l.values.filter((v): v is number => v !== null));
-  const a = mean(without);
-  const b = mean(withMf);
-  if (a !== null && b !== null) {
-    if (b < a) withMf.best = true;
-    else if (a < b) without.best = true;
+  const without = build("off", t.chartWithout, "#9aa4b2", (x) => x.b);
+  const lines = [without];
+  if (live?.running && samples.some((x) => x.t !== null)) {
+    const withMf = build("on", t.chartWith, "#3ddc84", (x) => x.t);
+    const a = avg(without.values.filter((v): v is number => v !== null));
+    const b = avg(withMf.values.filter((v): v is number => v !== null));
+    if (a !== null && b !== null) {
+      if (b < a) withMf.best = true;
+      else if (a < b) without.best = true;
+    }
+    lines.push(withMf);
   }
   return (
     <>
       <div style={{ fontWeight: 600, fontSize: 13, margin: "4px 0" }}>{t.chartTitle}</div>
-      {warn && <div style={WARN_BOX}>{t.mfFullVpnWarn}</div>}
-      <LineChart lines={[without, withMf]} emptyText={t.chartEmpty} bestTag={t.chartBest} />
+      {live?.only_game && <div style={PILL}>{t.onlyGameBadge}</div>}
+      {live?.full_vpn && <div style={WARN_BOX}>{t.mfFullVpnWarn}</div>}
+      <LineChart lines={lines} emptyText={t.chartEmpty} bestTag={t.chartBest} />
+      {live?.running && !live.tunnel_iface && !live.full_vpn && <div style={SMALL}>{t.chartNoTunnel}</div>}
       <Help show={helpOn} text={t.hChart} />
     </>
   );
@@ -336,7 +333,8 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
   const [testing, setTesting] = useState(false);
   const [pingNote, setPingNote] = useState("");
   const [logs, setLogs] = useState<{ service: string; install: string } | null>(null);
-  const [probeNote, setProbeNote] = useState("");
+  const [user, setUser] = useState("");
+  const [pass, setPass] = useState("");
   const timer = useRef<number | undefined>(undefined);
   const filled = useRef(false);
 
@@ -344,6 +342,7 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
     if (status && !filled.current) {
       filled.current = true;
       setTarget(status.ping_target ?? "");
+      setUser(status.user ?? "");
     }
   }, [status]);
 
@@ -376,6 +375,11 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
     [t.mfStepLogin, done(!!status?.login_done)],
     [t.mfStepActivate, done(!!status?.running)],
   ];
+  if (status?.running) {
+    const sess = status.session;
+    rows.push([t.mfSessionRow, sess === "active" ? t.mfSessionActive : sess === "inactive" ? t.mfSessionInactive : t.mfSessionUnknown]);
+    rows.push([t.mfApiRow, status.api_ok ? t.mfApiOk : t.mfApiDown]);
+  }
   if (status?.phase === "error" && status.error) rows.push([t.mfBadgeError, mudfishErrorFull(t, status.error, status.detail)]);
 
   const hint = step === "install" ? t.mfHintInstall : step === "login" ? t.mfHintLogin : t.mfHintActivate;
@@ -433,18 +437,22 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
       .then((r) => setLogs({ service: r?.service ?? "", install: r?.install ?? "" }))
       .catch(() => setLogs({ service: "", install: "" }));
 
-  const probe = async () => {
-    setProbeNote(t.mfProbing);
-    let msg = t.mfProbeFail;
-    try {
-      const r = await mudfishProbeApi();
-      if (r?.ok) msg = `${t.mfProbeOk}: ${r.requests ?? 0} / ${r.paths ?? 0}`;
-      else msg = `${t.mfProbeFail}: ${mudfishErrorFull(t, r?.error ?? "", r?.detail)}`;
-    } catch {
-      /* mantém o aviso de falha */
-    }
-    setProbeNote(msg);
-  };
+  const saveAccount = () =>
+    run(async () => {
+      const r = await mudfishSetCredentials(user, pass);
+      if (r?.ok) setPass("");
+      return r;
+    }, t.mfAccSaved);
+
+  const clearAccount = () =>
+    run(async () => {
+      const r = await mudfishClearCredentials();
+      if (r?.ok) {
+        setUser("");
+        setPass("");
+      }
+      return r;
+    }, t.mfAccCleared);
 
   if (status && status.arch_ok === false) return <Card rows={[[t.mfErrArch, DASH]]} />;
 
@@ -455,6 +463,13 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
       {status?.phase === "installing" && <div style={SMALL}>{t.mfInstalling}</div>}
       {status?.phase !== "installing" && note && <div style={SMALL}>{note}</div>}
       <div style={SMALL}>{hint}</div>
+      {step !== "activate" && (
+        <div style={WARN_BOX}>
+          <div style={{ fontWeight: 700, marginBottom: 2 }}>{t.mfFirstTitle}</div>
+          <div>{t.mfFirstSteps}</div>
+        </div>
+      )}
+      <Help show={helpOn} text={t.hMfFirst} />
       {step === "install" && (
         <PanelSectionRow>
           <ButtonItem
@@ -494,7 +509,7 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
             <ButtonItem
               layout="inline"
               label={t.mfLoginDone}
-              disabled={busy || !status?.running}
+              disabled={busy || !status?.running || status?.session === "active"}
               onClick={() => run(() => mudfishConfirmLogin(true), t.mfLoginConfirmed)}
             >
               {t.mfLoginDone}
@@ -540,7 +555,44 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
         </>
       )}
       {route?.full_vpn && <div style={WARN_BOX}>{t.mfFullVpnWarn}</div>}
+      <Collapsible title={t.mfAccTitle} collapsed={isCollapsed("mudfishAcc")} onToggle={(v) => toggleSection("mudfishAcc", v)}>
+        <div style={SMALL}>{t.mfAccDesc}</div>
+        <PanelSectionRow>
+          <TextField label={t.mfUser} value={user} onChange={(e) => setUser(e.target.value)} />
+        </PanelSectionRow>
+        <PanelSectionRow>
+          <TextField
+            label={status?.has_password ? t.mfPassKept : t.mfPass}
+            bIsPassword
+            value={pass}
+            onChange={(e) => setPass(e.target.value)}
+          />
+        </PanelSectionRow>
+        <PanelSectionRow>
+          <ButtonItem layout="inline" label={t.mfAccSave} disabled={busy || !user.trim()} onClick={saveAccount}>
+            {t.mfAccSave}
+          </ButtonItem>
+        </PanelSectionRow>
+        {(status?.user || status?.has_password) && (
+          <PanelSectionRow>
+            <ButtonItem layout="inline" label={t.mfAccClear} disabled={busy} onClick={clearAccount}>
+              {t.mfAccClear}
+            </ButtonItem>
+          </PanelSectionRow>
+        )}
+        <Help show={helpOn} text={t.hMfAcc} />
+      </Collapsible>
       <Collapsible title={t.mfAdvTitle} collapsed={isCollapsed("mudfishAdv")} onToggle={(v) => toggleSection("mudfishAdv", v)}>
+        <Card
+          rows={[
+            [t.mfAdvWebui, status?.webui || "http://127.0.0.1:8282"],
+            [t.mfPort, status?.port_open ? t.mfPortOpen : t.mfPortClosed],
+            [t.mfRouteIface, route?.dev || DASH],
+            [t.mfRouteIp, route?.src || DASH],
+            [t.mfRouteGw, route?.via || DASH],
+            ...pingRows(t, status),
+          ]}
+        />
         <PanelSectionRow>
           <ButtonItem
             layout="inline"
@@ -553,47 +605,16 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
           </ButtonItem>
         </PanelSectionRow>
         <PanelSectionRow>
-          <ToggleField
-            label={t.mfToggle}
-            description={t.mfToggleDesc}
-            checked={!!status?.running}
-            disabled={busy || working || !installed}
-            onChange={(v) => run(() => mudfishSetEnabled(v), v ? t.mfOn : t.mfOff)}
-          />
-        </PanelSectionRow>
-        <PanelSectionRow>
           <ButtonItem
             layout="inline"
-            label={t.mfOpenWeb}
-            description={t.mfAdvPanelDesc}
-            disabled={!status?.port_open}
-            onClick={openWeb}
+            label={t.mfLoginReset}
+            description={t.mfResetSessionDesc}
+            disabled={busy}
+            onClick={() => run(() => mudfishResetSession(), t.mfLoginResetDone)}
           >
-            {t.mfOpenWeb}
+            {t.mfLoginReset}
           </ButtonItem>
         </PanelSectionRow>
-        {status?.login_done && (
-          <PanelSectionRow>
-            <ButtonItem
-              layout="inline"
-              label={t.mfLoginReset}
-              disabled={busy}
-              onClick={() => run(() => mudfishConfirmLogin(false), t.mfLoginResetDone)}
-            >
-              {t.mfLoginReset}
-            </ButtonItem>
-          </PanelSectionRow>
-        )}
-        <Card
-          rows={[
-            [t.mfDaemon, status?.running ? t.mfRunning : t.mfStopped],
-            [t.mfPort, status?.port_open ? t.mfPortOpen : t.mfPortClosed],
-            [t.mfRouteIface, route?.dev || DASH],
-            [t.mfRouteIp, route?.src || DASH],
-            [t.mfRouteGw, route?.via || DASH],
-            ...pingRows(t, status),
-          ]}
-        />
         <PanelSectionRow>
           <TextField
             label={t.mfPingTarget}
@@ -613,7 +634,6 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
             {t.mfPingTest}
           </ButtonItem>
         </PanelSectionRow>
-        <Help show={helpOn} text={t.hMfNet} />
         <Collapsible title={t.mfLogsTitle} collapsed={isCollapsed("mudfishLogs")} onToggle={(v) => toggleSection("mudfishLogs", v)}>
           <PanelSectionRow>
             <ButtonItem layout="inline" label={t.mfLogsTitle} onClick={loadLogs}>
@@ -629,11 +649,6 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
             </>
           )}
         </Collapsible>
-        <PanelSectionRow>
-          <ButtonItem layout="inline" label={t.mfProbe} description={probeNote || t.mfProbeDesc} disabled={!status?.port_open} onClick={probe}>
-            {t.mfProbe}
-          </ButtonItem>
-        </PanelSectionRow>
         <Help show={helpOn} text={t.hMfAdv} />
       </Collapsible>
     </>

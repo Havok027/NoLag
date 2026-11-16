@@ -40,7 +40,7 @@ test("api do Wi-Fi usa o prefixo wifi_ e existe no main.py", () => {
 
 test("aba Wi-Fi e cartão do Painel estão ligados no Content", () => {
   const src = read("Content.tsx");
-  assert.ok(src.includes('tab === "wifi"') && src.includes("<WifiTab") && src.includes("<WifiCard"));
+  assert.ok(src.includes('tab === "wifi"') && src.includes("<WifiTab") && src.includes("<WifiButton"));
   assert.ok(src.includes("t.tabWifi") && src.includes("TAB_KEYS"));
   const nav = read("TabNav.tsx");
   assert.ok(/TAB_KEYS: TabKey\[\] = \["dash", "wifi", "mudfish", "conf"\]/.test(nav));

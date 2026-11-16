@@ -72,8 +72,23 @@ class GameProfileTests(unittest.TestCase):
         self.assertEqual((w.log, m.log), (["on"], []))  # Mudfish não liga sem o perfil do jogo
         seq["cur"] = ("", "")
         run(gp.tick())
-        self.assertEqual((w.log, m.log), (["on", "off"], []))  # desligado, nada a encerrar
+        self.assertEqual((w.log, m.log), (["on"], []))  # Wi-Fi segue otimizado; Mudfish desligado, nada a encerrar
+        self.assertTrue(w.active)
         self.assertFalse(m.active)
+
+    def test_wifi_is_never_turned_off_by_games_or_mudfish(self):
+        # Isolamento: fechar o jogo ou encerrar o Mudfish nunca desfaz o Wi-Fi Optimizer.
+        w, m = Fake(), Fake(active=True)
+        gp, seq = setup(w, m, {"10": {"wifi": True}})
+        seq["cur"] = ("10", "Jogo")
+        run(gp.tick())
+        seq["cur"] = ("", "")
+        run(gp.tick())
+        self.assertEqual(w.log, ["on"])
+        self.assertTrue(w.active)
+        self.assertEqual(m.log, ["off"])  # só o Mudfish cai
+        run(gp.stop())
+        self.assertEqual(w.log, ["on"])
 
     def test_mudfish_is_stopped_when_any_game_closes(self):
         # Proteção de créditos: mesmo ligado à mão, e em jogo sem perfil salvo, o Mudfish cai ao fechar o jogo.
@@ -112,7 +127,7 @@ class GameProfileTests(unittest.TestCase):
         run(gp.tick())
         seq["cur"] = ("2", "B")
         run(gp.tick())
-        self.assertEqual(w.log, ["on", "off"])
+        self.assertEqual(w.log, ["on"])  # trocar de jogo não desfaz o Wi-Fi
 
     def test_no_module_imports(self):
         src = open(os.path.join(ROOT, "game_profiles.py"), encoding="utf-8").read()

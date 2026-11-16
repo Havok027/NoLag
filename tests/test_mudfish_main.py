@@ -67,7 +67,7 @@ class RouterTests(unittest.TestCase):
     def test_methods_exist(self):
         p = main.Plugin()
         for name in ("mudfish_available", "mudfish_get_status", "mudfish_install", "mudfish_set_enabled",
-                     "mudfish_set_option", "mudfish_confirm_login", "mudfish_set_ping_target",
+                     "mudfish_set_option", "mudfish_set_credentials", "mudfish_clear_credentials", "mudfish_reset_session", "mudfish_get_live", "mudfish_confirm_login", "mudfish_set_ping_target",
                      "mudfish_get_route", "mudfish_test_ping", "mudfish_get_logs", "mudfish_probe_api", "get_snapshot", "get_current_game", "set_game_module"):
             self.assertTrue(callable(getattr(p, name)), name)
 

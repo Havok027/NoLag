@@ -20,21 +20,35 @@ test("4 abas: Painel, Wi-Fi, Mudfish e Conf", () => {
   assert.ok(src.includes("<ConfTab") && src.includes("<MudfishTab") && src.includes("<WifiTab"));
 });
 
-test("Painel tem só 2 chaves rápidas (Wi-Fi e Mudfish), o gráfico ao vivo e o aviso de créditos", () => {
+test("Painel: gráfico no topo, botão do Mudfish, status e botão Otimizar Wi-Fi mais ao final", () => {
   const src = read("Content.tsx");
   const dash = src.slice(src.indexOf('tab === "dash"'), src.indexOf('tab === "wifi"'));
-  assert.ok(dash.includes("<WifiCard") && dash.includes("<MudfishCard"));
-  assert.ok(dash.includes("<LiveChart") && dash.includes("<MfWarning") && dash.includes("<ConnCard"));
-  assert.ok(!dash.includes("ToggleField"), "as chaves ficam dentro dos cartões, só 2");
+  const at = (tag) => dash.indexOf(tag);
+  for (const tag of ["<LiveChart", "<MudfishButton", "<MfWarning", "<ConnCard", "<WifiButton"]) assert.ok(at(tag) >= 0, tag);
+  assert.ok(at("<LiveChart") < at("<MudfishButton") && at("<MudfishButton") < at("<ConnCard") && at("<ConnCard") < at("<WifiButton"));
+  assert.ok(!dash.includes("ToggleField") && !dash.includes("<WifiCard") && !dash.includes("<MudfishCard"), "sem switches no Painel");
+});
+
+test("os dois controles do Painel são botões de ação com estado ativo/inativo", () => {
+  const src = read("DashControls.tsx");
+  assert.ok(src.includes("export function ActionButton") && src.includes("aria-pressed") && src.includes("active"));
+  assert.ok(src.includes("mudfishSetEnabled") && src.includes("wifiOptimizeSafe") && src.includes("wifiReset"));
+  assert.ok(!src.includes("ToggleField"));
+  for (const k of ["btnMfOn", "btnMfOff", "btnWifiOn", "btnWifiOff"]) assert.ok(src.includes("t." + k), k);
+});
+
+test("selo Modo Apenas Jogo aparece só com o Mudfish ativo sem VPN total", () => {
   const mud = read("MudfishTab.tsx");
-  const card = (fn) => mud.slice(mud.indexOf("export function " + fn));
-  assert.strictEqual((card("MudfishCard").split("export function ConnCard")[0].match(/<ToggleField/g) || []).length, 1);
+  assert.ok(mud.includes("live?.only_game") && mud.includes("t.onlyGameBadge"));
+  const py = read("mudfish_mgr.py");
+  assert.ok(py.includes('"only_game": bool(running and not full_vpn)'));
 });
 
 test("gráfico ao vivo reaproveita o LineChart e compara com e sem Mudfish", () => {
   const mud = read("MudfishTab.tsx");
   assert.ok(mud.includes("LineChart") && mud.includes("t.chartWith") && mud.includes("t.chartWithout"));
-  assert.ok(mud.includes("t.connJitter") && mud.includes("getSnapshot"));
+  assert.ok(mud.includes("t.connJitter") && mud.includes("mudfishGetLive"));
+  assert.ok(mud.includes("live?.running && samples.some"), "a linha com Mudfish só entra com ele ligado e medindo");
 });
 
 test("aba Conf tem ativação ao abrir jogo e manter ligado, ambas opcionais, jogos, idioma e diagnóstico", () => {

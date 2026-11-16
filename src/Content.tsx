@@ -4,11 +4,12 @@ import { CurrentGame, GameProfile, deleteGame, getCurrentGame, getSettings, setG
 import { Collapsible, Footer } from "./components";
 import { HelpToggle, TAB_KEYS, TabKey, TabNav } from "./TabNav";
 import { ConfTab } from "./ConfTab";
-import { ConnCard, LiveChart, MfWarning, MudfishCard, MudfishTab } from "./MudfishTab";
-import { WifiCard, WifiTab } from "./WifiTab";
+import { ConnCard, LiveChart, MfWarning, MudfishTab } from "./MudfishTab";
+import { MudfishButton, WifiButton } from "./DashControls";
+import { WifiTab } from "./WifiTab";
 import { Lang, TEXTS, normalizeLang } from "./i18n";
 
-const DEFAULT_COLLAPSED: Record<string, boolean> = { mudfishAdv: true, mudfishLogs: true };
+const DEFAULT_COLLAPSED: Record<string, boolean> = { mudfishAdv: true, mudfishLogs: true, mudfishAcc: true };
 
 export function Content() {
   const [lang, setLang] = useState<Lang>("pt");
@@ -107,13 +108,13 @@ export function Content() {
       <HelpToggle label={t.helpBtn} on={helpOn} onToggle={toggleHelp} />
       {tab === "dash" && (
         <>
-          <WifiCard t={t} />
-          <MudfishCard t={t} />
-          <MfWarning t={t} helpOn={helpOn} />
           <LiveChart t={t} helpOn={helpOn} />
+          <MudfishButton t={t} helpOn={helpOn} />
+          <MfWarning t={t} helpOn={helpOn} />
           <Collapsible title={t.connTitle} collapsed={isCollapsed("conn")} onToggle={(v) => toggleSection("conn", v)}>
             <ConnCard t={t} helpOn={helpOn} />
           </Collapsible>
+          <WifiButton t={t} />
         </>
       )}
       {tab === "wifi" && (

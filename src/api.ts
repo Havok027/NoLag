@@ -105,6 +105,10 @@ export interface MudfishStatus {
   auto_selection?: boolean;
   multipath?: boolean;
   auto_on_game?: boolean;
+  session?: "active" | "inactive" | "unknown";
+  api_ok?: boolean;
+  user?: string;
+  has_password?: boolean;
   option_state?: "" | "applied" | "api_unmapped" | "failed";
   login_done?: boolean;
   step?: "install" | "login" | "activate";
@@ -151,6 +155,22 @@ export type MudfishOption = "auto_selection" | "multipath" | "auto_on_game" | "k
 export const mudfishSetOption = callable<[key: MudfishOption, value: boolean], MudfishResult & { applied?: boolean; state?: string }>(
   "mudfish_set_option"
 );
+export interface MudfishLive {
+  ok: boolean;
+  running: boolean;
+  base: Metrics | null;
+  tunnel: Metrics | null;
+  base_iface: string;
+  tunnel_iface: string;
+  full_vpn: boolean;
+  only_game: boolean;
+}
+export const mudfishGetLive = callable<[], MudfishLive>("mudfish_get_live");
+export const mudfishSetCredentials = callable<[user: string, password: string], MudfishResult & { has_password?: boolean }>(
+  "mudfish_set_credentials"
+);
+export const mudfishClearCredentials = callable<[], MudfishResult>("mudfish_clear_credentials");
+export const mudfishResetSession = callable<[], MudfishResult & { logged_out?: boolean }>("mudfish_reset_session");
 export const mudfishConfirmLogin = callable<[done: boolean], MudfishResult>("mudfish_confirm_login");
 export const mudfishGetLogs = callable<[], { ok: boolean; service: string; install: string }>("mudfish_get_logs");
 export const mudfishProbeApi = callable<[], { ok: boolean; error: string; detail?: string; requests?: number; paths?: number; file?: string }>(

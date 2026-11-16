@@ -14,7 +14,7 @@ const read = (f) => {
 test("todo texto usado nas telas do Mudfish e da Conf existe 3 vezes no i18n (pt, en, es) e na interface", () => {
   const src = read("i18n.tsx");
   const used = new Set();
-  for (const f of ["MudfishTab.tsx", "ConfTab.tsx", "Content.tsx"]) {
+  for (const f of ["MudfishTab.tsx", "ConfTab.tsx", "Content.tsx", "DashControls.tsx"]) {
     for (const m of read(f).matchAll(/\bt\.(\w+)/g)) used.add(m[1]);
   }
   assert.ok(used.size > 60);
@@ -63,18 +63,53 @@ test("Mudfish e Wi-Fi não dependem um do outro no frontend", () => {
   assert.ok(!/mudfish/i.test(wifi) && !/MudfishTab/.test(wifi));
 });
 
-test("nenhum segredo trafega: sem usuário nem senha no status", () => {
+test("a senha nunca volta do backend para a tela", () => {
   const api = read("api.ts");
   const iface = api.match(/export interface MudfishStatus \{[\s\S]*?\n\}/)[0];
-  assert.ok(!/\bpassword\b\??:/.test(iface) && !iface.includes("has_password"));
-  assert.ok(!api.includes("mudfish_set_credentials") && !api.includes("mudfish_set_profile"));
+  assert.ok(!/\bpassword\b\??:/.test(iface));
+  assert.ok(iface.includes("has_password") && iface.includes("user?: string"));
+  assert.ok(!api.includes("mudfish_set_profile"));
+});
+
+test("conta opcional na aba Mudfish, recolhida por padrão, com campo de senha mascarado", () => {
+  const src = read("MudfishTab.tsx");
+  assert.ok(src.includes("bIsPassword") && src.includes("mudfishSetCredentials") && src.includes("mudfishClearCredentials"));
+  assert.ok(src.includes('isCollapsed("mudfishAcc")'));
+  assert.ok(read("Content.tsx").includes("mudfishAcc: true"));
+});
+
+test("primeiro uso explica o cadastro único dos jogos no painel, nos 3 idiomas", () => {
+  const src = read("MudfishTab.tsx");
+  assert.ok(src.includes("t.mfFirstTitle") && src.includes("t.mfFirstSteps") && src.includes("t.hMfFirst"));
+  const i18n = read("i18n.tsx");
+  const steps = [...i18n.matchAll(/^\s+mfFirstSteps: "(.*)",$/gm)].map((m) => m[1]);
+  assert.strictEqual(steps.length, 3);
+  for (const text of steps) {
+    assert.ok(text.includes("127.0.0.1:8282") && text.includes("Basic") && text.includes("Multi-Path") && text.includes("Auto / South America"));
+  }
+});
+
+test("Opções Avançadas do Mudfish não repetem controles da Conf nem do Painel", () => {
+  const src = read("MudfishTab.tsx");
+  const adv = src.slice(src.indexOf("t.mfAdvTitle"), src.indexOf("t.hMfAdv"));
+  assert.ok(adv.includes("t.mfAdvWebui") && adv.includes("mudfishInstall") && adv.includes("mudfishResetSession"));
+  for (const dup of ["mudfishSetEnabled", "ToggleField", "mudfishProbeApi", "mudfishSetOption", "NavigateToExternalWeb"]) {
+    assert.ok(!adv.includes(dup), dup);
+  }
+});
+
+test("sessão do painel e API aparecem no status", () => {
+  const src = read("MudfishTab.tsx");
+  assert.ok(src.includes("t.mfSessionRow") && src.includes("t.mfApiRow") && src.includes('status?.session === "active"'));
+  const api = read("api.ts");
+  assert.ok(api.includes("session?:") && api.includes("api_ok?:"));
 });
 
 test("api.ts expõe todos os métodos do roteador do main.py", () => {
   const api = read("api.ts");
   const py = read("main.py");
   for (const name of ["mudfish_available", "mudfish_get_status", "mudfish_install", "mudfish_set_enabled",
-    "mudfish_set_option", "mudfish_confirm_login", "mudfish_set_ping_target", "mudfish_get_route", "mudfish_test_ping",
+    "mudfish_set_option", "mudfish_set_credentials", "mudfish_clear_credentials", "mudfish_reset_session", "mudfish_get_live", "mudfish_confirm_login", "mudfish_set_ping_target", "mudfish_get_route", "mudfish_test_ping",
     "mudfish_get_logs", "mudfish_probe_api", "get_snapshot", "get_current_game", "set_game_module"]) {
     assert.ok(api.includes('"' + name + '"'), "api " + name);
     assert.ok(py.includes("async def " + name + "("), "main " + name);

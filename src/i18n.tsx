@@ -103,8 +103,6 @@ export interface Texts {
   mfInstallOk: string;
   mfToggle: string;
   mfToggleDesc: string;
-  mfCardToggle: string;
-  mfCardToggleDesc: string;
   mfOn: string;
   mfOff: string;
   mfOpenWeb: string;
@@ -130,6 +128,37 @@ export interface Texts {
   mfErrBusy: string;
   mfErrArch: string;
   mfErrGeneric: string;
+  onlyGameBadge: string;
+  chartNoTunnel: string;
+  btnMfOn: string;
+  btnMfOff: string;
+  btnMfSetup: string;
+  btnWifiOn: string;
+  btnWifiOff: string;
+  hDashBtns: string;
+  mfFirstTitle: string;
+  mfFirstSteps: string;
+  hMfFirst: string;
+  mfSessionRow: string;
+  mfSessionActive: string;
+  mfSessionInactive: string;
+  mfSessionUnknown: string;
+  mfApiRow: string;
+  mfApiOk: string;
+  mfApiDown: string;
+  mfAccTitle: string;
+  mfAccDesc: string;
+  hMfAcc: string;
+  mfUser: string;
+  mfPass: string;
+  mfPassKept: string;
+  mfAccSave: string;
+  mfAccClear: string;
+  mfAccSaved: string;
+  mfAccCleared: string;
+  mfErrBadCreds: string;
+  mfAdvWebui: string;
+  mfResetSessionDesc: string;
   tabMudfish: string;
   tabConf: string;
   mfAutoSel: string;
@@ -306,8 +335,6 @@ export const TEXTS: Record<Lang, Texts> = {
     mfInstallOk: "Mudfish instalado",
     mfToggle: "Mudfish ligado",
     mfToggleDesc: "Liga o serviço do Mudfish. O Mudfish cobra por tráfego.",
-    mfCardToggle: "Rotas (Mudfish)",
-    mfCardToggleDesc: "Liga ou desliga o Mudfish",
     mfOn: "Mudfish ligado",
     mfOff: "Mudfish desligado",
     mfOpenWeb: "Abrir painel do Mudfish",
@@ -333,6 +360,37 @@ export const TEXTS: Record<Lang, Texts> = {
     mfErrBusy: "Outra ação em andamento",
     mfErrArch: "Só funciona em aparelhos x86_64",
     mfErrGeneric: "Não foi possível concluir",
+    onlyGameBadge: "Modo Apenas Jogo (Créditos Protegidos)",
+    chartNoTunnel: "Mudfish ligado, mas nenhum túnel foi detectado: só a linha base é medida",
+    btnMfOn: "Mudfish ATIVO · toque para desligar",
+    btnMfOff: "Ligar Mudfish",
+    btnMfSetup: "Mudfish: conclua a instalação na aba Mudfish",
+    btnWifiOn: "Wi-Fi otimizado · toque para restaurar",
+    btnWifiOff: "Otimizar Wi-Fi",
+    hDashBtns: "O botão do Mudfish liga e desliga só o serviço dele e gasta créditos enquanto estiver ativo. O botão de Wi-Fi aplica as otimizações e elas continuam mesmo ao fechar o jogo ou desligar o Mudfish: só você as restaura.",
+    mfFirstTitle: "Primeiro uso (só uma vez)",
+    mfFirstSteps: "1) Abra o painel (127.0.0.1:8282) e entre na conta. 2) Escolha o modo Basic ou Multi-Path. 3) Adicione à mão os jogos que quer otimizar, conferindo a região Auto / South America. Esse cadastro é feito uma única vez e fica salvo na nuvem da sua conta Mudfish.",
+    hMfFirst: "Depois desse cadastro único, o plugin cuida dos jogos equipados por faixa de IP: você só liga e desliga o Mudfish. Se trocar de conta ou de região, repita o passo no painel.",
+    mfSessionRow: "Sessão no painel",
+    mfSessionActive: "Ativa",
+    mfSessionInactive: "Sem sessão: entre no painel",
+    mfSessionUnknown: "Não verificada",
+    mfApiRow: "API do painel",
+    mfApiOk: "Responde",
+    mfApiDown: "Sem resposta",
+    mfAccTitle: "Conta Mudfish (opcional)",
+    mfAccDesc: "Fica só neste aparelho. O login automático ainda não foi ligado: falta mapear o formulário do painel, então entre pelo painel por enquanto",
+    hMfAcc: "Opcional. Se um dia a sessão expirar, estes dados servirão para o login automático assim que ele for mapeado. A senha nunca volta para a tela.",
+    mfUser: "Usuário",
+    mfPass: "Senha",
+    mfPassKept: "Senha salva (deixe vazio para manter)",
+    mfAccSave: "Salvar conta",
+    mfAccClear: "Apagar conta",
+    mfAccSaved: "Conta salva neste aparelho",
+    mfAccCleared: "Conta apagada",
+    mfErrBadCreds: "Usuário ou senha inválidos",
+    mfAdvWebui: "Painel (WebUI)",
+    mfResetSessionDesc: "Sai do painel e volta ao passo de login",
     tabMudfish: "Mudfish",
     tabConf: "Conf",
     mfAutoSel: "Seleção automática",
@@ -341,7 +399,7 @@ export const TEXTS: Record<Lang, Texts> = {
     mfMultiPathDesc: "Envia o tráfego do jogo por mais de um caminho contra picos de lag",
     mfOptSaved: "Preferência salva",
     mfOptApplied: "Aplicado no Mudfish",
-    mfOptPending: "Salvo. O Mudfish ainda não permite aplicar isso de fora: ative a mesma opção no painel",
+    mfOptPending: "Salvo neste aparelho. O painel do Mudfish não tem esse comando conferido ainda: ative a mesma opção lá",
     mfOptFailed: "Salvo, mas não foi possível aplicar no Mudfish",
     mfErrBadOption: "Opção inválida",
     mfWarnTitle: "Cuidado com os créditos",
@@ -364,7 +422,7 @@ export const TEXTS: Record<Lang, Texts> = {
     chartWithout: "Sem Mudfish",
     chartEmpty: "Aguardando medições…",
     chartBest: "MELHOR",
-    hChart: "Compara o ping médio e o jitter com e sem o Mudfish, medidos a cada 8 s no alvo configurado. Ligue e desligue o Mudfish para ver a diferença.",
+    hChart: "Mede sem parar, a cada 8 s. A linha 'Sem Mudfish' é medida pela conexão normal e não gasta créditos, mesmo com o Mudfish desligado. Com ele ligado, a outra linha mede pelo túnel ao mesmo tempo, para mostrar o ganho real.",
     mfStepInstall: "1. Instalar",
     mfStepLogin: "2. Entrar na conta",
     mfStepActivate: "3. Ativar a rota",
@@ -385,7 +443,7 @@ export const TEXTS: Record<Lang, Texts> = {
     mfLogInstall: "Instalação",
     mfLogEmpty: "Sem registros",
     mfProbe: "Capturar API do painel",
-    mfProbeDesc: "Salva as respostas do painel local para mapear nós e FastConnect",
+    mfProbeDesc: "Captura só leitura do painel, para mapear a API. O arquivo pode ter dados da conta: revise antes de enviar",
     mfProbing: "Capturando…",
     mfProbeOk: "API capturada (respostas / caminhos)",
     mfProbeFail: "Não foi possível capturar",
@@ -397,10 +455,10 @@ export const TEXTS: Record<Lang, Texts> = {
     hMfNet: "Compare o ping com o Mudfish desligado e ligado para ver se a rota ajuda.",
     gameWifi: "Wi-Fi",
     gameMudfish: "Mudfish",
-    gameModulesDesc: "Liga ao abrir o jogo; só desliga o que ele mesmo ligou",
+    gameModulesDesc: "Wi-Fi: otimiza ao abrir e segue otimizado ao sair. Mudfish: só liga com a opção da Conf e sempre encerra ao sair",
     gameCurrent: "Jogo aberto",
     gameAddCurrent: "Salvar jogo aberto",
-    hGameModules: "Cada jogo salvo pode ligar o Wi-Fi e o Mudfish por conta própria ao abrir.",
+    hGameModules: "Cada jogo salvo pode otimizar o Wi-Fi e ligar o Mudfish ao abrir. O Wi-Fi nunca é desfeito ao fechar o jogo; o Mudfish sempre é encerrado.",
     connTitle: "Conexão",
     connWifi: "Wi-Fi",
     connMudfish: "Mudfish",
@@ -507,8 +565,6 @@ export const TEXTS: Record<Lang, Texts> = {
     mfInstallOk: "Mudfish installed",
     mfToggle: "Mudfish on",
     mfToggleDesc: "Turns the Mudfish service on. Mudfish charges by traffic.",
-    mfCardToggle: "Routes (Mudfish)",
-    mfCardToggleDesc: "Turns Mudfish on or off",
     mfOn: "Mudfish is on",
     mfOff: "Mudfish is off",
     mfOpenWeb: "Open Mudfish panel",
@@ -534,6 +590,37 @@ export const TEXTS: Record<Lang, Texts> = {
     mfErrBusy: "Another action is running",
     mfErrArch: "Only works on x86_64 devices",
     mfErrGeneric: "Could not complete",
+    onlyGameBadge: "Game-only mode (credits protected)",
+    chartNoTunnel: "Mudfish is on but no tunnel was detected: only the baseline is measured",
+    btnMfOn: "Mudfish ON · tap to turn off",
+    btnMfOff: "Turn on Mudfish",
+    btnMfSetup: "Mudfish: finish setup in the Mudfish tab",
+    btnWifiOn: "Wi-Fi tuned · tap to restore",
+    btnWifiOff: "Optimize Wi-Fi",
+    hDashBtns: "The Mudfish button only starts and stops its service and uses credits while on. The Wi-Fi button applies the tweaks and they stay even when the game closes or Mudfish turns off: only you restore them.",
+    mfFirstTitle: "First use (only once)",
+    mfFirstSteps: "1) Open the panel (127.0.0.1:8282) and sign in. 2) Pick Basic or Multi-Path mode. 3) Add the games you want to optimize by hand, checking the Auto / South America region. This setup is done only once and is saved in your Mudfish account cloud.",
+    hMfFirst: "After this one-time setup, the plugin handles the equipped games by IP range: you only turn Mudfish on and off. If you change account or region, repeat the step in the panel.",
+    mfSessionRow: "Panel session",
+    mfSessionActive: "Active",
+    mfSessionInactive: "No session: sign in on the panel",
+    mfSessionUnknown: "Not verified",
+    mfApiRow: "Panel API",
+    mfApiOk: "Responding",
+    mfApiDown: "No response",
+    mfAccTitle: "Mudfish account (optional)",
+    mfAccDesc: "Stays on this device only. Auto-login is not wired yet: the panel form still has to be mapped, so sign in on the panel for now",
+    hMfAcc: "Optional. If the session ever expires, these will be used for auto-login once it is mapped. The password never comes back to the screen.",
+    mfUser: "Username",
+    mfPass: "Password",
+    mfPassKept: "Password saved (leave empty to keep)",
+    mfAccSave: "Save account",
+    mfAccClear: "Delete account",
+    mfAccSaved: "Account saved on this device",
+    mfAccCleared: "Account deleted",
+    mfErrBadCreds: "Invalid username or password",
+    mfAdvWebui: "Panel (WebUI)",
+    mfResetSessionDesc: "Signs out of the panel and returns to the login step",
     tabMudfish: "Mudfish",
     tabConf: "Conf",
     mfAutoSel: "Auto Selection",
@@ -542,7 +629,7 @@ export const TEXTS: Record<Lang, Texts> = {
     mfMultiPathDesc: "Sends game traffic over more than one path against lag spikes",
     mfOptSaved: "Preference saved",
     mfOptApplied: "Applied in Mudfish",
-    mfOptPending: "Saved. Mudfish does not allow applying this from outside yet: turn on the same option in its panel",
+    mfOptPending: "Saved on this device. The Mudfish panel's command for this is not verified yet: turn on the same option there",
     mfOptFailed: "Saved, but it could not be applied in Mudfish",
     mfErrBadOption: "Invalid option",
     mfWarnTitle: "Mind your credits",
@@ -565,7 +652,7 @@ export const TEXTS: Record<Lang, Texts> = {
     chartWithout: "Without Mudfish",
     chartEmpty: "Waiting for measurements…",
     chartBest: "BEST",
-    hChart: "Compares average ping and jitter with and without Mudfish, measured every 8 s on the configured target. Turn Mudfish on and off to see the difference.",
+    hChart: "Measures nonstop, every 8 s. The 'Without Mudfish' line uses the normal connection and costs no credits, even with Mudfish off. With it on, the other line measures through the tunnel at the same time to show the real gain.",
     mfStepInstall: "1. Install",
     mfStepLogin: "2. Sign in",
     mfStepActivate: "3. Turn on the route",
@@ -586,7 +673,7 @@ export const TEXTS: Record<Lang, Texts> = {
     mfLogInstall: "Installation",
     mfLogEmpty: "No entries",
     mfProbe: "Capture panel API",
-    mfProbeDesc: "Saves the local panel's responses so nodes and FastConnect can be mapped",
+    mfProbeDesc: "Read-only capture of the panel, to map the API. The file may hold account data: review it before sending",
     mfProbing: "Capturing…",
     mfProbeOk: "API captured (responses / paths)",
     mfProbeFail: "Could not capture",
@@ -598,10 +685,10 @@ export const TEXTS: Record<Lang, Texts> = {
     hMfNet: "Compare the ping with Mudfish off and on to see if the route helps.",
     gameWifi: "Wi-Fi",
     gameMudfish: "Mudfish",
-    gameModulesDesc: "Turns on when the game opens; only turns off what it turned on",
+    gameModulesDesc: "Wi-Fi: tunes on open and stays tuned after closing. Mudfish: turns on only with the Conf option and always stops on exit",
     gameCurrent: "Open game",
     gameAddCurrent: "Save open game",
-    hGameModules: "Each saved game can turn on Wi-Fi and Mudfish on its own when it opens.",
+    hGameModules: "Each saved game can tune Wi-Fi and turn on Mudfish when it opens. Wi-Fi is never undone when the game closes; Mudfish is always stopped.",
     connTitle: "Connection",
     connWifi: "Wi-Fi",
     connMudfish: "Mudfish",
@@ -708,8 +795,6 @@ export const TEXTS: Record<Lang, Texts> = {
     mfInstallOk: "Mudfish instalado",
     mfToggle: "Mudfish activado",
     mfToggleDesc: "Enciende el servicio de Mudfish. Mudfish cobra por tráfico.",
-    mfCardToggle: "Rutas (Mudfish)",
-    mfCardToggleDesc: "Activa o desactiva Mudfish",
     mfOn: "Mudfish activado",
     mfOff: "Mudfish apagado",
     mfOpenWeb: "Abrir panel de Mudfish",
@@ -735,6 +820,37 @@ export const TEXTS: Record<Lang, Texts> = {
     mfErrBusy: "Otra acción en curso",
     mfErrArch: "Solo funciona en equipos x86_64",
     mfErrGeneric: "No se pudo completar",
+    onlyGameBadge: "Modo solo juego (créditos protegidos)",
+    chartNoTunnel: "Mudfish activo, pero no se detectó túnel: solo se mide la línea base",
+    btnMfOn: "Mudfish ACTIVO · toca para apagar",
+    btnMfOff: "Activar Mudfish",
+    btnMfSetup: "Mudfish: termina la instalación en la pestaña Mudfish",
+    btnWifiOn: "Wi-Fi optimizado · toca para restaurar",
+    btnWifiOff: "Optimizar Wi-Fi",
+    hDashBtns: "El botón de Mudfish solo inicia y detiene su servicio y gasta créditos mientras esté activo. El botón de Wi-Fi aplica los ajustes y permanecen aunque se cierre el juego o se apague Mudfish: solo tú los restauras.",
+    mfFirstTitle: "Primer uso (solo una vez)",
+    mfFirstSteps: "1) Abre el panel (127.0.0.1:8282) y entra en la cuenta. 2) Elige el modo Basic o Multi-Path. 3) Añade a mano los juegos que quieres optimizar, revisando la región Auto / South America. Este registro se hace una sola vez y queda guardado en la nube de tu cuenta Mudfish.",
+    hMfFirst: "Tras este registro único, el plugin gestiona los juegos equipados por rango de IP: solo enciendes y apagas Mudfish. Si cambias de cuenta o de región, repite el paso en el panel.",
+    mfSessionRow: "Sesión en el panel",
+    mfSessionActive: "Activa",
+    mfSessionInactive: "Sin sesión: entra en el panel",
+    mfSessionUnknown: "Sin verificar",
+    mfApiRow: "API del panel",
+    mfApiOk: "Responde",
+    mfApiDown: "Sin respuesta",
+    mfAccTitle: "Cuenta Mudfish (opcional)",
+    mfAccDesc: "Queda solo en este equipo. El acceso automático aún no está conectado: falta mapear el formulario del panel, así que entra por el panel por ahora",
+    hMfAcc: "Opcional. Si algún día caduca la sesión, estos datos servirán para el acceso automático cuando se mapee. La contraseña nunca vuelve a la pantalla.",
+    mfUser: "Usuario",
+    mfPass: "Contraseña",
+    mfPassKept: "Contraseña guardada (déjalo vacío para mantener)",
+    mfAccSave: "Guardar cuenta",
+    mfAccClear: "Borrar cuenta",
+    mfAccSaved: "Cuenta guardada en este equipo",
+    mfAccCleared: "Cuenta borrada",
+    mfErrBadCreds: "Usuario o contraseña no válidos",
+    mfAdvWebui: "Panel (WebUI)",
+    mfResetSessionDesc: "Sale del panel y vuelve al paso de acceso",
     tabMudfish: "Mudfish",
     tabConf: "Conf",
     mfAutoSel: "Selección automática",
@@ -743,7 +859,7 @@ export const TEXTS: Record<Lang, Texts> = {
     mfMultiPathDesc: "Envía el tráfico del juego por más de un camino contra picos de lag",
     mfOptSaved: "Preferencia guardada",
     mfOptApplied: "Aplicado en Mudfish",
-    mfOptPending: "Guardado. Mudfish aún no permite aplicarlo desde fuera: activa la misma opción en su panel",
+    mfOptPending: "Guardado en este equipo. El comando del panel de Mudfish aún no está verificado: activa la misma opción allí",
     mfOptFailed: "Guardado, pero no se pudo aplicar en Mudfish",
     mfErrBadOption: "Opción no válida",
     mfWarnTitle: "Cuidado con los créditos",
@@ -766,7 +882,7 @@ export const TEXTS: Record<Lang, Texts> = {
     chartWithout: "Sin Mudfish",
     chartEmpty: "Esperando mediciones…",
     chartBest: "MEJOR",
-    hChart: "Compara el ping medio y el jitter con y sin Mudfish, medidos cada 8 s en el destino configurado. Enciende y apaga Mudfish para ver la diferencia.",
+    hChart: "Mide sin parar, cada 8 s. La línea 'Sin Mudfish' usa la conexión normal y no gasta créditos, aun con Mudfish apagado. Con él activo, la otra línea mide por el túnel a la vez para mostrar la ganancia real.",
     mfStepInstall: "1. Instalar",
     mfStepLogin: "2. Iniciar sesión",
     mfStepActivate: "3. Activar la ruta",
@@ -787,7 +903,7 @@ export const TEXTS: Record<Lang, Texts> = {
     mfLogInstall: "Instalación",
     mfLogEmpty: "Sin registros",
     mfProbe: "Capturar API del panel",
-    mfProbeDesc: "Guarda las respuestas del panel local para mapear nodos y FastConnect",
+    mfProbeDesc: "Captura de solo lectura del panel, para mapear la API. El archivo puede tener datos de la cuenta: revísalo antes de enviarlo",
     mfProbing: "Capturando…",
     mfProbeOk: "API capturada (respuestas / rutas)",
     mfProbeFail: "No se pudo capturar",
@@ -799,10 +915,10 @@ export const TEXTS: Record<Lang, Texts> = {
     hMfNet: "Compara el ping con Mudfish apagado y activado para ver si la ruta ayuda.",
     gameWifi: "Wi-Fi",
     gameMudfish: "Mudfish",
-    gameModulesDesc: "Se activa al abrir el juego; solo apaga lo que activó",
+    gameModulesDesc: "Wi-Fi: optimiza al abrir y sigue optimizado al salir. Mudfish: solo se activa con la opción de Conf y siempre se detiene al salir",
     gameCurrent: "Juego abierto",
     gameAddCurrent: "Guardar juego abierto",
-    hGameModules: "Cada juego guardado puede activar Wi-Fi y Mudfish por su cuenta al abrirse.",
+    hGameModules: "Cada juego guardado puede optimizar el Wi-Fi y activar Mudfish al abrirse. El Wi-Fi nunca se deshace al cerrar el juego; Mudfish siempre se detiene.",
     connTitle: "Conexión",
     connWifi: "Wi-Fi",
     connMudfish: "Mudfish",
