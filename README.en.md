@@ -6,10 +6,26 @@ Decky Loader plugin (Steam Deck, Legion Go and similar devices running SteamOS o
 
 ## Tabs
 
-- **Dashboard:** two quick switches (Wi-Fi and Mudfish), the live ping and jitter chart with and without Mudfish, and the Connection table.
+- **Dashboard:** the live ping and jitter chart on top, which measures nonstop over the normal connection ("Without Mudfish", no credits used) and, with Mudfish on, also through the tunnel ("With Mudfish") to show the real gain, plus the **Game-only mode (credits protected)** badge when there is no full VPN. Then the **Mudfish** button (green when active), the Connection table and, near the end, the **Optimize Wi-Fi** button.
 - **Wi-Fi:** local network tuning (below).
-- **Mudfish:** guided 3-step flow (install, sign in on the panel, turn on), **Auto Selection** (on by default), **Multi-Path** (off), a button to open the `http://127.0.0.1:8282` panel and Advanced options (route, ping before and after, logs).
+- **Mudfish:** guided 3-step flow (install, sign in on the panel, turn on) that detects a session already open on the panel, **Auto Selection** (on by default), **Multi-Path** (off), a button to open `http://127.0.0.1:8282`, an optional account (username and password, kept on this device only) and Advanced options (panel port, reinstall, reset session, route, ping, logs).
 - **Conf:** turn on when a game opens (off by default), keep on after restart (off by default), per-game profiles with Wi-Fi and Mudfish switches, language (PT, EN, ES) and diagnostics.
+
+## Mudfish: first use (only once)
+
+1. Open the panel (`http://127.0.0.1:8282`) and sign in.
+2. Pick **Basic** or **Multi-Path** mode.
+3. Add by hand the games you want to optimize, checking the **Auto / South America** region.
+
+This setup is done only once and is saved in your Mudfish account cloud. After that, the plugin only starts and stops the service and the equipped games follow by IP range.
+
+## Wi-Fi and Mudfish are isolated
+
+Wi-Fi tweaks are **never** undone when a game closes, when the console boots or when Mudfish turns off: only the button (or the Wi-Fi tab) restores them. The start-off and stop-on-game-exit rules apply **only** to the Mudfish service.
+
+## Mudfish local API
+
+The plugin only reads (GET) the panel's status paths and uses session detection. Commands that change state (Auto Selection and equipped items) are not sent yet: Conf > Diagnostics captures, read-only, the context of those calls into `mudfish-api.json` so they can be verified before being wired. Until then, Auto Selection and Multi-Path are saved and the screen tells you when you must turn them on in the panel. Auto-login with the optional account also depends on that capture.
 
 ## Mudfish: credit protection
 

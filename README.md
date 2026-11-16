@@ -6,10 +6,26 @@ Plugin para o Decky Loader (Steam Deck, Legion Go e similares com SteamOS e Bazz
 
 ## Abas
 
-- **Painel:** duas chaves rápidas (Wi-Fi e Mudfish), o gráfico ao vivo de ping e jitter com e sem o Mudfish e a tabela Conexão.
+- **Painel:** no topo, o gráfico ao vivo de ping e jitter, que mede sem parar a conexão normal ("Sem Mudfish", sem gastar créditos) e, com o Mudfish ligado, também pelo túnel ("Com Mudfish") para mostrar o ganho real, com o selo **Modo Apenas Jogo (Créditos Protegidos)** quando não há VPN total. Depois, o botão do **Mudfish** (verde quando ativo), a tabela Conexão e, mais ao final, o botão **Otimizar Wi-Fi**.
 - **Wi-Fi:** otimizações da rede local (abaixo).
-- **Mudfish:** fluxo guiado em 3 passos (instalar, entrar no painel, ativar), **Auto Selection** (ligado por padrão), **Multi-Path** (desligado), botão para abrir o painel `http://127.0.0.1:8282` e Opções Avançadas (rota, ping antes e depois, logs).
+- **Mudfish:** fluxo guiado em 3 passos (instalar, entrar no painel, ativar) com detecção da sessão já aberta no painel, **Auto Selection** (ligado por padrão), **Multi-Path** (desligado), botão para abrir `http://127.0.0.1:8282`, conta opcional (usuário e senha, guardados só neste aparelho) e Opções Avançadas (porta do painel, reinstalar, resetar sessão, rota, ping, logs).
 - **Conf:** ativar ao abrir jogo (desligado por padrão), manter ligado ao reiniciar (desligado por padrão), perfis por jogo com chaves de Wi-Fi e Mudfish, idioma (PT, EN, ES) e diagnóstico.
+
+## Mudfish: primeiro uso (só uma vez)
+
+1. Abra o painel (`http://127.0.0.1:8282`) e entre na conta.
+2. Escolha o modo **Basic** ou **Multi-Path**.
+3. Adicione à mão os jogos que quer otimizar, conferindo a região **Auto / South America**.
+
+Esse cadastro é feito uma única vez e fica salvo na nuvem da conta Mudfish. Depois disso, o plugin só liga e desliga o serviço e os jogos equipados seguem por faixa de IP.
+
+## Isolamento entre Wi-Fi e Mudfish
+
+As otimizações de Wi-Fi **nunca** são desfeitas ao fechar um jogo, ao ligar o console ou ao desligar o Mudfish: só o botão (ou a aba Wi-Fi) as restaura. A regra de começar desligado e encerrar ao fechar o jogo vale **apenas** para o serviço do Mudfish.
+
+## API local do Mudfish
+
+O plugin só lê (GET) os caminhos de status do painel e usa a detecção de sessão. Os comandos que alteram estado (Auto Selection e itens equipados) ainda não são enviados: Conf > Diagnóstico captura, só em leitura, o contexto dessas chamadas em `mudfish-api.json` para conferi-las antes de ligá-las. Até lá, Auto Selection e Multi-Path ficam salvos e a tela avisa quando é preciso ativá-los no painel. O login automático com a conta opcional também depende dessa captura.
 
 ## Mudfish: proteção de créditos
 

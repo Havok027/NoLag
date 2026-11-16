@@ -16,6 +16,8 @@ _RTT = re.compile(r"= ([\d.]+)/([\d.]+)/([\d.]+)/([\d.]+) ms")
 _ROUTE = {"dev": re.compile(r"\bdev (\S+)"), "src": re.compile(r"\bsrc (\S+)"), "via": re.compile(r"\bvia (\S+)")}
 
 DEFAULT_TARGET = "1.1.1.1"
+_IFACE = re.compile(r"^[A-Za-z0-9_.-]{1,15}$")
+TUNNEL_DEV = re.compile(r"^(tun|tap|ppp|mudfish|mud)", re.I)
 
 
 def clean_target(value, default=DEFAULT_TARGET):
@@ -83,9 +85,32 @@ async def route_get(target):
     return info
 
 
-async def ping_stats(target, count=4):
-    rc, out = await run(["ping", "-n", "-c", str(int(count)), "-i", "0.2", "-W", "1", target], 15)
+async def ping_stats(target, count=4, iface=None):
+    """Ping comum; com `iface` força a saída por aquela interface (ping -I)."""
+    cmd = ["ping", "-n", "-c", str(int(count)), "-i", "0.2", "-W", "1"]
+    if iface and _IFACE.match(iface):
+        cmd += ["-I", iface]
+    rc, out = await run(cmd + [target], 15)
     return parse_ping(out)
+
+
+async def default_dev():
+    """Interface da rota padrão, preferindo uma que não seja túnel (linha de base sem Mudfish)."""
+    rc, out = await run(["ip", "-o", "route", "show", "default"], 5)
+    devs = [m.group(1) for m in re.finditer(r"\bdev (\S+)", out if rc == 0 else "")]
+    for dev in devs:
+        if not TUNNEL_DEV.match(dev):
+            return dev
+    return devs[0] if devs else ""
+
+
+async def tunnel_dev():
+    """Primeira interface de túnel (tun/tap) existente, ou vazio."""
+    rc, out = await run(["ip", "-o", "link", "show"], 5)
+    for m in re.finditer(r"^\d+:\s+([^:@\s]+)", out if rc == 0 else "", re.M):
+        if TUNNEL_DEV.match(m.group(1)):
+            return m.group(1)
+    return ""
 
 
 class Bus:

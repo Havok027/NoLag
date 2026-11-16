@@ -3,6 +3,8 @@
 Proteção de créditos: o Mudfish só liga aqui se a opção "ao abrir jogo" (aba Conf) estiver ativa, e é
 encerrado ao fechar QUALQUER jogo detectado, mesmo que tenha sido ligado à mão.
 
+Isolamento: ao sair do jogo só o daemon do Mudfish é encerrado. O Wi-Fi Optimizer nunca é desligado aqui.
+
 Fala com os módulos só pelo core_state. Cada ação é isolada: se um módulo falhar ou estiver
 indisponível, o outro continua normalmente.
 """
@@ -56,15 +58,14 @@ class GameProfiles:
         await core_state.bus.emit("game_started", {"appid": appid, "modules": sorted(self.started)})
 
     async def _leave(self):
-        done, self.started = sorted(self.started), set()
-        for mod in done:
-            await core_state.bus.call(mod, "disable")
-        if "mudfish" not in done and core_state.bus.has("mudfish", "disable") and await self._is_active("mudfish"):
-            r = await core_state.bus.call("mudfish", "disable")  # ligado à mão ou por outro caminho: encerra também
+        self.started = set()  # o Wi-Fi ligado por perfil continua ligado: nada aqui o desfaz
+        stopped = []
+        if core_state.bus.has("mudfish", "disable") and await self._is_active("mudfish"):
+            r = await core_state.bus.call("mudfish", "disable")  # ligado à mão ou por perfil: encerra sempre
             if r["ok"] and not (isinstance(r["result"], dict) and r["result"].get("ok") is False):
-                done.append("mudfish")
-        if done:
-            await core_state.bus.emit("game_stopped", {"modules": done})
+                stopped.append("mudfish")
+        if stopped:
+            await core_state.bus.emit("game_stopped", {"modules": stopped})
 
     async def _is_active(self, mod):
         if not core_state.bus.has(mod, "active"):

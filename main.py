@@ -40,7 +40,7 @@ except Exception as _e:  # pragma: no cover
 LANGS = ("pt", "en", "es")
 DEFAULTS = {"language": "pt", "collapsed": {}, "games": {}}
 SECTIONS = ("help", "games", "wifiMain", "wifiAdv", "wifiStream", "wifiActions",
-            "mudfishMain", "mudfishAdv", "mudfishNet", "mudfishLogs", "conn", "confGames", "confDiag")
+            "mudfishMain", "mudfishAdv", "mudfishNet", "mudfishLogs", "conn", "mudfishAcc", "confGames", "confDiag")
 MAX_GAMES = 50
 
 
@@ -237,8 +237,8 @@ class Plugin:
         if core_state is None:
             return
         if self.wifi is not None:
-            core_state.bus.register("wifi", enable=self._wifi_game_on, disable=self._wifi_game_off,
-                                    active=self._wifi_active)
+            # Isolamento: sem "disable". Nada (jogo fechando, console ligando, Mudfish desligando) desfaz o Wi-Fi.
+            core_state.bus.register("wifi", enable=self._wifi_game_on, active=self._wifi_active)
         if self.mudfish is not None:
             try:
                 await self.mudfish._main()
@@ -270,9 +270,6 @@ class Plugin:
 
     async def _wifi_game_on(self):
         return await self.wifi.optimize_safe()
-
-    async def _wifi_game_off(self):
-        return await self.wifi.reset_settings()
 
     async def _wifi_boot(self):
         try:
@@ -452,6 +449,18 @@ class Plugin:
 
     async def mudfish_confirm_login(self, done):
         return await self._mudfish_call("confirm_login", done)
+
+    async def mudfish_set_credentials(self, user, password):
+        return await self._mudfish_call("set_credentials", user, password)
+
+    async def mudfish_clear_credentials(self):
+        return await self._mudfish_call("clear_credentials")
+
+    async def mudfish_reset_session(self):
+        return await self._mudfish_call("reset_session")
+
+    async def mudfish_get_live(self):
+        return await self._mudfish_call("get_live")
 
     async def mudfish_set_ping_target(self, target):
         return await self._mudfish_call("set_ping_target", target)

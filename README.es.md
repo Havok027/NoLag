@@ -6,10 +6,26 @@ Plugin para Decky Loader (Steam Deck, Legion Go y equipos similares con SteamOS 
 
 ## Pestañas
 
-- **Panel:** dos interruptores rápidos (Wi-Fi y Mudfish), el gráfico en vivo de ping y jitter con y sin Mudfish y la tabla Conexión.
+- **Panel:** arriba, el gráfico en vivo de ping y jitter, que mide sin parar la conexión normal ("Sin Mudfish", sin gastar créditos) y, con Mudfish activo, también por el túnel ("Con Mudfish") para mostrar la ganancia real, con el sello **Modo solo juego (créditos protegidos)** cuando no hay VPN total. Luego, el botón de **Mudfish** (verde cuando está activo), la tabla Conexión y, hacia el final, el botón **Optimizar Wi-Fi**.
 - **Wi-Fi:** ajustes de la red local (abajo).
-- **Mudfish:** flujo guiado en 3 pasos (instalar, entrar en el panel, activar), **Auto Selection** (activado por defecto), **Multi-Path** (desactivado), botón para abrir el panel `http://127.0.0.1:8282` y Opciones avanzadas (ruta, ping antes y después, registros).
+- **Mudfish:** flujo guiado en 3 pasos (instalar, entrar en el panel, activar) que detecta una sesión ya abierta en el panel, **Auto Selection** (activado por defecto), **Multi-Path** (desactivado), botón para abrir `http://127.0.0.1:8282`, cuenta opcional (usuario y contraseña, guardados solo en este equipo) y Opciones avanzadas (puerto del panel, reinstalar, resetear sesión, ruta, ping, registros).
 - **Conf:** activar al abrir un juego (desactivado por defecto), mantener activo al reiniciar (desactivado por defecto), perfiles por juego con interruptores de Wi-Fi y Mudfish, idioma (PT, EN, ES) y diagnóstico.
+
+## Mudfish: primer uso (solo una vez)
+
+1. Abre el panel (`http://127.0.0.1:8282`) y entra en la cuenta.
+2. Elige el modo **Basic** o **Multi-Path**.
+3. Añade a mano los juegos que quieres optimizar, revisando la región **Auto / South America**.
+
+Este registro se hace una sola vez y queda guardado en la nube de tu cuenta Mudfish. Después, el plugin solo inicia y detiene el servicio y los juegos equipados siguen por rango de IP.
+
+## Aislamiento entre Wi-Fi y Mudfish
+
+Los ajustes de Wi-Fi **nunca** se deshacen al cerrar un juego, al encender la consola ni al apagar Mudfish: solo el botón (o la pestaña Wi-Fi) los restaura. La regla de arrancar apagado y detenerse al cerrar el juego vale **solo** para el servicio de Mudfish.
+
+## API local de Mudfish
+
+El plugin solo lee (GET) las rutas de estado del panel y usa la detección de sesión. Los comandos que cambian estado (Auto Selection y elementos equipados) aún no se envían: Conf > Diagnóstico captura, en solo lectura, el contexto de esas llamadas en `mudfish-api.json` para verificarlas antes de conectarlas. Hasta entonces, Auto Selection y Multi-Path quedan guardados y la pantalla avisa cuándo debes activarlos en el panel. El acceso automático con la cuenta opcional también depende de esa captura.
 
 ## Mudfish: protección de créditos
 

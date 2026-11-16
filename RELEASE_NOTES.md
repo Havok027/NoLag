@@ -1,3 +1,14 @@
+## v0.11.0
+
+- Painel reorganizado: o gráfico ao vivo de ping e jitter fica no topo, com o selo "Modo Apenas Jogo (Créditos Protegidos)" quando o Mudfish está ativo sem VPN total. O Mudfish e o Wi-Fi viram botões de ação com estado ativo/inativo, e o botão Otimizar Wi-Fi fica mais ao final.
+- Medição contínua: a linha "Sem Mudfish" é medida sempre, pela interface padrão e sem gastar créditos, mesmo com o Mudfish desligado. Com ele ligado, a linha "Com Mudfish" é medida pelo túnel na mesma amostra, para mostrar o ganho real.
+- Mudfish: detecção da sessão já aberta no painel (sem falso aviso de entrar na conta), estado da API local na tela e conta opcional (usuário e senha, só neste aparelho, em seção recolhível).
+- API local: leitura (GET) dos caminhos de status mapeados. Os comandos que alteram estado (Auto Selection e itens equipados) ainda não são enviados, porque o arquivo mapeado traz só os nomes dos caminhos; o diagnóstico passou a capturar, só em leitura, o contexto dessas chamadas.
+- Opções Avançadas do Mudfish limpas: ficam a porta do painel, a reinstalação, o reset de sessão, rota, ping e logs. O que já existia na aba Conf saiu.
+- Isolamento: o Wi-Fi nunca é desfeito ao fechar jogos, ao ligar o console ou ao desligar o Mudfish. Começar desligado e encerrar ao fechar o jogo valem só para o serviço do Mudfish.
+- Primeiro uso: guia na aba Mudfish e ajuda nos três idiomas explicando o cadastro único dos jogos no painel (modo Basic ou Multi-Path, região Auto / South America).
+- READMEs e textos nos três idiomas atualizados; testes novos para a medição, a sessão, a conta e o isolamento.
+
 ## v0.10.0
 
 - Rota interna antiga do NoLag removida por completo (lógica, interface e testes). O Mudfish passa a ser a única rota; o Wi-Fi não foi alterado.

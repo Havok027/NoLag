@@ -11,6 +11,12 @@ Fluxo guiado: instalar -> entrar no painel (login) -> ativar. Auto Selection (pa
 (padrão desligado) são guardados em mudfish.json e aplicados pela API local; os endpoints dela ainda não são
 documentados pelo Mudfish, então a aplicação só roda depois de mapeados (probe_api captura o que o painel expõe).
 
+Isolamento: o Mudfish nunca mexe no Wi-Fi. Só o daemon do Mudfish começa desligado e é encerrado ao fechar o jogo.
+
+API local (127.0.0.1:8282): o mudfish-api.json mapeado traz só os NOMES dos caminhos, sem método, parâmetros nem
+corpos. Por isso o plugin só LÊ (GET) os caminhos de status e nunca chama os que alteram estado
+(/do/node/autoselect, /item/conf_onoff) até o formato deles ser capturado pelo diagnóstico.
+
 Proteção de créditos (o Mudfish cobra por tráfego): o serviço nasce sempre desligado; só liga sozinho se o usuário
 ativar "keep_on" (ao reiniciar) ou "auto_on_game" (ao abrir jogo) na aba Conf, e é encerrado ao fechar qualquer
 jogo. Ligar manualmente nunca ativa essas opções. O plugin só inicia o serviço; o roteamento por jogo
@@ -46,7 +52,16 @@ LOG_MAX = 200_000
 _VERSION = re.compile(r"^\d+\.\d+\.\d+$")
 _RELEASE_RX = re.compile(r"mudfish-(\d+\.\d+\.\d+)-linux-x86_64\.sh")
 OPTION_KEYS = ("auto_selection", "multipath", "auto_on_game", "keep_on")
-_TUNNEL_DEV = re.compile(r"^(tun|tap|ppp|mudfish|mud)", re.I)
+_TUNNEL_DEV = core_state.TUNNEL_DEV
+# Caminhos de LEITURA do painel (mapeados no mudfish-api.json). Os que alteram estado ficam de fora de propósito.
+READ_ENDPOINTS = ("/do/mudrun/status", "/do/status/pingstat", "/do/status/netstat", "/do/rtt/staticnodes", "/do/rtt/vnodes")
+NEVER_CALLED = ("/do/node/autoselect", "/item/conf_onoff", "/logout.html")
+SESSION_PATH = "/item/list.html"
+LOGOUT_PATH = "/logout.html"
+SESSION_TTL = 6.0
+LIVE_COUNT = 3
+MAX_USER = 128
+MAX_PASS = 256
 PROBE_MAX_REQUESTS = 6
 PROBE_MAX_BYTES = 200_000
 _SRC_RX = re.compile(r"""(?:src|href)=["']([^"'#?]+\.(?:js|json))["']""", re.I)
@@ -76,7 +91,7 @@ def _ver_key(v):
 def sanitize_settings(raw):
     """Só guarda o que o módulo usa. Usuário e senha de versões antigas são descartados."""
     data = {"login_done": False, "keep_on": False, "auto_on_game": False, "auto_selection": True,
-            "multipath": False, "ping_target": core_state.DEFAULT_TARGET, "ping_before": None, "ping_after": None}
+            "user": "", "password": "", "multipath": False, "ping_target": core_state.DEFAULT_TARGET, "ping_before": None, "ping_after": None}
     if not isinstance(raw, dict):
         return data
     data["login_done"] = raw.get("login_done") is True
@@ -84,6 +99,9 @@ def sanitize_settings(raw):
     data["auto_on_game"] = raw.get("auto_on_game") is True
     data["auto_selection"] = raw.get("auto_selection") is not False  # padrão: ligado
     data["multipath"] = raw.get("multipath") is True
+    for key, limit in (("user", MAX_USER), ("password", MAX_PASS)):
+        v = raw.get(key)
+        data[key] = v[:limit] if isinstance(v, str) and all(ch.isprintable() for ch in v) else ""
     data["ping_target"] = core_state.clean_target(raw.get("ping_target"))
     for key in ("ping_before", "ping_after"):
         m = raw.get(key)
@@ -145,56 +163,126 @@ def port_open(port=PORT, host="127.0.0.1"):
         s.close()
 
 
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, *args, **kwargs):  # noqa: D401 - devolve o 3xx em vez de seguir
+        return None
+
+
+_FORM_RX = re.compile(r"<form\b[^>]*>", re.I)
+_INPUT_RX = re.compile(r"<input\b[^>]*>", re.I)
+_ATTR_RX = re.compile(r"""\b(name|type|id)\s*=\s*["']([^"']{0,40})["']""", re.I)
+_LIB_RX = re.compile(r"(jquery|axios|polyfill|promise|\.min\.js)", re.I)
+
+
 class MudfishApi:
     """Cliente da API local (127.0.0.1:8282). Só GET, só no próprio aparelho.
 
-    Os endpoints do Mudfish não são documentados. `ENDPOINTS` fica vazio até serem mapeados a partir das
-    respostas reais (probe_api): sem isso, nenhum perfil é aplicado e o motivo aparece na tela.
+    Só lê o que está em READ_ENDPOINTS. Os caminhos que alteram estado (Auto Selection, itens) NÃO são chamados
+    enquanto o método e os parâmetros deles não forem capturados (probe) e conferidos.
     """
-    ENDPOINTS = {}  # ex.: {"nodes": "/...", "fastconnect": "/..."} depois de mapeado
+    ENDPOINTS = {}  # preenchido só depois de mapear os caminhos que alteram estado
 
     def __init__(self, host="127.0.0.1", port=PORT):
         self.base = "http://%s:%d" % (host, port)
+        self._opener = urllib.request.build_opener(_NoRedirect)
 
     def mapped(self):
         return bool(self.ENDPOINTS)
 
-    def _get(self, path):
+    def _get(self, path, follow=True):
         req = urllib.request.Request(self.base + path, headers={"User-Agent": "NoLag"})
-        with urllib.request.urlopen(req, timeout=3) as r:  # noqa: S310 - só 127.0.0.1
-            body = r.read(PROBE_MAX_BYTES)
-            return r.status, r.headers.get("Content-Type", ""), body
+        if follow:
+            with urllib.request.urlopen(req, timeout=3) as r:  # noqa: S310 - só 127.0.0.1
+                return r.status, r.headers.get("Content-Type", ""), r.read(PROBE_MAX_BYTES)
+        try:
+            with self._opener.open(req, timeout=3) as r:
+                return r.status, r.headers.get("Content-Type", ""), r.read(PROBE_MAX_BYTES)
+        except urllib.error.HTTPError as e:  # 3xx/4xx/5xx chegam aqui, sem seguir o redirecionamento
+            return e.code, e.headers.get("Content-Type", "") if e.headers else "", b""
+
+    def check(self):
+        """(sessão, api_ok). Sessão: active | inactive | unknown (heurística, veja abaixo)."""
+        try:
+            status, _ctype, _body = self._get("/do/mudrun/status", follow=False)
+            api_ok = status == 200
+        except Exception:
+            return "unknown", False
+        try:
+            code, _ctype, body = self._get(SESSION_PATH, follow=False)
+        except Exception:
+            return "unknown", api_ok
+        if code in (301, 302, 303, 307, 308, 401, 403):
+            return "inactive", api_ok
+        if code == 200:
+            text = body.decode("utf-8", "replace").lower()
+            # a lista de itens só existe com sessão: se vier um formulário de senha, é a tela de login
+            return ("inactive" if ("type=\"password\"" in text or "type='password'" in text) else "active"), api_ok
+        return "unknown", api_ok
+
+    def logout(self):
+        """Encerra a sessão do painel (GET /logout.html). True se o painel respondeu."""
+        try:
+            code, _ctype, _body = self._get(LOGOUT_PATH, follow=False)
+            return code < 500
+        except Exception:
+            return False
 
     def apply(self, options):
-        """(ok, motivo) para {"auto_selection": bool, "multipath": bool}. Sem endpoints mapeados, não adivinha."""
-        if not self.mapped():
-            return False, "api_unmapped"
+        """(ok, motivo) para {"auto_selection": bool, "multipath": bool}. Sem endpoint conferido, não adivinha."""
         return False, "api_unmapped"
 
     def probe(self):
-        """Lê a página do painel e os scripts dela, para descobrir quais caminhos a API usa."""
-        seen, queue, rows, found = set(), ["/"], [], set()
-        while queue and len(rows) < PROBE_MAX_REQUESTS:
-            path = queue.pop(0)
-            if path in seen:
+        """Captura só leitura: página do painel, caminhos de status, contexto das chamadas e campos de formulário."""
+        rows, found, reads, snippets, forms = [], set(), {}, {}, []
+        try:
+            status, ctype, body = self._get("/")
+        except Exception as e:
+            return [{"path": "/", "status": 0, "type": "", "bytes": 0, "error": _err(e), "head": ""}], [], {}, {}, []
+        root = body.decode("utf-8", "replace")
+        rows.append({"path": "/", "status": status, "type": ctype, "bytes": len(body), "error": "", "head": root[:300]})
+        texts = [("/", root)]
+        for src in _SRC_RX.findall(root):
+            if len(rows) >= PROBE_MAX_REQUESTS or not src.startswith("/") or _LIB_RX.search(src):
                 continue
-            seen.add(path)
             try:
-                status, ctype, body = self._get(path)
+                st, ct, bd = self._get(src)
             except Exception as e:
-                rows.append({"path": path, "status": 0, "type": "", "bytes": 0, "error": _err(e), "head": ""})
+                rows.append({"path": src, "status": 0, "type": "", "bytes": 0, "error": _err(e), "head": ""})
                 continue
-            text = body.decode("utf-8", "replace")
-            rows.append({"path": path, "status": status, "type": ctype, "bytes": len(body), "error": "",
-                         "head": text[:300]})
-            for m in _SRC_RX.findall(text):
-                if m.startswith("/") and m not in seen:
-                    queue.append(m)
-            for m in _API_RX.findall(text):
+            txt = bd.decode("utf-8", "replace")
+            rows.append({"path": src, "status": st, "type": ct, "bytes": len(bd), "error": "", "head": txt[:300]})
+            texts.append((src, txt))
+        for _name, txt in texts:
+            for m in _API_RX.findall(txt):
                 low = m.lower()
                 if any(w in low for w in _API_WORDS) and not low.endswith((".js", ".css", ".png", ".svg", ".ico")):
                     found.add(m)
-        return rows, sorted(found)[:60]
+        for path in READ_ENDPOINTS:
+            try:
+                st, ct, bd = self._get(path)
+                reads[path] = {"status": st, "type": ct, "bytes": len(bd), "body": bd.decode("utf-8", "replace")[:4000]}
+            except Exception as e:
+                reads[path] = {"status": 0, "type": "", "bytes": 0, "body": "", "error": _err(e)}
+        # contexto em volta de cada caminho (revela método e parâmetros da chamada) sem chamar o caminho
+        for path in sorted(set(found) | set(NEVER_CALLED) | set(READ_ENDPOINTS)):
+            hits = []
+            for name, txt in texts:
+                start = 0
+                while len(hits) < 3:
+                    i = txt.find(path, start)
+                    if i < 0:
+                        break
+                    hits.append({"in": name, "text": txt[max(0, i - 220): i + len(path) + 220]})
+                    start = i + len(path)
+            if hits:
+                snippets[path] = hits
+        for tag in _FORM_RX.findall(root)[:6]:
+            forms.append({"form": tag[:200]})
+        for tag in _INPUT_RX.findall(root)[:20]:
+            attrs = {k.lower(): v for k, v in _ATTR_RX.findall(tag)}  # só nomes e tipos, nunca valores
+            if attrs:
+                forms.append({"input": attrs})
+        return rows, sorted(found)[:60], reads, snippets, forms
 
 
 class MudfishManager:
@@ -210,6 +298,7 @@ class MudfishManager:
         self.detail = ""  # motivo exato da última falha, mostrado na tela
         self.api = MudfishApi()
         self.option_state = ""  # "" | applied | api_unmapped | failed
+        self._check_cache = (0.0, "unknown", False)
         self.owned = False  # ligado por perfil de jogo (não persiste ao reiniciar)
 
     # ---------- arquivos ----------
@@ -300,6 +389,8 @@ class MudfishManager:
             self.phase = "off"
         if running and self.phase == "off":
             self.phase = "running"
+        session, api_ok = await self._check()
+        logged = session == "active" or (session == "unknown" and cfg["login_done"])
         data = {
             "arch_ok": platform.machine() == "x86_64",
             "installed": bool(version),
@@ -314,8 +405,12 @@ class MudfishManager:
             "multipath": cfg["multipath"],
             "auto_on_game": cfg["auto_on_game"],
             "option_state": self.option_state,
-            "login_done": cfg["login_done"],
-            "step": "install" if not version else ("login" if not cfg["login_done"] else "activate"),
+            "login_done": logged,
+            "session": session,
+            "api_ok": api_ok,
+            "user": cfg["user"],
+            "has_password": bool(cfg["password"]),
+            "step": "install" if not version else ("login" if not logged else "activate"),
             "keep_on": cfg["keep_on"],
             "ping_target": cfg["ping_target"],
             "ping_before": cfg["ping_before"],
@@ -324,6 +419,21 @@ class MudfishManager:
         }
         self._publish()
         return data
+
+    async def _check(self):
+        """Sessão do painel e estado da API, com cache curto (o painel do Decky consulta a cada poucos segundos)."""
+        at, session, api_ok = self._check_cache
+        if time.monotonic() - at < SESSION_TTL:
+            return session, api_ok
+        if not (self._alive() and await asyncio.to_thread(port_open)):
+            self._check_cache = (time.monotonic(), "unknown", False)
+            return "unknown", False
+        try:
+            session, api_ok = await asyncio.to_thread(self.api.check)
+        except Exception:  # pragma: no cover - defensivo
+            session, api_ok = "unknown", False
+        self._check_cache = (time.monotonic(), session, api_ok)
+        return session, api_ok
 
     # ---------- instalação ----------
     async def _ensure_mount(self):
@@ -642,6 +752,37 @@ class MudfishManager:
         self.save(cfg)
         return {"ok": True, "error": ""}
 
+    async def set_credentials(self, user, password):
+        """Usuário e senha opcionais, só neste aparelho (0600). Senha vazia mantém a que já estava guardada."""
+        if not isinstance(user, str) or not isinstance(password, str):
+            return {"ok": False, "error": "bad_credentials"}
+        user = user.strip()
+        if not user or len(user) > MAX_USER or len(password) > MAX_PASS:
+            return {"ok": False, "error": "bad_credentials"}
+        if not all(ch.isprintable() for ch in user + password):
+            return {"ok": False, "error": "bad_credentials"}
+        cfg = self.load()
+        cfg["user"] = user
+        if password:
+            cfg["password"] = password
+        self.save(cfg)
+        return {"ok": True, "error": "", "has_password": bool(cfg["password"])}
+
+    async def clear_credentials(self):
+        cfg = self.load()
+        cfg["user"], cfg["password"] = "", ""
+        self.save(cfg)
+        return {"ok": True, "error": ""}
+
+    async def reset_session(self):
+        """Reseta a sessão: sai do painel (se ele responder) e volta o passo de login."""
+        out = await asyncio.to_thread(self.api.logout) if self._alive() else False
+        cfg = self.load()
+        cfg["login_done"] = False
+        self.save(cfg)
+        self._check_cache = (0.0, "unknown", False)
+        return {"ok": True, "error": "", "logged_out": bool(out)}
+
     async def set_ping_target(self, value):
         cfg = self.load()
         cfg["ping_target"] = core_state.clean_target(value)
@@ -657,6 +798,28 @@ class MudfishManager:
         # Aviso de VPN total: com o Mudfish ligado, a rota até um destino qualquer não pode passar pelo túnel.
         info["full_vpn"] = bool(info["running"] and _TUNNEL_DEV.match(info.get("dev") or ""))
         return info
+
+    async def get_live(self):
+        """Medição contínua para o gráfico do Painel.
+
+        Sempre mede a linha base "sem Mudfish" pela interface padrão (custo zero de créditos). Com o Mudfish ligado,
+        mede também pelo túnel, ao mesmo tempo, para mostrar o ganho real.
+        """
+        cfg = self.load()
+        target = cfg["ping_target"]
+        running = self._alive()
+        base_dev = await core_state.default_dev()
+        tun = await core_state.tunnel_dev() if running else ""
+        jobs = [core_state.ping_stats(target, LIVE_COUNT, base_dev or None), core_state.route_get(target)]
+        if tun:
+            jobs.append(core_state.ping_stats(target, LIVE_COUNT, tun))
+        res = await asyncio.gather(*jobs, return_exceptions=True)
+        ok = lambda x: None if isinstance(x, Exception) else x  # noqa: E731
+        base, route = ok(res[0]), ok(res[1]) or {}
+        tunnel = ok(res[2]) if tun else None
+        full_vpn = bool(running and (_TUNNEL_DEV.match(route.get("dev") or "") or _TUNNEL_DEV.match(base_dev or "")))
+        return {"ok": True, "running": running, "base": base, "tunnel": tunnel, "base_iface": base_dev,
+                "tunnel_iface": tun, "full_vpn": full_vpn, "only_game": bool(running and not full_vpn)}
 
     async def test_ping(self):
         """Com o Mudfish desligado guarda o 'antes'; ligado, guarda o 'depois'."""
@@ -682,16 +845,16 @@ class MudfishManager:
         return {"ok": True, "error": "", "service": service, "install": install}
 
     async def probe_api(self):
-        """Captura o que o painel local expõe e grava em mudfish-api.json (para mapear a API)."""
+        """Captura (só leitura) o que o painel expõe e grava em mudfish-api.json, para mapear o que falta."""
         if not await asyncio.to_thread(port_open):
             return {"ok": False, "error": "port_closed"}
-        rows, found = await asyncio.to_thread(self.api.probe)
+        rows, found, reads, snippets, forms = await asyncio.to_thread(self.api.probe)
         path = os.path.join(self.runtime_dir, "mudfish-api.json")
         try:
             os.makedirs(self.runtime_dir, exist_ok=True)
             with open(path, "w", encoding="utf-8") as f:
-                json.dump({"time": time.strftime("%Y-%m-%d %H:%M:%S"), "requests": rows, "paths": found},
-                          f, ensure_ascii=False, indent=2)
+                json.dump({"time": time.strftime("%Y-%m-%d %H:%M:%S"), "requests": rows, "paths": found,
+                           "reads": reads, "snippets": snippets, "forms": forms}, f, ensure_ascii=False, indent=2)
         except OSError as e:
             return {"ok": False, "error": "write_failed", "detail": _err(e)}
         return {"ok": True, "error": "", "requests": len(rows), "paths": len(found), "file": path}
