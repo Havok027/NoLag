@@ -12,7 +12,7 @@ interface Props {
 // Assim só a aba ativa fica destacada e o botão A nunca age na aba errada.
 export function TabNav({ labels, hint, active, onSelect }: Props) {
   return (
-    <div style={{ marginBottom: 6 }}>
+    <div style={{ marginBottom: 10 }}>
       <div style={{ display: "flex", gap: 4 }} role="tablist">
         {TAB_KEYS.map((key) => {
           const on = active === key;
@@ -54,7 +54,7 @@ export function HelpToggle({ label, on, onToggle }: { label: string; on: boolean
       aria-pressed={on}
       onClick={onToggle}
       style={{
-        margin: "0 0 8px 0",
+        margin: "0 0 12px 0",
         padding: "9px 8px",
         textAlign: "center",
         fontSize: 13,

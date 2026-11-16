@@ -200,8 +200,8 @@ export function WifiTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
   return (
     <>
       <Card badge={badge.text} tone={badge.tone} rows={rows} />
-      {note && <div style={{ fontSize: 12, textAlign: "center", opacity: 0.8, marginBottom: 6 }}>{note}</div>}
-      <div style={{ fontSize: 11, opacity: 0.7, textAlign: "center", marginBottom: 8 }}>{t.wifiIndep}</div>
+      {note && <div style={{ fontSize: 12, textAlign: "center", opacity: 0.8, marginBottom: 10, whiteSpace: "pre-line" }}>{note}</div>}
+      <div style={{ fontSize: 11, opacity: 0.7, textAlign: "center", marginBottom: 12 }}>{t.wifiIndep}</div>
       <Help show={helpOn} text={t.hWifiStatus} />
 
       <Collapsible title={t.wifiSecMain} collapsed={isCollapsed("wifiMain")} onToggle={(v) => toggleSection("wifiMain", v)}>

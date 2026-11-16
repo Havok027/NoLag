@@ -40,6 +40,7 @@ export function ActionButton(props: { label: string; active: boolean; disabled?:
     color: props.active ? "#eafff3" : "inherit",
     background: props.active ? "rgba(31, 143, 85, 0.85)" : "rgba(255,255,255,0.10)",
     border: props.active ? "2px solid #3ddc84" : "1px solid rgba(255,255,255,0.25)",
+    margin: "4px 0 10px",
   };
   return (
     <PanelSectionRow>

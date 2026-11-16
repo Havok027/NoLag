@@ -143,7 +143,7 @@ export function Card(props: { badge?: string; tone?: BadgeTone; rows: [string, s
 
 export function SectionTitle({ title }: { title: string }) {
   return (
-    <div style={{ textAlign: "center", fontWeight: 700, fontSize: 15, margin: "6px 0 8px" }}>
+    <div style={{ textAlign: "center", fontWeight: 700, fontSize: 15, margin: "8px 0 10px" }}>
       {title}
       <div style={{ height: 3, borderRadius: 2, background: "#a35cf0", marginTop: 4 }} />
     </div>
@@ -202,10 +202,12 @@ export function Help({ show, text }: { show: boolean; text: string }) {
     <div
       style={{
         fontSize: 12,
-        lineHeight: 1.4,
+        lineHeight: 1.45,
         opacity: 0.92,
-        padding: "6px 10px",
+        padding: "8px 10px",
         margin: "0 0 12px",
+        whiteSpace: "pre-line",
+        overflowWrap: "anywhere",
         borderLeft: "3px solid #ffc857",
         background: "rgba(255, 200, 87, 0.08)",
         borderRadius: 4,

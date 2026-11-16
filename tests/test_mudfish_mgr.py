@@ -1,5 +1,7 @@
 import asyncio
 import json
+import shutil
+import time
 import logging
 import os
 import stat
@@ -310,7 +312,15 @@ class ManagerTests(unittest.TestCase):
             self.assertEqual(st["step"], "login")
             self.mgr._check_cache = (0.0, "unknown", False)
             self.mgr.api.check = lambda: ("unknown", False)
-            self.assertTrue(run(self.mgr.get_status())["login_done"])  # sem evidência: vale o aviso manual
+            # v0.11.1: a detecção grava o último estado conhecido; sem evidência, vale ele (aqui: sem sessão)
+            self.assertFalse(run(self.mgr.get_status())["login_done"])
+            self.mgr._check_cache = (0.0, "unknown", False)
+            self.mgr.api.check = lambda: ("active", True)
+            run(self.mgr.get_status())
+            self.assertTrue(self.mgr.load()["login_done"])  # detectado e gravado sozinho, sem botão manual
+            self.mgr._check_cache = (0.0, "unknown", False)
+            self.mgr.api.check = lambda: ("unknown", False)
+            self.assertTrue(run(self.mgr.get_status())["login_done"])
         finally:
             mudfish_mgr.port_open = old
 
@@ -572,3 +582,44 @@ class ManagerTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class V0111Tests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+        self.mgr = mudfish_mgr.MudfishManager(settings_dir=self.tmp, runtime_dir=self.tmp, mount_point=os.path.join(self.tmp, "mnt"))
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def test_api_unmapped_does_not_pollute_install_log(self):
+        cfg = self.mgr.load()
+        ok, why = run(self.mgr._apply_options(cfg))
+        self.assertFalse(ok)
+        self.assertEqual(self.mgr.option_state, "api_unmapped")
+        self.assertFalse(os.path.exists(self.mgr.install_log_path) and "não aplicadas" in open(self.mgr.install_log_path, encoding="utf-8").read())
+
+    def test_real_option_failure_is_still_logged(self):
+        self.mgr.api.apply = lambda opts: (False, "timeout")
+        run(self.mgr._apply_options(self.mgr.load()))
+        self.assertEqual(self.mgr.option_state, "failed")
+        self.assertIn("timeout", open(self.mgr.install_log_path, encoding="utf-8").read())
+
+    def test_saving_credentials_forces_new_session_check(self):
+        self.mgr._check_cache = (time.monotonic(), "inactive", True)
+        run(self.mgr.set_credentials("ana", "x"))
+        self.assertEqual(self.mgr._check_cache[0], 0.0)
+
+    def test_watcher_detects_session_in_background(self):
+        async def go():
+            self.mgr._alive = lambda: True
+            self.mgr.api.check = lambda: ("active", True)
+            mudfish_mgr.port_open, old = (lambda *a, **k: True), mudfish_mgr.port_open
+            try:
+                self.mgr._start_watch()
+                await asyncio.sleep(0.3)
+                self.mgr._stop_watch()
+            finally:
+                mudfish_mgr.port_open = old
+        run(go())
+        self.assertTrue(self.mgr.load()["login_done"])

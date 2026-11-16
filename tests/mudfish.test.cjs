@@ -34,7 +34,7 @@ test("textos de perfis antigos e da rota interna foram removidos", () => {
 
 test("aba Mudfish tem fluxo guiado, Auto Selection, Multi-Path, WebUI, rota e ping", () => {
   const src = read("MudfishTab.tsx");
-  for (const s of ["mudfishInstall", "mudfishConfirmLogin", "mudfishSetEnabled", 'mudfishSetOption("auto_selection"',
+  for (const s of ["mudfishInstall", "mudfishSetEnabled", 'mudfishSetOption("auto_selection"',
     'mudfishSetOption("multipath"', "NavigateToExternalWeb", "http://127.0.0.1:8282", "mudfishGetRoute", "mudfishTestPing",
     "t.mfPingBefore", "t.mfPingAfter", "mudfishGetLogs", "t.mfAdvTitle", "t.mfAutoSel", "t.mfMultiPath"]) {
     assert.ok(src.includes(s), s);
@@ -100,7 +100,7 @@ test("Opções Avançadas do Mudfish não repetem controles da Conf nem do Paine
 
 test("sessão do painel e API aparecem no status", () => {
   const src = read("MudfishTab.tsx");
-  assert.ok(src.includes("t.mfSessionRow") && src.includes("t.mfApiRow") && src.includes('status?.session === "active"'));
+  assert.ok(src.includes("t.mfAccConnected") && src.includes("t.mfAccWaiting") && src.includes("t.mfApiRow"));
   const api = read("api.ts");
   assert.ok(api.includes("session?:") && api.includes("api_ok?:"));
 });
@@ -133,4 +133,34 @@ test("a falha mostra o motivo exato (detail) na mensagem e na tabela de status",
   assert.ok(tab.includes("mudfishErrorFull"));
   assert.ok(tab.includes("status.detail") && tab.includes("r?.detail"));
   assert.ok((api.match(/detail\?: string;/g) || []).length >= 2);
+});
+
+test("v0.11.1: sem botão manual de login; conta é só indicador passivo e detecção é automática", () => {
+  const src = read("MudfishTab.tsx");
+  assert.ok(!src.includes("mudfishConfirmLogin") && !src.includes("mfLoginDone"));
+  const i18n = read("i18n.tsx");
+  assert.ok(!/mfLoginDone|mfLoginConfirmed/.test(i18n));
+  const mgr = fs.readFileSync(path.join(__dirname, "..", "mudfish_mgr.py"), "utf8");
+  assert.ok(mgr.includes("_watch_session") && mgr.includes("_sync_login"));
+});
+
+test("v0.11.1: botão Abrir Mudfish aparece sempre que instalado ou ativo, fora das condições de passo", () => {
+  const src = read("MudfishTab.tsx");
+  const i = src.indexOf("label={t.mfOpenWeb}");
+  assert.ok(i > 0);
+  const before = src.slice(src.lastIndexOf("<PanelSectionRow>", i) - 140, i);
+  assert.ok(before.includes("installed ||") && !/step === "(login|activate|install)"/.test(before));
+});
+
+test("v0.11.1: textos de ajuda quebram linha (pre-line) e têm \\n nos 3 idiomas", () => {
+  const comp = read("components.tsx");
+  assert.ok(/whiteSpace: "pre-line"/.test(comp));
+  const mud = read("MudfishTab.tsx");
+  assert.ok((mud.match(/whiteSpace: "pre-line"/g) || []).length >= 2);
+  const i18n = read("i18n.tsx");
+  for (const key of ["mfFirstSteps", "hMfFirst", "hDashBtns", "hMfMultiPath", "hMfAutoSel"]) {
+    const lines = [...i18n.matchAll(new RegExp("^\\s+" + key + ': "(.*)",$', "gm"))].map((m) => m[1]);
+    assert.strictEqual(lines.length, 3, key);
+    for (const l of lines) assert.ok(l.includes("\\n"), key);
+  }
 });

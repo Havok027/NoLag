@@ -13,7 +13,6 @@ import {
   getSnapshot,
   mudfishAvailable,
   mudfishClearCredentials,
-  mudfishConfirmLogin,
   mudfishGetLive,
   mudfishResetSession,
   mudfishSetCredentials,
@@ -198,7 +197,7 @@ export function ConnCard({ t, helpOn }: { t: Texts; helpOn: boolean }) {
   return (
     <>
       <Card rows={rows} />
-      <div style={{ fontSize: 11, opacity: 0.7, textAlign: "center", marginBottom: 8 }}>{t.connHint}</div>
+      <div style={{ fontSize: 11, opacity: 0.7, textAlign: "center", marginBottom: 12 }}>{t.connHint}</div>
       <Help show={helpOn} text={t.hConn} />
       <PanelSectionRow>
         <ButtonItem layout="inline" label={t.connTitle} disabled={loading} onClick={load}>
@@ -221,7 +220,9 @@ function pingRows(t: Texts, s: MudfishStatus | null): [string, string][] {
 const WARN_BOX: CSSProperties = {
   fontSize: 12,
   padding: "8px 10px",
-  margin: "0 0 8px 0",
+  margin: "0 0 12px 0",
+  lineHeight: 1.45,
+  whiteSpace: "pre-line",
   borderRadius: 8,
   border: "1px solid rgba(255,200,0,0.7)",
   background: "rgba(255,200,0,0.12)",
@@ -234,8 +235,8 @@ export function MfWarning({ t, helpOn }: { t: Texts; helpOn: boolean }) {
   return (
     <>
       <div style={WARN_BOX}>
-        <div style={{ fontWeight: 700, marginBottom: 2 }}>{t.mfWarnTitle}</div>
-        <div>{t.mfWarnDownload}</div>
+        <div style={{ fontWeight: 700, marginBottom: 6 }}>{t.mfWarnTitle}</div>
+        <div style={{ marginBottom: 6 }}>{t.mfWarnDownload}</div>
         <div>{t.mfWarnSplit}</div>
       </div>
       <Help show={helpOn} text={t.hMfWarn} />
@@ -248,7 +249,7 @@ const PILL: CSSProperties = {
   fontSize: 11,
   fontWeight: 700,
   padding: "3px 10px",
-  margin: "0 0 6px 0",
+  margin: "0 0 10px 0",
   borderRadius: 12,
   color: "#eafff3",
   background: "rgba(31, 143, 85, 0.75)",
@@ -312,7 +313,7 @@ export function LiveChart({ t, helpOn }: { t: Texts; helpOn: boolean }) {
   }
   return (
     <>
-      <div style={{ fontWeight: 600, fontSize: 13, margin: "4px 0" }}>{t.chartTitle}</div>
+      <div style={{ fontWeight: 600, fontSize: 13, margin: "6px 0 10px" }}>{t.chartTitle}</div>
       {live?.only_game && <div style={PILL}>{t.onlyGameBadge}</div>}
       {live?.full_vpn && <div style={WARN_BOX}>{t.mfFullVpnWarn}</div>}
       <LineChart lines={lines} emptyText={t.chartEmpty} bestTag={t.chartBest} />
@@ -322,8 +323,16 @@ export function LiveChart({ t, helpOn }: { t: Texts; helpOn: boolean }) {
   );
 }
 
-const SMALL: CSSProperties = { fontSize: 11, opacity: 0.7, textAlign: "center", marginBottom: 6, wordBreak: "break-word" };
-const MONO: CSSProperties = { fontSize: 10, opacity: 0.8, whiteSpace: "pre-wrap", wordBreak: "break-word", marginBottom: 8 };
+const SMALL: CSSProperties = {
+  fontSize: 11,
+  lineHeight: 1.45,
+  opacity: 0.75,
+  textAlign: "center",
+  marginBottom: 10,
+  wordBreak: "break-word",
+  whiteSpace: "pre-line",
+};
+const MONO: CSSProperties = { fontSize: 10, opacity: 0.8, whiteSpace: "pre-wrap", wordBreak: "break-word", marginBottom: 12 };
 
 /** Aba Rotas: fluxo guiado (instalar, entrar, ativar), perfil de desempenho e opções avançadas. */
 export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
@@ -372,12 +381,10 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
 
   const rows: [string, string][] = [
     [t.mfStepInstall, installed ? `${t.mfDone} · ${status?.version ?? ""}` : t.mfPending],
-    [t.mfStepLogin, done(!!status?.login_done)],
+    [t.mfStepLogin, status?.login_done ? t.mfAccConnected : t.mfAccWaiting],
     [t.mfStepActivate, done(!!status?.running)],
   ];
   if (status?.running) {
-    const sess = status.session;
-    rows.push([t.mfSessionRow, sess === "active" ? t.mfSessionActive : sess === "inactive" ? t.mfSessionInactive : t.mfSessionUnknown]);
     rows.push([t.mfApiRow, status.api_ok ? t.mfApiOk : t.mfApiDown]);
   }
   if (status?.phase === "error" && status.error) rows.push([t.mfBadgeError, mudfishErrorFull(t, status.error, status.detail)]);
@@ -465,7 +472,7 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
       <div style={SMALL}>{hint}</div>
       {step !== "activate" && (
         <div style={WARN_BOX}>
-          <div style={{ fontWeight: 700, marginBottom: 2 }}>{t.mfFirstTitle}</div>
+          <div style={{ fontWeight: 700, marginBottom: 6 }}>{t.mfFirstTitle}</div>
           <div>{t.mfFirstSteps}</div>
         </div>
       )}
@@ -494,27 +501,6 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
               onChange={(v) => run(() => mudfishSetEnabled(v), v ? t.mfOn : t.mfOff)}
             />
           </PanelSectionRow>
-          <PanelSectionRow>
-            <ButtonItem
-              layout="inline"
-              label={t.mfOpenWeb}
-              description={t.mfOpenWebDesc}
-              disabled={!status?.port_open}
-              onClick={openWeb}
-            >
-              {t.mfOpenWeb}
-            </ButtonItem>
-          </PanelSectionRow>
-          <PanelSectionRow>
-            <ButtonItem
-              layout="inline"
-              label={t.mfLoginDone}
-              disabled={busy || !status?.running || status?.session === "active"}
-              onClick={() => run(() => mudfishConfirmLogin(true), t.mfLoginConfirmed)}
-            >
-              {t.mfLoginDone}
-            </ButtonItem>
-          </PanelSectionRow>
         </>
       )}
       {step === "activate" && (
@@ -526,6 +512,19 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
             disabled={busy || working || !installed}
             onChange={(v) => run(() => mudfishSetEnabled(v), v ? t.mfOn : t.mfOff)}
           />
+        </PanelSectionRow>
+      )}
+      {(installed || !!status?.running) && (
+        <PanelSectionRow>
+          <ButtonItem
+            layout="inline"
+            label={t.mfOpenWeb}
+            description={t.mfOpenWebDesc}
+            disabled={!status?.port_open}
+            onClick={openWeb}
+          >
+            {t.mfOpenWeb}
+          </ButtonItem>
         </PanelSectionRow>
       )}
       <Help show={helpOn} text={t.hMfFlow} />
