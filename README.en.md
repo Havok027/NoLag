@@ -8,7 +8,7 @@ Decky Loader plugin (Steam Deck, Legion Go and similar devices running SteamOS o
 
 - **Dashboard:** the live ping and jitter chart on top, which measures nonstop over the normal connection ("Without Mudfish", no credits used) and, with Mudfish on, also through the tunnel ("With Mudfish") to show the real gain, plus the **Game-only mode (credits protected)** badge when there is no full VPN. Then the **Mudfish** button (green when active), the Connection table and, near the end, the **Optimize Wi-Fi** button.
 - **Wi-Fi:** local network tuning (below).
-- **Mudfish:** guided 3-step flow (install, sign in on the panel, turn on) that detects a session already open on the panel, **Auto Selection** (on by default), **Multi-Path** (off), a button to open `http://127.0.0.1:8282`, an optional account (username and password, kept on this device only) and Advanced options (panel port, reinstall, reset session, route, ping, logs).
+- **Mudfish:** guided 3-step flow (install, sign in on the panel, turn on) with automatic session detection (a passive "Account connected" / "Waiting for WebUI sign-in" indicator, no manual button), **Auto Selection** (on by default), **Multi-Path** (off), a button to open `http://127.0.0.1:8282`, an optional account (username and password, kept on this device only) and Advanced options (panel port, reinstall, reset session, route, ping, logs).
 - **Conf:** turn on when a game opens (off by default), keep on after restart (off by default), per-game profiles with Wi-Fi and Mudfish switches, language (PT, EN, ES) and diagnostics.
 
 ## Mudfish: first use (only once)

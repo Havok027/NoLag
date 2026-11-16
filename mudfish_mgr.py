@@ -59,6 +59,7 @@ NEVER_CALLED = ("/do/node/autoselect", "/item/conf_onoff", "/logout.html")
 SESSION_PATH = "/item/list.html"
 LOGOUT_PATH = "/logout.html"
 SESSION_TTL = 6.0
+SESSION_WATCH = 6.0
 LIVE_COUNT = 3
 MAX_USER = 128
 MAX_PASS = 256
@@ -292,6 +293,7 @@ class MudfishManager:
         self.mount_point = mount_point
         self.run = runner or core_state.run
         self.proc = None
+        self._watch = None
         self.lock = asyncio.Lock()
         self.phase = "off"  # off | installing | starting | running | stopping | error
         self.error = ""
@@ -433,7 +435,49 @@ class MudfishManager:
         except Exception:  # pragma: no cover - defensivo
             session, api_ok = "unknown", False
         self._check_cache = (time.monotonic(), session, api_ok)
+        await self._sync_login(session)
         return session, api_ok
+
+    async def _sync_login(self, session):
+        """Detecção automática: guarda login_done conforme a sessão detectada (sem botão manual)."""
+        if session not in ("active", "inactive"):
+            return
+        want = session == "active"
+        try:
+            cfg = self.load()
+            if cfg["login_done"] != want:
+                cfg["login_done"] = want
+                self.save(cfg)
+        except Exception as e:  # pragma: no cover - defensivo
+            decky.logger.error(f"NoLag Mudfish: não gravou o estado de login: {e}")
+
+    def recheck_session(self):
+        """Invalida o cache para a próxima leitura refazer a detecção na hora."""
+        self._check_cache = (0.0, "unknown", False)
+
+    async def _watch_session(self):
+        """Com o serviço ligado, confere a sessão do painel em segundo plano (mesmo com o menu fechado)."""
+        try:
+            while self._alive():
+                await self._check()
+                await asyncio.sleep(SESSION_WATCH)
+        except asyncio.CancelledError:
+            raise
+        except Exception as e:  # pragma: no cover - defensivo
+            decky.logger.error(f"NoLag Mudfish: vigia de sessão parou: {e}")
+
+    def _start_watch(self):
+        self._stop_watch()
+        self.recheck_session()
+        try:
+            self._watch = asyncio.get_running_loop().create_task(self._watch_session())
+        except RuntimeError:  # pragma: no cover - sem loop
+            self._watch = None
+
+    def _stop_watch(self):
+        task, self._watch = getattr(self, "_watch", None), None
+        if task is not None and not task.done():
+            task.cancel()
 
     # ---------- instalação ----------
     async def _ensure_mount(self):
@@ -680,10 +724,12 @@ class MudfishManager:
             await self._kill()
             return self._fail("start_failed", "a porta %d não abriu em %d s. Log: %s" % (PORT, START_WAIT, tail or "vazio"))
         self._set("running")  # ligar nunca ativa o keep_on: só a aba Conf faz isso
+        self._start_watch()
         await self._apply_options(cfg)
         return {"ok": True, "error": ""}
 
     async def _kill(self):
+        self._stop_watch()
         proc, self.proc = self.proc, None
         pids = set(find_daemon_pids())
         if proc is not None and proc.returncode is None:
@@ -728,7 +774,7 @@ class MudfishManager:
         except Exception as e:  # pragma: no cover - defensivo
             ok, why = False, _err(e)
         self.option_state = "applied" if ok else ("api_unmapped" if why == "api_unmapped" else "failed")
-        if not ok:
+        if not ok and why != "api_unmapped":  # api_unmapped é esperado até a Etapa 2: não polui o log
             self._log_install("opções %s não aplicadas: %s" % (opts, why))
         self._publish()
         return ok, why
@@ -766,6 +812,7 @@ class MudfishManager:
         if password:
             cfg["password"] = password
         self.save(cfg)
+        self.recheck_session()
         return {"ok": True, "error": "", "has_password": bool(cfg["password"])}
 
     async def clear_credentials(self):
