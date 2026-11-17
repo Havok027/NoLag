@@ -64,6 +64,8 @@ export function mudfishError(t: Texts, code: string): string {
       return t.mfErrBadCreds;
     case "port_closed":
       return t.mfErrPortClosed;
+    case "fullvpn_blocked":
+      return t.mfErrFullVpn;
     default:
       return t.mfErrGeneric;
   }
@@ -361,6 +363,7 @@ export function LiveChart({ t, helpOn }: { t: Texts; helpOn: boolean }) {
         />
       </div>
       {live?.running && !live.tunnel_iface && !live.full_vpn && <div style={SMALL}>{t.chartNoTunnel}</div>}
+      {live?.running && live.tunnel_blocked && <div style={SMALL}>{t.chartTunnelBlocked}</div>}
       <Help show={helpOn} text={t.hChart} />
     </>
   );
@@ -429,6 +432,11 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
   ];
   if (status?.running) {
     rows.push([t.mfApiRow, status.api_ok ? t.mfApiOk : t.mfApiDown]);
+    const r = status.rtt;
+    if (status.api_ok && r) {
+      const st = r.static === "ready" && r.vnodes === "ready" ? t.mfRttReady : r.static === "error" && r.vnodes === "error" ? t.mfRttError : t.mfRttPending;
+      rows.push([t.mfRttRow, st]);
+    }
   }
   if (status?.phase === "error" && status.error) rows.push([t.mfBadgeError, mudfishErrorFull(t, status.error, status.detail)]);
 

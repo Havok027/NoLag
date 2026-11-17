@@ -92,6 +92,13 @@ export interface MudfishResult {
   version?: string;
 }
 
+export interface MudfishRtt {
+  static: "unknown" | "pending" | "ready" | "error";
+  vnodes: "unknown" | "pending" | "ready" | "error";
+  n_static?: number;
+  n_vnodes?: number;
+}
+
 export interface MudfishStatus {
   arch_ok?: boolean;
   installed: boolean;
@@ -107,6 +114,9 @@ export interface MudfishStatus {
   auto_on_game?: boolean;
   session?: "active" | "inactive" | "unknown";
   api_ok?: boolean;
+  full_vpn_api?: boolean;
+  core_ready?: boolean | null;
+  rtt?: MudfishRtt;
   user?: string;
   has_password?: boolean;
   option_state?: "" | "applied" | "api_unmapped" | "failed";
@@ -164,6 +174,8 @@ export interface MudfishLive {
   tunnel_iface: string;
   full_vpn: boolean;
   only_game: boolean;
+  tunnel_blocked?: boolean;
+  rtt?: MudfishRtt;
 }
 export const mudfishGetLive = callable<[], MudfishLive>("mudfish_get_live");
 export const mudfishSetCredentials = callable<[user: string, password: string], MudfishResult & { has_password?: boolean }>(

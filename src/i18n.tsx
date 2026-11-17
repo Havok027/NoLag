@@ -130,6 +130,12 @@ export interface Texts {
   mfErrGeneric: string;
   onlyGameBadge: string;
   chartNoTunnel: string;
+  chartTunnelBlocked: string;
+  mfErrFullVpn: string;
+  mfRttRow: string;
+  mfRttReady: string;
+  mfRttPending: string;
+  mfRttError: string;
   btnMfOn: string;
   btnMfOff: string;
   btnMfSetup: string;
@@ -308,12 +314,12 @@ export const TEXTS: Record<Lang, Texts> = {
     hWifiWatchdog: "Ajuda quando a imagem do stream congela e não volta sozinha.",
     wifiCardToggle: "Otimizar Wi-Fi",
     wifiCardToggleDesc: "Liga os ajustes seguros; desligar restaura o padrão",
-    wifiRestore: "Restaurar tudo ao padrão",
+    wifiRestore: "Restaurar padrão",
     wifiWorking: "Aplicando…",
     wifiDone: "Pronto",
     wifiFailed: "Não foi possível aplicar",
     hWifiStatus: "Resumo do Wi-Fi agora.\nAs otimizações daqui não dependem da rota do NoLag nem do Mudfish.",
-    hWifiActions: "Aplicar liga os ajustes seguros de uma vez.\nRestaurar devolve tudo ao padrão do sistema.",
+    hWifiActions: "Aplicar liga os ajustes seguros de uma vez.\nRestaurar padrão desliga os ajustes de rede e mantém \"Corrigir ao acordar\" ligado.",
     mfBadgeOn: "Ativo",
     mfBadgeOff: "Desligado",
     mfBadgeBusy: "Aguarde",
@@ -362,6 +368,12 @@ export const TEXTS: Record<Lang, Texts> = {
     mfErrGeneric: "Não foi possível concluir",
     onlyGameBadge: "Modo Apenas Jogo (Créditos Protegidos)",
     chartNoTunnel: "Mudfish ligado, mas nenhum túnel foi detectado: só a linha base é medida",
+    chartTunnelBlocked: "O túnel não respondeu a esse alvo: no modo por jogo só o IP do item passa pelo Mudfish. Troque o alvo de ping pelo IP do servidor do jogo (Avançadas)",
+    mfErrFullVpn: "Full VPN estava ativo no painel e o Mudfish foi encerrado para proteger seus créditos. Desative o Full VPN e ligue de novo",
+    mfRttRow: "Latência dos nós",
+    mfRttReady: "Medida",
+    mfRttPending: "Medindo…",
+    mfRttError: "Indisponível",
     btnMfOn: "Mudfish ATIVO · toque para desligar",
     btnMfOff: "Ligar Mudfish",
     btnMfSetup: "Mudfish: conclua a instalação na aba Mudfish",
@@ -538,12 +550,12 @@ export const TEXTS: Record<Lang, Texts> = {
     hWifiWatchdog: "Helps when the stream image freezes and does not recover.",
     wifiCardToggle: "Optimize Wi-Fi",
     wifiCardToggleDesc: "Turns on the safe tweaks; turning off restores the default",
-    wifiRestore: "Restore everything to default",
+    wifiRestore: "Restore default",
     wifiWorking: "Applying…",
     wifiDone: "Done",
     wifiFailed: "Could not apply",
     hWifiStatus: "Wi-Fi summary right now.\nThese optimizations do not depend on the NoLag route or Mudfish.",
-    hWifiActions: "Apply turns on the safe tweaks at once.\nRestore puts everything back to the system default.",
+    hWifiActions: "Apply turns on the safe tweaks at once.\nRestore default turns the network tweaks off and keeps \"Fix on wake\" on.",
     mfBadgeOn: "Active",
     mfBadgeOff: "Off",
     mfBadgeBusy: "Wait",
@@ -592,6 +604,12 @@ export const TEXTS: Record<Lang, Texts> = {
     mfErrGeneric: "Could not complete",
     onlyGameBadge: "Game-only mode (credits protected)",
     chartNoTunnel: "Mudfish is on but no tunnel was detected: only the baseline is measured",
+    chartTunnelBlocked: "The tunnel did not answer this target: in per-game mode only the item IP goes through Mudfish. Set the ping target to the game server IP (Advanced)",
+    mfErrFullVpn: "Full VPN was on in the panel and Mudfish was stopped to protect your credits. Turn Full VPN off and start again",
+    mfRttRow: "Node latency",
+    mfRttReady: "Measured",
+    mfRttPending: "Measuring…",
+    mfRttError: "Unavailable",
     btnMfOn: "Mudfish ON · tap to turn off",
     btnMfOff: "Turn on Mudfish",
     btnMfSetup: "Mudfish: finish setup in the Mudfish tab",
@@ -768,12 +786,12 @@ export const TEXTS: Record<Lang, Texts> = {
     hWifiWatchdog: "Ayuda cuando la imagen del stream se congela y no se recupera.",
     wifiCardToggle: "Optimizar Wi-Fi",
     wifiCardToggleDesc: "Activa los ajustes seguros; desactivar restaura lo predeterminado",
-    wifiRestore: "Restaurar todo a lo predeterminado",
+    wifiRestore: "Restaurar predeterminado",
     wifiWorking: "Aplicando…",
     wifiDone: "Listo",
     wifiFailed: "No se pudo aplicar",
     hWifiStatus: "Resumen del Wi-Fi ahora.\nEstas optimizaciones no dependen de la ruta de NoLag ni de Mudfish.",
-    hWifiActions: "Aplicar activa los ajustes seguros de una vez.\nRestaurar devuelve todo a lo predeterminado del sistema.",
+    hWifiActions: "Aplicar activa los ajustes seguros de una vez.\nRestaurar predeterminado apaga los ajustes de red y mantiene \"Corregir al despertar\" activado.",
     mfBadgeOn: "Activo",
     mfBadgeOff: "Apagado",
     mfBadgeBusy: "Espera",
@@ -822,6 +840,12 @@ export const TEXTS: Record<Lang, Texts> = {
     mfErrGeneric: "No se pudo completar",
     onlyGameBadge: "Modo solo juego (créditos protegidos)",
     chartNoTunnel: "Mudfish activo, pero no se detectó túnel: solo se mide la línea base",
+    chartTunnelBlocked: "El túnel no respondió a este destino: en el modo por juego solo la IP del ítem pasa por Mudfish. Cambia el destino del ping por la IP del servidor del juego (Avanzadas)",
+    mfErrFullVpn: "Full VPN estaba activo en el panel y Mudfish se detuvo para proteger tus créditos. Desactiva Full VPN y vuelve a encender",
+    mfRttRow: "Latencia de nodos",
+    mfRttReady: "Medida",
+    mfRttPending: "Midiendo…",
+    mfRttError: "No disponible",
     btnMfOn: "Mudfish ACTIVO · toca para apagar",
     btnMfOff: "Activar Mudfish",
     btnMfSetup: "Mudfish: termina la instalación en la pestaña Mudfish",

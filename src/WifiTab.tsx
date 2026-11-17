@@ -48,7 +48,8 @@ export function activeCount(s: WifiStatus | null): number {
     c.dns_enabled,
     c.streaming_mode_enabled,
     c.link_watchdog_enabled,
-    c.auto_fix_on_wake,
+    // "Corrigir ao acordar" (auto_fix_on_wake) fica ligado por padrão, inclusive após "Restaurar padrão":
+    // não conta como otimização ativa, senão o Painel nunca voltaria ao estado "padrão".
   ].filter(Boolean).length;
 }
 
