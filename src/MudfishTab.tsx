@@ -374,6 +374,7 @@ export function LiveChart({ t, helpOn }: { t: Texts; helpOn: boolean }) {
       </div>
       {live?.running && !live.tunnel_iface && !live.full_vpn && <div style={SMALL}>{t.chartNoTunnel}</div>}
       {live?.running && live.tunnel_waiting && <div style={SMALL}>{t.chartTunnelWaiting}</div>}
+      {live?.running && live.tunnel_idle && <div style={SMALL}>{t.chartTunnelIdle}</div>}
       {live?.running && live.tunnel_blocked && <div style={SMALL}>{t.chartTunnelBlocked}</div>}
       <Help show={helpOn} text={t.hChart} />
     </>

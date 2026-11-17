@@ -184,6 +184,7 @@ export interface MudfishLive {
   full_vpn: boolean;
   only_game: boolean;
   tunnel_blocked?: boolean;
+  tunnel_idle?: boolean;
   tunnel_waiting?: boolean;
   rtt?: MudfishRtt;
 }
