@@ -125,6 +125,16 @@ export interface Texts {
   onlyGameBadge: string;
   mfConnectManual: string;
   mfUpdateTitle: string;
+  mfLatestRow: string;
+  mfUninstall: string;
+  mfUninstallDesc: string;
+  mfUninstallTitle: string;
+  mfUninstallConfirm: string;
+  mfUninstallOk: string;
+  mfCancel: string;
+  mfUninstalled: string;
+  mfErrUninstall: string;
+  hMfUninstall: string;
   mfUpdateAvail: string;
   mfUpdateBtn: string;
   mfUpdateOk: string;
@@ -358,6 +368,16 @@ export const TEXTS: Record<Lang, Texts> = {
     mfRttError: "Indisponível",
     mfConnectManual: "Configure e equipe o item do jogo previamente no painel web do Mudfish. Caso o túnel não conecte automaticamente ao iniciar o jogo, abra o painel e clique em Conectar.",
     mfUpdateTitle: "Atualização do Mudfish",
+    hMfUninstall: "Encerra todos os processos do Mudfish, desmonta e apaga /opt/mudfish e a pasta persistente e limpa logs e restos.\nPede confirmação antes. Depois, o passo 1 volta a aparecer para reinstalar a versão mais recente.",
+    mfErrUninstall: "Não foi possível desinstalar",
+    mfUninstalled: "Mudfish desinstalado",
+    mfCancel: "Cancelar",
+    mfUninstallOk: "Desinstalar",
+    mfUninstallConfirm: "Isto encerra o Mudfish e apaga os arquivos locais dele (pasta /opt/mudfish, instalação, logs e a conta salva no plugin). Sua conta e seus itens na nuvem do Mudfish não são afetados. Você poderá instalar de novo quando quiser.",
+    mfUninstallTitle: "Desinstalar o Mudfish?",
+    mfUninstallDesc: "Apaga o Mudfish deste aparelho. Para uma instalação limpa",
+    mfUninstall: "Desinstalar Mudfish",
+    mfLatestRow: "Última versão",
     mfUpdateAvail: "Nova versão do núcleo disponível: {v} (instalada: {c})",
     mfUpdateBtn: "Atualizar para {v}",
     mfUpdateOk: "Mudfish atualizado",
@@ -584,6 +604,16 @@ export const TEXTS: Record<Lang, Texts> = {
     mfRttError: "Unavailable",
     mfConnectManual: "Set up and equip the game item beforehand in the Mudfish web panel. If the tunnel does not connect automatically when the game starts, open the panel and click Connect.",
     mfUpdateTitle: "Mudfish update",
+    hMfUninstall: "Stops every Mudfish process, unmounts and deletes /opt/mudfish and the persistent folder, and clears logs and leftovers.\nAsks for confirmation first. Afterwards step 1 shows up again to reinstall the latest version.",
+    mfErrUninstall: "Could not uninstall",
+    mfUninstalled: "Mudfish uninstalled",
+    mfCancel: "Cancel",
+    mfUninstallOk: "Uninstall",
+    mfUninstallConfirm: "This stops Mudfish and deletes its local files (the /opt/mudfish folder, the install, logs and the account saved in the plugin). Your account and items in the Mudfish cloud are not affected. You can install it again anytime.",
+    mfUninstallTitle: "Uninstall Mudfish?",
+    mfUninstallDesc: "Removes Mudfish from this device. For a clean install",
+    mfUninstall: "Uninstall Mudfish",
+    mfLatestRow: "Latest version",
     mfUpdateAvail: "New core version available: {v} (installed: {c})",
     mfUpdateBtn: "Update to {v}",
     mfUpdateOk: "Mudfish updated",
@@ -810,6 +840,16 @@ export const TEXTS: Record<Lang, Texts> = {
     mfRttError: "No disponible",
     mfConnectManual: "Configura y equipa antes el ítem del juego en el panel web de Mudfish. Si el túnel no se conecta solo al iniciar el juego, abre el panel y pulsa Conectar.",
     mfUpdateTitle: "Actualización de Mudfish",
+    hMfUninstall: "Cierra todos los procesos de Mudfish, desmonta y borra /opt/mudfish y la carpeta persistente, y limpia logs y restos.\nPide confirmación antes. Después vuelve a aparecer el paso 1 para reinstalar la última versión.",
+    mfErrUninstall: "No se pudo desinstalar",
+    mfUninstalled: "Mudfish desinstalado",
+    mfCancel: "Cancelar",
+    mfUninstallOk: "Desinstalar",
+    mfUninstallConfirm: "Esto cierra Mudfish y borra sus archivos locales (la carpeta /opt/mudfish, la instalación, los logs y la cuenta guardada en el plugin). Tu cuenta y tus ítems en la nube de Mudfish no se ven afectados. Podrás instalarlo de nuevo cuando quieras.",
+    mfUninstallTitle: "¿Desinstalar Mudfish?",
+    mfUninstallDesc: "Borra Mudfish de este dispositivo. Para una instalación limpia",
+    mfUninstall: "Desinstalar Mudfish",
+    mfLatestRow: "Última versión",
     mfUpdateAvail: "Nueva versión del núcleo disponible: {v} (instalada: {c})",
     mfUpdateBtn: "Actualizar a {v}",
     mfUpdateOk: "Mudfish actualizado",

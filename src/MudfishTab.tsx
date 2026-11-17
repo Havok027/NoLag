@@ -1,5 +1,5 @@
 import { toaster } from "@decky/api";
-import { ButtonItem, Navigation, PanelSectionRow, TextField, ToggleField } from "@decky/ui";
+import { ButtonItem, ConfirmModal, Navigation, PanelSectionRow, TextField, ToggleField, showModal } from "@decky/ui";
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import {
@@ -21,6 +21,7 @@ import {
   mudfishCheckUpdate,
   mudfishInstall,
   mudfishUpdate,
+  mudfishUninstall,
   mudfishSetEnabled,
   mudfishSetPingTarget,
 } from "./api";
@@ -65,6 +66,8 @@ export function mudfishError(t: Texts, code: string): string {
       return t.mfErrPortClosed;
     case "fullvpn_blocked":
       return t.mfErrFullVpn;
+    case "uninstall_failed":
+      return t.mfErrUninstall;
     case "update_check_failed":
       return t.mfErrUpdateCheck;
     default:
@@ -410,6 +413,7 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
     [t.mfStepLogin, status?.login_done ? t.mfAccConnected : t.mfAccWaiting],
     [t.mfStepActivate, done(!!status?.running)],
   ];
+  if (installed && status?.update?.latest) rows.splice(1, 0, [t.mfLatestRow, status.update.latest]);
   if (status?.running) {
     rows.push([t.mfApiRow, status.api_ok ? t.mfApiOk : t.mfApiDown]);
     const r = status.rtt;
@@ -456,6 +460,20 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
       }
       return r;
     }, t.mfAccCleared);
+
+  const askUninstall = () =>
+    showModal(
+      <ConfirmModal
+        strTitle={t.mfUninstallTitle}
+        strDescription={t.mfUninstallConfirm}
+        strOKButtonText={t.mfUninstallOk}
+        strCancelButtonText={t.mfCancel}
+        bDestructiveWarning={true}
+        onOK={() => {
+          run(() => mudfishUninstall(), t.mfUninstalled);
+        }}
+      />
+    );
 
   if (status && status.arch_ok === false) return <Card rows={[[t.mfErrArch, DASH]]} />;
 
@@ -536,7 +554,19 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
         </>
       )}
 
-      {/* 6. Conta opcional e opções avançadas (recolhidas) */}
+      {/* 6. Desinstalar (com confirmação) */}
+      {installed && (
+        <>
+          <PanelSectionRow>
+            <ButtonItem layout="below" label={t.mfUninstall} description={t.mfUninstallDesc} disabled={busy || working} onClick={askUninstall}>
+              {t.mfUninstall}
+            </ButtonItem>
+          </PanelSectionRow>
+          <Help show={helpOn} text={t.hMfUninstall} />
+        </>
+      )}
+
+      {/* 7. Conta opcional e opções avançadas (recolhidas) */}
       <Collapsible
         title={t.mfAccTitle}
         icon={<FaUser size={14} />}

@@ -170,6 +170,7 @@ export interface CurrentGame {
 export const mudfishAvailable = callable<[], { available: boolean; error: string }>("mudfish_available");
 export const mudfishGetStatus = callable<[], MudfishStatus>("mudfish_get_status");
 export const mudfishInstall = callable<[], MudfishResult>("mudfish_install");
+export const mudfishUninstall = callable<[], MudfishResult & { removed?: string[] }>("mudfish_uninstall");
 export const mudfishSetEnabled = callable<[enabled: boolean], MudfishResult>("mudfish_set_enabled");
 export type MudfishOption = "auto_selection" | "multipath" | "auto_on_game" | "keep_on";
 export const mudfishSetOption = callable<[key: MudfishOption, value: boolean], MudfishResult & { applied?: boolean; state?: string }>(
