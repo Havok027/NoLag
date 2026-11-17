@@ -21,7 +21,7 @@ test("v0.12.1: mini-cards alinhados (colunas iguais, linhas em grade, sem estour
   const comp = read("components.tsx");
   const i = comp.indexOf("export function MiniCard");
   const body = comp.slice(i);
-  assert.ok(body.includes("minmax(0, 1fr) auto") && body.includes("textOverflow") && body.includes('height: "100%"'));
+  assert.ok(body.includes("textOverflow") && body.includes('height: "100%"') && body.includes("minWidth: 0"));
   assert.ok(read("MudfishTab.tsx").includes('alignItems: "stretch"'));
 });
 
@@ -36,7 +36,7 @@ test("v0.12.2: aviso e botão de atualização do núcleo, nos 3 idiomas", () =>
   const i18n = read("i18n.tsx");
   const tab = read("MudfishTab.tsx");
   const dash = read("DashControls.tsx");
-  for (const key of ["chartTunnelWaiting", "mfUpdateTitle", "mfUpdateAvail", "mfUpdateBtn", "mfUpdateOk", "mfErrUpdateCheck"]) {
+  for (const key of ["mfUpdateTitle", "mfUpdateAvail", "mfUpdateBtn", "mfUpdateOk", "mfErrUpdateCheck"]) {
     assert.strictEqual((i18n.match(new RegExp("^\\s+" + key + ': "', "gm")) || []).length, 3, key);
     assert.ok(tab.includes("t." + key) || dash.includes("t." + key), "não usado: " + key);
   }

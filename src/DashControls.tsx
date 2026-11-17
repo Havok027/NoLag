@@ -1,10 +1,10 @@
-import { Focusable, PanelSectionRow } from "@decky/ui";
+import { ButtonItem, Focusable, PanelSectionRow } from "@decky/ui";
 import { useRef } from "react";
 import type { CSSProperties } from "react";
 import { wifiReset, wifiOptimizeSafe, mudfishSetEnabled } from "./api";
 import { Card, Help } from "./components";
 import type { Texts } from "./i18n";
-import { useMudfish } from "./MudfishTab";
+import { openMudfishWeb, useMudfish } from "./MudfishTab";
 import { activeCount, useWifi } from "./WifiTab";
 
 const DASH = "—";
@@ -76,6 +76,13 @@ export function MudfishButton({ t, helpOn }: { t: Texts; helpOn: boolean }) {
         disabled={busy || working || !status || (!ready && !running)}
         onPress={() => run(() => mudfishSetEnabled(!running), running ? t.mfOff : t.mfOn)}
       />
+      {(ready || running) && (
+        <PanelSectionRow>
+          <ButtonItem layout="below" label={t.mfOpenWeb} description={t.mfOpenWebDesc} disabled={!status?.port_open} onClick={() => openMudfishWeb(status?.webui)}>
+            {t.mfOpenWeb}
+          </ButtonItem>
+        </PanelSectionRow>
+      )}
       {status?.update?.available && (
         <div style={{ fontSize: 11, color: "#ffd84a", textAlign: "center", margin: "-4px 0 10px", whiteSpace: "pre-line" }}>
           {t.mfUpdateAvail.replace("{v}", status.update.latest).replace("{c}", status.update.installed)}

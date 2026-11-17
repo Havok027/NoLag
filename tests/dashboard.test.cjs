@@ -44,11 +44,11 @@ test("selo Modo Apenas Jogo aparece só com o Mudfish ativo sem VPN total", () =
   assert.ok(py.includes('"only_game": bool(running and not full_vpn)'));
 });
 
-test("gráfico ao vivo reaproveita o LineChart e compara com e sem Mudfish", () => {
+test("gráfico ao vivo reaproveita o LineChart e mostra só o ping atual (sem comparação Com/Sem)", () => {
   const mud = read("MudfishTab.tsx");
-  assert.ok(mud.includes("LineChart") && mud.includes("t.chartWith") && mud.includes("t.chartWithout"));
-  assert.ok(mud.includes("t.connJitter") && mud.includes("mudfishGetLive"));
-  assert.ok(mud.includes("live?.running && samples.some"), "a linha com Mudfish só entra com ele ligado e medindo");
+  assert.ok(mud.includes("LineChart") && mud.includes("t.chartNow") && mud.includes("t.connJitter") && mud.includes("mudfishGetLive"));
+  assert.ok(!mud.includes("t.chartWith") && !mud.includes("t.chartWithout"));
+  assert.ok(mud.includes("lines={[line]}"), "uma única linha");
 });
 
 test("aba Conf tem ativação ao abrir jogo e manter ligado, ambas opcionais, jogos, idioma e diagnóstico", () => {
@@ -75,12 +75,13 @@ test("a rota interna antiga não existe mais no frontend", () => {
   }
 });
 
-test("v0.12.1: botão Abrir painel do Mudfish existe só na aba Mudfish (sem duplicata no Painel)", () => {
+test("v0.13.0: botão Abrir painel do Mudfish existe no Painel e na aba Mudfish (mesma função)", () => {
   const dash = fs.readFileSync(path.join(__dirname, "..", "src", "DashControls.tsx"), "utf8");
-  assert.ok(!dash.includes("t.mfOpenWeb") && !dash.includes("NavigateToExternalWeb"));
+  assert.ok(dash.includes("t.mfOpenWeb") && dash.includes("openMudfishWeb") && dash.includes("!status?.port_open"));
+  assert.ok(fs.readFileSync(path.join(__dirname, "..", "src", "MudfishTab.tsx"), "utf8").includes("NavigateToExternalWeb"));
   assert.ok(fs.readFileSync(path.join(__dirname, "..", "src", "MudfishTab.tsx"), "utf8").includes("label={t.mfOpenWeb}"));
   const i18n = fs.readFileSync(path.join(__dirname, "..", "src", "i18n.tsx"), "utf8");
-  for (const w of ["Abrir painel do Mudfish abre", "Open Mudfish panel button", "Abrir panel de Mudfish abre"]) assert.ok(i18n.includes(w), w);
+  for (const w of ["Abrir painel do Mudfish abre", "Open Mudfish panel opens", "Abrir panel de Mudfish abre"]) assert.ok(i18n.includes(w), w);
 });
 
 test("v0.11.3: acordeões com ícone, resumo e seta; containers unificados; dropdowns dentro de Box", () => {
@@ -98,12 +99,11 @@ test("v0.11.3: acordeões com ícone, resumo e seta; containers unificados; drop
   assert.strictEqual((src("WifiTab.tsx").match(/<Box>/g) || []).length, 2);
 });
 
-test("v0.11.3: Painel tem anel de ping, gráfico com duas curvas e mini-cartões de jitter e perda", () => {
+test("v0.11.3: Painel tem anel de ping, gráfico e mini-cartões de jitter e perda", () => {
   const mud = fs.readFileSync(path.join(__dirname, "..", "src", "MudfishTab.tsx"), "utf8");
   const comp = fs.readFileSync(path.join(__dirname, "..", "src", "components.tsx"), "utf8");
   assert.ok(mud.includes("<Ring") && (mud.match(/<MiniCard/g) || []).length === 2 && mud.includes("t.tmLoss"));
   assert.ok(mud.includes('gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)"') && mud.includes("gap: 8"));
-  assert.ok(mud.includes("#3ddc84") && mud.includes("dashed") && comp.includes("strokeDasharray"));
-  assert.ok(mud.includes("t.chartWith") && mud.includes("t.chartWithout"));
+  assert.ok(mud.includes("#3ddc84") && comp.includes("strokeDasharray"));
 });
 

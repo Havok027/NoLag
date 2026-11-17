@@ -32,20 +32,14 @@ test("textos de perfis antigos e da rota interna foram removidos", () => {
   }
 });
 
-test("aba Mudfish tem fluxo guiado, Auto Selection, Multi-Path, WebUI, rota e ping", () => {
+test("aba Mudfish tem fluxo guiado, serviço, WebUI, rota e logs, sem controles de rota", () => {
   const src = read("MudfishTab.tsx");
-  for (const s of ["mudfishInstall", "mudfishSetEnabled", 'mudfishSetOption("auto_selection"',
-    'mudfishSetOption("multipath"', "NavigateToExternalWeb", "http://127.0.0.1:8282", "mudfishGetRoute", "mudfishTestPing",
-    "t.mfPingBefore", "t.mfPingAfter", "mudfishGetLogs", "t.mfAdvTitle", "t.mfAutoSel", "t.mfMultiPath"]) {
+  for (const s of ["mudfishInstall", "mudfishSetEnabled", "NavigateToExternalWeb", "http://127.0.0.1:8282", "mudfishGetRoute", "mudfishGetLogs", "t.mfAdvTitle", "t.mfOpenWeb", "t.hMfFlow", "MfWarning"]) {
     assert.ok(src.includes(s), s);
   }
-  assert.ok(src.includes("hMfAutoSel") && src.includes("hMfMultiPath") && src.includes("hMfWarn"));
-});
-
-test("Auto Selection começa ligado e Multi-Path desligado quando o backend ainda não respondeu", () => {
-  const src = read("MudfishTab.tsx");
-  assert.ok(src.includes("status?.auto_selection !== false"));
-  assert.ok(src.includes("status?.multipath === true"));
+  for (const s of ["mudfishSetOption", "mfAutoSel", "mfMultiPath", "mudfishTestPing", "mfPingBefore", "mfPingAfter"]) {
+    assert.ok(!src.includes(s), "não deveria existir: " + s);
+  }
 });
 
 test("avisos de crédito: sem downloads e sem VPN total, visíveis na UI", () => {
@@ -85,7 +79,7 @@ test("primeiro uso explica o cadastro único dos jogos no painel, nos 3 idiomas"
   const steps = [...i18n.matchAll(/^\s+mfFirstSteps: "(.*)",$/gm)].map((m) => m[1]);
   assert.strictEqual(steps.length, 3);
   for (const text of steps) {
-    assert.ok(text.includes("127.0.0.1:8282") && text.includes("Basic") && text.includes("Multi-Path") && text.includes("Auto / South America"));
+    assert.ok(text.includes("Basic") && text.includes("Multi-Path") && text.includes("Auto / South America"));
   }
 });
 
@@ -158,7 +152,7 @@ test("v0.11.1: textos de ajuda quebram linha (pre-line) e têm \\n nos 3 idiomas
   const mud = read("MudfishTab.tsx");
   assert.ok((mud.match(/whiteSpace: "pre-line"/g) || []).length >= 2);
   const i18n = read("i18n.tsx");
-  for (const key of ["mfFirstSteps", "hMfFirst", "hDashBtns", "hMfMultiPath", "hMfAutoSel"]) {
+  for (const key of ["mfFirstSteps", "hMfFirst", "hDashBtns", "hMfFlow", "hMfAdv"]) {
     const lines = [...i18n.matchAll(new RegExp("^\\s+" + key + ': "(.*)",$', "gm"))].map((m) => m[1]);
     assert.strictEqual(lines.length, 3, key);
     for (const l of lines) assert.ok(l.includes("\\n"), key);

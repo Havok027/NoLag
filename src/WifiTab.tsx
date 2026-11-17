@@ -207,6 +207,24 @@ export function WifiTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
       <Help show={helpOn} text={t.hWifiStatus} />
 
       <Collapsible
+        title={t.wifiSecActions}
+        icon={<FaBolt size={14} />}
+        summary={t.sumCollapsed}
+        collapsed={isCollapsed("wifiActions")} onToggle={(v) => toggleSection("wifiActions", v)}>
+        <PanelSectionRow>
+          <ButtonItem layout="below" disabled={busy || !status} onClick={() => run(() => wifiOptimizeSafe(), applied(t))}>
+            {t.wifiOptimizeAll}
+          </ButtonItem>
+        </PanelSectionRow>
+        <PanelSectionRow>
+          <ButtonItem layout="below" disabled={busy || !status} onClick={() => run(() => wifiReset(), () => t.wifiRestored)}>
+            {t.wifiRestore}
+          </ButtonItem>
+        </PanelSectionRow>
+        <Help show={helpOn} text={t.hWifiActions} />
+      </Collapsible>
+
+      <Collapsible
         title={t.wifiSecMain}
         icon={<FaWifi size={14} />}
         summary={`${activeCount(status)} ${t.sumActive}`}
@@ -251,6 +269,33 @@ export function WifiTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
           />
         </PanelSectionRow>
         <Help show={helpOn} text={t.hWifiCake} />
+      </Collapsible>
+
+      <Collapsible
+        title={t.wifiSecStream}
+        icon={<FaGamepad size={14} />}
+        summary={t.sumCollapsed}
+        collapsed={isCollapsed("wifiStream")} onToggle={(v) => toggleSection("wifiStream", v)}>
+        <PanelSectionRow>
+          <ToggleField
+            label={t.wifiStreaming}
+            description={t.wifiStreamingDesc}
+            checked={!!cfg?.streaming_mode_enabled}
+            disabled={busy || !status}
+            onChange={(v) => run(() => wifiSetStreaming(v))}
+          />
+        </PanelSectionRow>
+        <Help show={helpOn} text={t.hWifiStreaming} />
+        <PanelSectionRow>
+          <ToggleField
+            label={t.wifiWatchdog}
+            description={t.wifiWatchdogDesc}
+            checked={!!cfg?.link_watchdog_enabled}
+            disabled={busy || !status}
+            onChange={(v) => run(() => wifiSetWatchdog(v))}
+          />
+        </PanelSectionRow>
+        <Help show={helpOn} text={t.hWifiWatchdog} />
       </Collapsible>
 
       <Collapsible
@@ -304,51 +349,6 @@ export function WifiTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
         </PanelSectionRow>
         </Box>
         <Help show={helpOn} text={t.hWifiDns} />
-      </Collapsible>
-
-      <Collapsible
-        title={t.wifiSecStream}
-        icon={<FaGamepad size={14} />}
-        summary={t.sumCollapsed}
-        collapsed={isCollapsed("wifiStream")} onToggle={(v) => toggleSection("wifiStream", v)}>
-        <PanelSectionRow>
-          <ToggleField
-            label={t.wifiStreaming}
-            description={t.wifiStreamingDesc}
-            checked={!!cfg?.streaming_mode_enabled}
-            disabled={busy || !status}
-            onChange={(v) => run(() => wifiSetStreaming(v))}
-          />
-        </PanelSectionRow>
-        <Help show={helpOn} text={t.hWifiStreaming} />
-        <PanelSectionRow>
-          <ToggleField
-            label={t.wifiWatchdog}
-            description={t.wifiWatchdogDesc}
-            checked={!!cfg?.link_watchdog_enabled}
-            disabled={busy || !status}
-            onChange={(v) => run(() => wifiSetWatchdog(v))}
-          />
-        </PanelSectionRow>
-        <Help show={helpOn} text={t.hWifiWatchdog} />
-      </Collapsible>
-
-      <Collapsible
-        title={t.wifiSecActions}
-        icon={<FaBolt size={14} />}
-        summary={t.sumCollapsed}
-        collapsed={isCollapsed("wifiActions")} onToggle={(v) => toggleSection("wifiActions", v)}>
-        <PanelSectionRow>
-          <ButtonItem layout="below" disabled={busy || !status} onClick={() => run(() => wifiOptimizeSafe(), applied(t))}>
-            {t.wifiOptimizeAll}
-          </ButtonItem>
-        </PanelSectionRow>
-        <PanelSectionRow>
-          <ButtonItem layout="below" disabled={busy || !status} onClick={() => run(() => wifiReset(), () => t.wifiRestored)}>
-            {t.wifiRestore}
-          </ButtonItem>
-        </PanelSectionRow>
-        <Help show={helpOn} text={t.hWifiActions} />
       </Collapsible>
     </>
   );
