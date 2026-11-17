@@ -1,8 +1,7 @@
-## v0.12.4
+## v0.12.5
 
-- Layout do QAM: sem arrasto lateral (`overflow-x: hidden`, `max-width: 100%`, `box-sizing: border-box` na raiz e nos cartões, quebra de palavras e reset do deslocamento ao focar). Botões do diagnóstico e do painel passam para layout em coluna.
-- Telemetria: com o túnel ativo e sem resposta do ICMP, RTT, jitter e perda do item vêm de `/do/status/pingstat` do Mudfish (só leitura) e aparecem lado a lado com "Sem Mudfish" no gráfico e nos mini-cards.
-- Conexão automática: ao abrir o jogo (perfil com "Ativar ao abrir jogo"), o plugin sobe o serviço, espera núcleo pronto e sessão ativa e tenta o equivalente ao botão Conectar. O endpoint de conexão ainda não foi capturado, então nada é enviado às cegas: a tela mostra o aviso para clicar em Conectar no painel. Ao fechar o jogo o serviço é encerrado (desconecta).
-- Auto-updater: o núcleo é atualizado sozinho no boot e antes de ligar por jogo (serviço desligado, no máximo a cada 6 h). Versão de reserva da instalação nova: 6.6.4.
-- Diagnóstico v6: captura o caminho dos botões Conectar/Desconectar e `pingstat` para mapear a conexão.
-- Textos novos nos três idiomas e testes novos.
+- Conexão automática com as rotas oficiais do painel: ao abrir o jogo (perfil com "Ativar ao abrir jogo") o plugin sobe o serviço, espera sessão ativa e núcleo pronto, envia `POST /do/mudfish/start` (200 = iniciado, 201 = já em execução) e confere `core_running`. Qualquer recusa (409, sessão inativa, erro) mostra o aviso para clicar em Conectar no painel, sem travar o menu.
+- Encerramento limpo: ao fechar o jogo envia `POST /do/mudfish/stop` (200 = encerrado) e em seguida encerra o serviço, liberando a porta 8282 e cortando o consumo mesmo se a API recusar.
+- Telemetria no formato real do `/do/status/pingstat` (Mudfish 6.6.4): RTT, jitter e perda reais do túnel preenchem o gráfico e os mini-cards ao lado de "Sem Mudfish" (0 = sem medição, acima de 2800 = perda de pacotes; usa a rota de menor mediana nas últimas 5 leituras). O ping ICMP pelo túnel fica só como reserva.
+- Layout do QAM mantido: sem rolagem lateral, botões em coluna e quebra de palavras.
+- Testes novos, incluindo a amostra real do pingstat.
