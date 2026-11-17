@@ -153,6 +153,9 @@ export function SectionTitle({ title }: { title: string }) {
 
 /** Container unificado: borda fina, fundo translúcido, cantos de 10 px. */
 export const BOX: CSSProperties = {
+  maxWidth: "100%",
+  overflowWrap: "anywhere",
+  wordBreak: "break-word",
   border: "1px solid rgba(255, 255, 255, 0.12)",
   background: "rgba(255, 255, 255, 0.04)",
   borderRadius: 10,

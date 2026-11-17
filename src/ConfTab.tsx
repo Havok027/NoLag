@@ -135,7 +135,7 @@ export function ConfTab(p: Props) {
         <Card rows={diag} />
         <PanelSectionRow>
           <ButtonItem
-            layout="inline"
+            layout="below"
             label={t.mfProbe}
             description={probeNote || t.mfProbeDesc}
             disabled={!status?.port_open}

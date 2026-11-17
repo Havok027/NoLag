@@ -213,7 +213,7 @@ export function ConnCard({ t, helpOn }: { t: Texts; helpOn: boolean }) {
       <div style={{ fontSize: 11, opacity: 0.7, textAlign: "center", marginBottom: 12 }}>{t.connHint}</div>
       <Help show={helpOn} text={t.hConn} />
       <PanelSectionRow>
-        <ButtonItem layout="inline" label={t.connTitle} disabled={loading} onClick={load}>
+        <ButtonItem layout="below" label={t.connTitle} disabled={loading} onClick={load}>
           {t.mfRefresh}
         </ButtonItem>
       </PanelSectionRow>
@@ -241,6 +241,9 @@ const WARN_BOX: CSSProperties = {
   background: "rgba(255,200,0,0.12)",
   color: "#ffd84a",
   wordBreak: "break-word",
+  overflowWrap: "anywhere",
+  boxSizing: "border-box",
+  maxWidth: "100%",
 };
 
 /** Aviso fixo de créditos: sem downloads com o Mudfish ligado e sem VPN total. */
@@ -372,7 +375,9 @@ export function LiveChart({ t, helpOn }: { t: Texts; helpOn: boolean }) {
           withOn={!!lastWith}
         />
       </div>
-      {live?.running && !live.tunnel_iface && !live.full_vpn && <div style={SMALL}>{t.chartNoTunnel}</div>}
+      {live?.running && live.tunnel_source === "api" && <div style={SMALL}>{t.chartViaApi}</div>}
+      {live?.running && !live.tunnel_iface && !live.full_vpn && live.tunnel_source !== "api" && <div style={SMALL}>{t.chartNoTunnel}</div>}
+      {live?.running && live.connect === "manual" && <div style={{ ...WARN_BOX, marginBottom: 10 }}>{t.mfConnectManual}</div>}
       {live?.running && live.tunnel_waiting && <div style={SMALL}>{t.chartTunnelWaiting}</div>}
       {live?.running && live.tunnel_idle && <div style={SMALL}>{t.chartTunnelIdle}</div>}
       {live?.running && live.tunnel_blocked && <div style={SMALL}>{t.chartTunnelBlocked}</div>}
@@ -556,7 +561,7 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
       {step === "install" && (
         <PanelSectionRow>
           <ButtonItem
-            layout="inline"
+            layout="below"
             label={t.mfInstall}
             description={t.mfInstallDesc}
             disabled={busy || working}
@@ -593,7 +598,7 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
       {(installed || !!status?.running) && (
         <PanelSectionRow>
           <ButtonItem
-            layout="inline"
+            layout="below"
             label={t.mfOpenWeb}
             description={t.mfOpenWebDesc}
             disabled={!status?.port_open}
@@ -648,13 +653,13 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
           />
         </PanelSectionRow>
         <PanelSectionRow>
-          <ButtonItem layout="inline" label={t.mfAccSave} disabled={busy || !user.trim()} onClick={saveAccount}>
+          <ButtonItem layout="below" label={t.mfAccSave} disabled={busy || !user.trim()} onClick={saveAccount}>
             {t.mfAccSave}
           </ButtonItem>
         </PanelSectionRow>
         {(status?.user || status?.has_password) && (
           <PanelSectionRow>
-            <ButtonItem layout="inline" label={t.mfAccClear} disabled={busy} onClick={clearAccount}>
+            <ButtonItem layout="below" label={t.mfAccClear} disabled={busy} onClick={clearAccount}>
               {t.mfAccClear}
             </ButtonItem>
           </PanelSectionRow>
@@ -678,7 +683,7 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
         />
         <PanelSectionRow>
           <ButtonItem
-            layout="inline"
+            layout="below"
             label={installed ? t.mfUpdate : t.mfInstall}
             description={t.mfInstallDesc}
             disabled={busy || working}
@@ -689,7 +694,7 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
         </PanelSectionRow>
         <PanelSectionRow>
           <ButtonItem
-            layout="inline"
+            layout="below"
             label={t.mfLoginReset}
             description={t.mfResetSessionDesc}
             disabled={busy}
@@ -708,7 +713,7 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
         </PanelSectionRow>
         <PanelSectionRow>
           <ButtonItem
-            layout="inline"
+            layout="below"
             label={t.mfPingTest}
             description={pingNote || t.mfPingTestDesc}
             disabled={testing}
@@ -723,7 +728,7 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
           summary={logs ? undefined : t.sumCollapsed}
           collapsed={isCollapsed("mudfishLogs")} onToggle={(v) => toggleSection("mudfishLogs", v)}>
           <PanelSectionRow>
-            <ButtonItem layout="inline" label={t.mfLogsTitle} onClick={loadLogs}>
+            <ButtonItem layout="below" label={t.mfLogsTitle} onClick={loadLogs}>
               {t.mfLogsLoad}
             </ButtonItem>
           </PanelSectionRow>

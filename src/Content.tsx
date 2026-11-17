@@ -10,6 +10,24 @@ import { MudfishButton, WifiButton } from "./DashControls";
 import { WifiTab } from "./WifiTab";
 import { Lang, TEXTS, normalizeLang } from "./i18n";
 
+// v0.12.4: impede o arrasto lateral do QAM (foco de botões largos) e força quebra de linha na largura estreita (~300px).
+const ROOT_CSS = `
+.nolag-root, .nolag-root * { box-sizing: border-box; max-width: 100%; }
+.nolag-root { width: 100%; overflow-x: hidden; word-break: break-word; overflow-wrap: anywhere; }
+.nolag-root button, .nolag-root [class*="Field"], .nolag-root [class*="Label"], .nolag-root [class*="Description"] {
+  white-space: normal; min-width: 0; word-break: break-word; overflow-wrap: anywhere;
+}
+.nolag-root [class*="FieldChildren"], .nolag-root [class*="FieldLabelRow"] { flex-wrap: wrap; min-width: 0; }
+`;
+
+// Zera qualquer deslocamento horizontal que o navegador aplique ao focar um elemento largo.
+function resetScrollX(e: { currentTarget: HTMLElement }) {
+  let el: HTMLElement | null = e.currentTarget;
+  for (let i = 0; el && i < 8; i++, el = el.parentElement) {
+    if (el.scrollLeft !== 0) el.scrollLeft = 0;
+  }
+}
+
 const DEFAULT_COLLAPSED: Record<string, boolean> = { mudfishAdv: true, mudfishLogs: true, mudfishAcc: true };
 
 export function Content() {
@@ -98,8 +116,13 @@ export function Content() {
 
   return (
     <PanelSection>
-    <Focusable style={{ width: "100%", boxSizing: "border-box" }}>
-    <div ref={root}>
+    <Focusable
+      style={{ width: "100%", maxWidth: "100%", boxSizing: "border-box", overflowX: "hidden" }}
+      onFocusCapture={resetScrollX as any}
+      onScrollCapture={resetScrollX as any}
+    >
+    <style>{ROOT_CSS}</style>
+    <div ref={root} className="nolag-root" style={{ width: "100%", maxWidth: "100%", boxSizing: "border-box", overflowX: "hidden" }}>
       <TabNav
         labels={{ dash: t.tabDash, wifi: t.tabWifi, mudfish: t.tabMudfish, conf: t.tabConf }}
         hint={t.tabHint}

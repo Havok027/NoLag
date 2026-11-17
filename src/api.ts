@@ -16,7 +16,7 @@ export interface Settings {
 export interface Metrics {
   avg: number | null;
   jitter: number | null;
-  loss: number;
+  loss: number | null;
 }
 
 export const getSettings = callable<[], Settings>("get_settings");
@@ -120,6 +120,7 @@ export interface MudfishStatus {
   auto_selection?: boolean;
   multipath?: boolean;
   auto_on_game?: boolean;
+  connect?: "" | "connecting" | "connected" | "manual" | "failed";
   session?: "active" | "inactive" | "unknown";
   api_ok?: boolean;
   full_vpn_api?: boolean;
@@ -186,6 +187,8 @@ export interface MudfishLive {
   tunnel_blocked?: boolean;
   tunnel_idle?: boolean;
   tunnel_waiting?: boolean;
+  tunnel_source?: "icmp" | "api" | "";
+  connect?: "" | "connecting" | "connected" | "manual" | "failed";
   rtt?: MudfishRtt;
 }
 export const mudfishCheckUpdate = callable<[], MudfishResult & { update?: MudfishUpdate }>("mudfish_check_update");

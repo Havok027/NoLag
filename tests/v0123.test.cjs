@@ -20,5 +20,5 @@ test("v0.12.3: aviso de túnel ocioso nos 3 idiomas, no tipo e na tela", () => {
 
 test("v0.12.3: versão do package.json", () => {
   const dir = fs.existsSync(path.join(__dirname, "..", "package.json")) ? ".." : ".";
-  assert.strictEqual(JSON.parse(fs.readFileSync(path.join(__dirname, dir, "package.json"), "utf8")).version, "0.12.3");
+  assert.strictEqual(JSON.parse(fs.readFileSync(path.join(__dirname, dir, "package.json"), "utf8")).version, "0.12.4");
 });

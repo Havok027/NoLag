@@ -508,7 +508,7 @@ class ManagerTests(unittest.TestCase):
         self.assertIn("HTTP 404", r["detail"])
         self.assertIn("curl código 22", r["detail"])
         self.assertIn("v5.12.0", r["detail"])
-        self.assertIn("v5.11.0", r["detail"])  # tentou também a versão de reserva
+        self.assertIn("v" + mudfish_mgr.FALLBACK_VERSION, r["detail"])  # tentou também a versão de reserva
         st = run(mgr.get_status())
         self.assertEqual((st["phase"], st["error"]), ("error", "download_failed"))
         self.assertEqual(st["detail"], r["detail"])

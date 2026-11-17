@@ -133,6 +133,8 @@ export interface Texts {
   chartTunnelBlocked: string;
   chartTunnelWaiting: string;
   chartTunnelIdle: string;
+  mfConnectManual: string;
+  chartViaApi: string;
   mfUpdateTitle: string;
   mfUpdateAvail: string;
   mfUpdateBtn: string;
@@ -383,6 +385,8 @@ export const TEXTS: Record<Lang, Texts> = {
     mfRttError: "Indisponível",
     chartTunnelWaiting: "Mudfish iniciando: o túnel só é medido quando o núcleo ficar pronto",
     chartTunnelIdle: "Túnel ocioso: nenhum jogo ou item do Mudfish está usando a rota agora. Sem tráfego tunelado não há o que medir (isso não é perda de pacotes)",
+    mfConnectManual: "Configure e equipe o item do jogo previamente no painel web do Mudfish. Caso o túnel não conecte automaticamente ao iniciar o jogo, abra o painel e clique em Conectar.",
+    chartViaApi: "medido pelo Mudfish",
     mfUpdateTitle: "Atualização do Mudfish",
     mfUpdateAvail: "Nova versão do núcleo disponível: {v} (instalada: {c})",
     mfUpdateBtn: "Atualizar para {v}",
@@ -626,6 +630,8 @@ export const TEXTS: Record<Lang, Texts> = {
     mfRttError: "Unavailable",
     chartTunnelWaiting: "Mudfish is starting: the tunnel is only measured once the core is ready",
     chartTunnelIdle: "Tunnel idle: no Mudfish game or item is using the route right now. With no tunneled traffic there is nothing to measure (this is not packet loss)",
+    mfConnectManual: "Set up and equip the game item beforehand in the Mudfish web panel. If the tunnel does not connect automatically when the game starts, open the panel and click Connect.",
+    chartViaApi: "measured by Mudfish",
     mfUpdateTitle: "Mudfish update",
     mfUpdateAvail: "New core version available: {v} (installed: {c})",
     mfUpdateBtn: "Update to {v}",
@@ -869,6 +875,8 @@ export const TEXTS: Record<Lang, Texts> = {
     mfRttError: "No disponible",
     chartTunnelWaiting: "Mudfish iniciando: el túnel solo se mide cuando el núcleo esté listo",
     chartTunnelIdle: "Túnel inactivo: ningún juego o ítem de Mudfish usa la ruta ahora. Sin tráfico por el túnel no hay nada que medir (esto no es pérdida de paquetes)",
+    mfConnectManual: "Configura y equipa antes el ítem del juego en el panel web de Mudfish. Si el túnel no se conecta solo al iniciar el juego, abre el panel y pulsa Conectar.",
+    chartViaApi: "medido por Mudfish",
     mfUpdateTitle: "Actualización de Mudfish",
     mfUpdateAvail: "Nueva versión del núcleo disponible: {v} (instalada: {c})",
     mfUpdateBtn: "Actualizar a {v}",
