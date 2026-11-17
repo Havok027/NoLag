@@ -21,7 +21,9 @@ API local (127.0.0.1:8282), mapeada pelo mudfish-api.json da v0.11.3 (Mudfish 5.
     quando termina: o plugin repete a leitura até ficar pronto e mostra o estado na tela;
   - Full VPN (fullvpn_enabled) é travado em false: se o painel o ligar, o serviço é encerrado para proteger créditos;
   - os caminhos que alteram estado (/do/node/autoselect, /item/conf_onoff) continuam NÃO chamados: o iid dos itens e o
-    endpoint do interruptor de Full VPN ainda não foram capturados (o diagnóstico v3 captura o que falta).
+    endpoint do interruptor de Full VPN ainda não foram capturados. O diagnóstico v4 mostrou que user.items (iid, rid, active)
+    vem de um POST GraphQL ao api.mudfish.net com o JWT do cliente; a URL ficou fora da captura. Sem ela e sem decisão
+    explícita de enviar o JWT do aparelho ao servidor do Mudfish, o plugin não monta o iid (o diagnóstico v5 captura a URL).
 
 Proteção de créditos (o Mudfish cobra por tráfego): o serviço nasce sempre desligado; só liga sozinho se o usuário
 ativar "keep_on" (ao reiniciar) ou "auto_on_game" (ao abrir jogo) na aba Conf, e é encerrado ao fechar qualquer
@@ -72,7 +74,13 @@ SECRET_KEYS = ("jwt", "token")
 UPDATE_TTL = 6 * 3600.0  # a consulta à página de versões é feita no máximo a cada 6 h
 # v4 do diagnóstico: de onde vêm os itens (iid) e o interruptor de Full VPN, e se a interface expõe versão nova.
 KEYWORD_PROBES = ("fullvpn", "data.user", "self.user", "updateActiveItems", "turnOffFullVPN", "getconfprogress", "iid",
-                  "autoselect", "conf_onoff", "newversion", "upgrade", "download", "mudrun_status.version")
+                  "autoselect", "conf_onoff", "newversion", "upgrade", "download", "mudrun_status.version",
+                  "graphql", "mudfishVpnVersion")
+# v5: o diagnóstico v4 mostrou que user.items (iid) vem de um POST ao api.mudfish.net com o JWT, mas a janela de
+# captura começava depois da URL. Estas chamadas (só o começo de axios.get/post, sem corpo nem cabeçalhos) fecham a lacuna.
+CALL_PROBE_MAX = 40
+IDLE_BYTES = 4096        # tráfego do cliente nos últimos NET_WINDOW s abaixo disso = túnel ocioso (sem item/jogo ativo)
+NET_WINDOW = 10
 KEYWORD_PER_SOURCE = 3
 KEYWORD_MAX_HITS = 8
 PAGE_PROBES = ("/item/list.html", "/item/manage.html")
@@ -188,6 +196,7 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
 _FORM_RX = re.compile(r"<form\b[^>]*>", re.I)
 _INPUT_RX = re.compile(r"<input\b[^>]*>", re.I)
 _ATTR_RX = re.compile(r"""\b(name|type|id)\s*=\s*["']([^"']{0,40})["']""", re.I)
+_CALL_RX = re.compile(r"axios\.(?:post|get|put|delete)\(\s*([^,)]{1,160})", re.I)
 _LIB_RX = re.compile(r"(jquery|axios|polyfill|promise|\.min\.js)", re.I)
 
 
@@ -293,6 +302,23 @@ class MudfishApi:
             out[key], out["n_" + key] = state, n
         return out
 
+    def netstat_recent(self, window=NET_WINDOW):
+        """Bytes (rx+tx) do cliente nos últimos `window` segundos, de /do/status/netstat (só leitura). None se falhar."""
+        try:
+            st, _ct, body = self._get("/do/status/netstat", follow=False)
+            rows = json.loads(body.decode("utf-8", "replace")) if st == 200 else None
+        except Exception:
+            return None
+        if not isinstance(rows, list) or not rows:
+            return None
+        total = 0
+        for row in rows[-window:]:
+            if isinstance(row, dict):
+                for key in ("rx", "tx"):
+                    if isinstance(row.get(key), (int, float)):
+                        total += row[key]
+        return total
+
     def logout(self):
         """Encerra a sessão do painel (GET /logout.html). True se o painel respondeu."""
         try:
@@ -371,6 +397,15 @@ class MudfishApi:
                     hits.append({"in": name, "text": _redact(txt[max(0, m.start() - 600): m.end() + 400])})
             if hits:
                 snippets["kw:" + word] = hits
+        calls, seen = [], set()
+        for name, txt in texts:
+            for m in _CALL_RX.finditer(txt):
+                head = _redact(m.group(0).strip())
+                if head not in seen and len(calls) < CALL_PROBE_MAX:
+                    seen.add(head)
+                    calls.append({"in": name, "text": head})
+        if calls:
+            snippets["calls"] = calls
         for tag in _FORM_RX.findall(root)[:6]:
             forms.append({"form": tag[:200]})
         for tag in _INPUT_RX.findall(root)[:20]:
@@ -1038,14 +1073,22 @@ class MudfishManager:
         tunnel = ok(res[2]) if (tun and not tunnel_waiting) else None
         # Túnel sem resposta alguma com a linha base ok: no modo por jogo o alvo de ping pode não estar no item do
         # Mudfish. Não mostra 100% de perda como se fosse a qualidade do túnel; avisa para usar o IP do servidor.
-        tunnel_blocked = bool(tunnel and base and isinstance(tunnel.get("loss"), (int, float)) and tunnel["loss"] >= 100
-                              and isinstance(base.get("loss"), (int, float)) and base["loss"] < 100)
-        if tunnel_blocked:
+        no_reply = bool(tunnel and base and isinstance(tunnel.get("loss"), (int, float)) and tunnel["loss"] >= 100
+                        and isinstance(base.get("loss"), (int, float)) and base["loss"] < 100)
+        # Sem item/jogo ativo o túnel fica ocioso: não há tráfego tunelado e o ping pela interface do túnel não tem
+        # resposta. Isso não é perda de qualidade. O cliente informa o tráfego em /do/status/netstat; quase nada nos
+        # últimos segundos = ocioso. Com tráfego e sem resposta, continua sendo alvo fora do item (blocked).
+        tunnel_idle = False
+        if no_reply:
+            recent = await asyncio.to_thread(self.api.netstat_recent)
+            tunnel_idle = recent is not None and recent < IDLE_BYTES
+        tunnel_blocked = bool(no_reply and not tunnel_idle)
+        if no_reply:
             tunnel = None
         full_vpn = bool(running and (_TUNNEL_DEV.match(route.get("dev") or "") or _TUNNEL_DEV.match(base_dev or "")))
         return {"ok": True, "running": running, "base": base, "tunnel": tunnel, "base_iface": base_dev,
                 "tunnel_iface": tun, "full_vpn": full_vpn, "only_game": bool(running and not full_vpn),
-                "tunnel_blocked": tunnel_blocked, "tunnel_waiting": tunnel_waiting, "rtt": dict(self.rtt)}
+                "tunnel_blocked": tunnel_blocked, "tunnel_idle": tunnel_idle, "tunnel_waiting": tunnel_waiting, "rtt": dict(self.rtt)}
 
     async def test_ping(self):
         """Com o Mudfish desligado guarda o 'antes'; ligado, guarda o 'depois'."""
