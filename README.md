@@ -27,6 +27,10 @@ As otimizações de Wi-Fi **nunca** são desfeitas ao fechar um jogo, ao ligar o
 
 O plugin lê (GET) o status do painel: a sessão vem do próprio cliente Mudfish (`isSignedIn`, sem JWT), o **Full VPN é travado em desligado** (se o painel o ligar, o serviço é encerrado para proteger créditos) e a medição de latência dos nós (`/do/rtt/*`) é acompanhada até ficar pronta. A interface `msk` do Mudfish é reconhecida na medição. Os comandos que alteram estado (Auto Selection e itens) ainda não são enviados: Conf > Diagnóstico captura, só em leitura, o contexto dessas chamadas em `mudfish-api.json` para conferi-las antes de ligá-las. Até lá, Auto Selection e Multi-Path ficam salvos e a tela avisa quando é preciso ativá-los no painel. O login automático com a conta opcional também depende dessa captura.
 
+## Atualização do núcleo do Mudfish
+
+O NoLag consulta a página oficial de versões do Mudfish (no máximo a cada 6 horas) e avisa no Painel e na aba Mudfish quando há núcleo novo. O botão **Atualizar** baixa o instalador dessa versão, troca o binário e religa o serviço se ele estava ligado. A consulta só informa: nada é instalado sem o seu toque.
+
 ## Mudfish: proteção de créditos
 
 O Mudfish cobra por tráfego. Por isso o NoLag **sempre começa com o Mudfish desligado**, ao ligar o console e ao abrir um jogo, a menos que você ative a opção na aba Conf. Ao fechar qualquer jogo, o Mudfish é encerrado na hora. Ligar à mão nunca ativa a opção de manter ligado.

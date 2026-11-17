@@ -441,6 +441,12 @@ class Plugin:
     async def mudfish_install(self):
         return await self._mudfish_call("install")
 
+    async def mudfish_check_update(self):
+        return await self._mudfish_call("check_update")
+
+    async def mudfish_update(self):
+        return await self._mudfish_call("update_core")
+
     async def mudfish_set_enabled(self, enabled):
         return await self._mudfish_call("set_enabled", enabled)
 

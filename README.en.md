@@ -27,6 +27,10 @@ Wi-Fi tweaks are **never** undone when a game closes, when the console boots or 
 
 The plugin reads (GET) the panel status: the session comes from the Mudfish client itself (`isSignedIn`, no JWT), **Full VPN is locked off** (if the panel turns it on, the service is stopped to protect credits) and the node latency measurement (`/do/rtt/*`) is followed until it is ready. Mudfish's `msk` interface is recognized when measuring. Commands that change state (Auto Selection and items) are not sent yet: Conf > Diagnostics captures, read-only, the context of those calls into `mudfish-api.json` so they can be verified before being wired. Until then, Auto Selection and Multi-Path are saved and the screen tells you when you must turn them on in the panel. Auto-login with the optional account also depends on that capture.
 
+## Mudfish core update
+
+NoLag checks Mudfish's official releases page (at most every 6 hours) and shows a notice on the Dashboard and the Mudfish tab when a new core is available. The **Update** button downloads that version's installer, replaces the binary and restarts the service if it was on. The check only informs: nothing is installed without your tap.
+
 ## Mudfish: credit protection
 
 Mudfish bills by traffic, so NoLag **always starts with Mudfish off**, at boot and when a game opens, unless you enable the option in the Conf tab. When any game closes, Mudfish is stopped right away. Turning it on by hand never enables keep-on.

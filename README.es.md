@@ -27,6 +27,10 @@ Los ajustes de Wi-Fi **nunca** se deshacen al cerrar un juego, al encender la co
 
 El plugin lee (GET) el estado del panel: la sesión viene del propio cliente Mudfish (`isSignedIn`, sin JWT), **Full VPN queda bloqueado en apagado** (si el panel lo enciende, el servicio se detiene para proteger créditos) y la medición de latencia de los nodos (`/do/rtt/*`) se sigue hasta que esté lista. La interfaz `msk` de Mudfish se reconoce al medir. Los comandos que cambian estado (Auto Selection y elementos) aún no se envían: Conf > Diagnóstico captura, en solo lectura, el contexto de esas llamadas en `mudfish-api.json` para verificarlas antes de conectarlas. Hasta entonces, Auto Selection y Multi-Path quedan guardados y la pantalla avisa cuándo debes activarlos en el panel. El acceso automático con la cuenta opcional también depende de esa captura.
 
+## Actualización del núcleo de Mudfish
+
+NoLag consulta la página oficial de versiones de Mudfish (como máximo cada 6 horas) y avisa en el Panel y en la pestaña Mudfish cuando hay un núcleo nuevo. El botón **Actualizar** descarga el instalador de esa versión, reemplaza el binario y reinicia el servicio si estaba encendido. La consulta solo informa: no se instala nada sin tu toque.
+
 ## Mudfish: protección de créditos
 
 Mudfish cobra por tráfico, por eso NoLag **siempre arranca con Mudfish apagado**, al encender la consola y al abrir un juego, salvo que actives la opción en la pestaña Conf. Al cerrar cualquier juego, Mudfish se detiene al instante. Encenderlo a mano nunca activa mantener activo.

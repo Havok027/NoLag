@@ -69,7 +69,12 @@ SESSION_WATCH = 6.0
 RTT_PENDING_EVERY = 6.0   # enquanto o cliente ainda mede (status 300)
 RTT_READY_EVERY = 120.0   # depois de pronto, só revalida de vez em quando
 SECRET_KEYS = ("jwt", "token")
-KEYWORD_PROBES = ("fullvpn", "conf_onoff", "autoselect", "iid")
+UPDATE_TTL = 6 * 3600.0  # a consulta à página de versões é feita no máximo a cada 6 h
+# v4 do diagnóstico: de onde vêm os itens (iid) e o interruptor de Full VPN, e se a interface expõe versão nova.
+KEYWORD_PROBES = ("fullvpn", "data.user", "self.user", "updateActiveItems", "turnOffFullVPN", "getconfprogress", "iid",
+                  "autoselect", "conf_onoff", "newversion", "upgrade", "download", "mudrun_status.version")
+KEYWORD_PER_SOURCE = 3
+KEYWORD_MAX_HITS = 8
 PAGE_PROBES = ("/item/list.html", "/item/manage.html")
 LIVE_COUNT = 3
 MAX_USER = 128
@@ -358,10 +363,12 @@ class MudfishApi:
         for word in KEYWORD_PROBES:
             hits = []
             for name, txt in texts:
-                for m in re.finditer(re.escape(word), txt):
-                    if len(hits) >= 6:
-                        break
-                    hits.append({"in": name, "text": _redact(txt[max(0, m.start() - 300): m.end() + 300])})
+                taken = 0
+                for m in re.finditer(re.escape(word), txt, re.I):
+                    if taken >= KEYWORD_PER_SOURCE or len(hits) >= KEYWORD_MAX_HITS:
+                        break  # limite por página: uma página grande não esgota o espaço das outras
+                    taken += 1
+                    hits.append({"in": name, "text": _redact(txt[max(0, m.start() - 600): m.end() + 400])})
             if hits:
                 snippets["kw:" + word] = hits
         for tag in _FORM_RX.findall(root)[:6]:
@@ -391,6 +398,8 @@ class MudfishManager:
         self.owned = False  # ligado por perfil de jogo (não persiste ao reiniciar)
         self.rtt = {"static": "unknown", "vnodes": "unknown", "n_static": 0, "n_vnodes": 0}
         self._rtt_at = 0.0
+        self.update = {"latest": "", "checked": False}
+        self._update_at = 0.0
 
     # ---------- arquivos ----------
     @property
@@ -502,6 +511,7 @@ class MudfishManager:
             "full_vpn_api": self.api.last.get("fullvpn") is True,
             "core_ready": self.api.last.get("core_ready"),
             "rtt": dict(self.rtt),
+            "update": self._update_view(version),
             "user": cfg["user"],
             "has_password": bool(cfg["password"]),
             "step": "install" if not version else ("login" if not logged else "activate"),
@@ -633,14 +643,18 @@ class MudfishManager:
         return True, ""
 
     def _fetch_latest(self):
+        return self._fetch_latest_strict() or FALLBACK_VERSION
+
+    def _fetch_latest_strict(self):
+        """Última versão publicada em mudfish.net/releases, ou '' se a consulta falhar (sem cair na versão fixa)."""
         try:
             req = urllib.request.Request(RELEASES_URL, headers={"User-Agent": "NoLag"})
             with urllib.request.urlopen(req, timeout=15) as r:  # noqa: S310 - URL fixa
                 html = r.read(2_000_000).decode("utf-8", "ignore")
             versions = parse_release_versions(html)
-            return versions[-1] if versions else FALLBACK_VERSION
+            return versions[-1] if versions else ""
         except Exception:
-            return FALLBACK_VERSION
+            return ""
 
     def _check_installer(self, tmp):
         """Confere o arquivo baixado; devolve o motivo se não for o instalador, senão ''."""
@@ -714,7 +728,39 @@ class MudfishManager:
         exe = os.path.join(self.store, version, "bin", "mudrun-headless")
         return exe if os.path.isfile(exe) else ""
 
-    async def install(self):
+    def _update_view(self, installed):
+        latest = self.update.get("latest", "")
+        newer = bool(latest and installed and _VERSION.match(latest) and _ver_key(latest) > _ver_key(installed))
+        return {"latest": latest, "installed": installed, "available": newer, "checked": bool(self.update.get("checked")),
+                "url": (RELEASES_URL + INSTALLER % latest) if latest else ""}
+
+    async def check_update(self, force=False):
+        """Consulta a versão mais recente (cache de 6 h). Só informa: nunca baixa nem instala."""
+        version, _exe = self.installed()
+        if version and (force or not self.update["checked"] or time.monotonic() - self._update_at >= UPDATE_TTL):
+            latest = await asyncio.to_thread(self._fetch_latest_strict)
+            if not latest:
+                return {"ok": False, "error": "update_check_failed", "update": self._update_view(version)}
+            self.update, self._update_at = {"latest": latest, "checked": True}, time.monotonic()
+        return {"ok": True, "error": "", "update": self._update_view(version)}
+
+    async def update_core(self):
+        """Atualização em um clique: confere a versão, baixa, troca o binário e religa o serviço se estava ligado."""
+        version, _exe = self.installed()
+        if not version:
+            return {"ok": False, "error": "not_installed", "detail": ""}
+        chk = await self.check_update(force=True)
+        if not chk["ok"]:
+            return chk
+        if not chk["update"]["available"]:
+            return {"ok": True, "error": "", "updated": False, "version": version}
+        res = await self.install(version=chk["update"]["latest"])
+        if res.get("ok"):
+            res["updated"] = True
+        return res
+
+    async def install(self, version=None):
+        wanted = version  # versão pedida (atualização); a variável `version` abaixo passa a guardar a instalada
         if self.lock.locked():
             return {"ok": False, "error": "busy", "detail": ""}
         async with self.lock:
@@ -739,9 +785,10 @@ class MudfishManager:
                 ok, why = await self._ensure_mount()
                 if not ok:
                     return self._fail("mount_failed", why)
-                latest = await asyncio.to_thread(self._fetch_latest)
+                latest = wanted or await asyncio.to_thread(self._fetch_latest)
                 tried, reasons, version, dest = [], [], "", ""
-                for cand in (latest, FALLBACK_VERSION):
+                # Atualização com versão definida: nunca cai na versão fixa (evita rebaixar o Mudfish instalado).
+                for cand in ((latest,) if wanted else (latest, FALLBACK_VERSION)):
                     if cand in tried:
                         continue
                     tried.append(cand)
@@ -978,13 +1025,17 @@ class MudfishManager:
         running = self._alive()
         base_dev = await core_state.default_dev()
         tun = await core_state.tunnel_dev() if running else ""
+        # Núcleo ainda subindo (core_ready/client_ready falsos no status): o túnel ainda não carrega tráfego e medi-lo
+        # daria um falso 100% de perda. Só mede quando o cliente informa que está pronto (ou não informa nada).
+        tunnel_waiting = bool(running and tun and (self.api.last.get("core_ready") is False
+                                                   or self.api.last.get("client_ready") is False))
         jobs = [core_state.ping_stats(target, LIVE_COUNT, base_dev or None), core_state.route_get(target)]
-        if tun:
+        if tun and not tunnel_waiting:
             jobs.append(core_state.ping_stats(target, LIVE_COUNT, tun))
         res = await asyncio.gather(*jobs, return_exceptions=True)
         ok = lambda x: None if isinstance(x, Exception) else x  # noqa: E731
         base, route = ok(res[0]), ok(res[1]) or {}
-        tunnel = ok(res[2]) if tun else None
+        tunnel = ok(res[2]) if (tun and not tunnel_waiting) else None
         # Túnel sem resposta alguma com a linha base ok: no modo por jogo o alvo de ping pode não estar no item do
         # Mudfish. Não mostra 100% de perda como se fosse a qualidade do túnel; avisa para usar o IP do servidor.
         tunnel_blocked = bool(tunnel and base and isinstance(tunnel.get("loss"), (int, float)) and tunnel["loss"] >= 100
@@ -994,7 +1045,7 @@ class MudfishManager:
         full_vpn = bool(running and (_TUNNEL_DEV.match(route.get("dev") or "") or _TUNNEL_DEV.match(base_dev or "")))
         return {"ok": True, "running": running, "base": base, "tunnel": tunnel, "base_iface": base_dev,
                 "tunnel_iface": tun, "full_vpn": full_vpn, "only_game": bool(running and not full_vpn),
-                "tunnel_blocked": tunnel_blocked, "rtt": dict(self.rtt)}
+                "tunnel_blocked": tunnel_blocked, "tunnel_waiting": tunnel_waiting, "rtt": dict(self.rtt)}
 
     async def test_ping(self):
         """Com o Mudfish desligado guarda o 'antes'; ligado, guarda o 'depois'."""

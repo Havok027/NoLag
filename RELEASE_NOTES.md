@@ -1,9 +1,15 @@
-## v0.12.0
+## v0.12.2 (inclui a v0.12.1)
 
-- Sessão do Mudfish lida direto do status da API local (`isSignedIn`): a detecção deixa de depender da página de itens. O JWT e o token do painel nunca são guardados, registrados nem repetidos, e o diagnóstico os remove do `mudfish-api.json`.
-- Full VPN travado em desligado: se o painel o ativar, o serviço é encerrado e a tela explica o motivo, para proteger os créditos. O tráfego fica restrito aos itens e jogos do painel.
-- Latência dos nós: o plugin acompanha a medição de RTT dos nós estáticos e virtuais do cliente (medindo, medida ou indisponível) e mostra o estado na aba Mudfish.
-- Medição "Com Mudfish" corrigida: a interface `msk` do Mudfish passa a ser reconhecida como túnel. Se o túnel não responder ao alvo de ping (no modo por jogo só o IP do item passa pelo Mudfish), o gráfico deixa de exibir 100% de perda como qualidade do túnel e orienta a usar o IP do servidor do jogo.
-- Diagnóstico v3 em Conf: além do status, captura em leitura as páginas de itens e o contexto de `iid`, `fullvpn`, `autoselect` e `conf_onoff` para mapear as escritas que faltam.
-- Wi-Fi: botão de restauração agora se chama "Restaurar padrão" (EN: "Restore default", ES: "Restaurar predeterminado"). "Corrigir ao acordar" continua ligado ao restaurar, e o Painel volta ao estado padrão porque essa opção deixou de contar como otimização ativa.
+### v0.12.2: núcleo do Mudfish e medição do túnel
+- Versão do núcleo dinâmica: o plugin consulta a página oficial de versões do Mudfish (no máximo a cada 6 horas) e compara com a instalada. A versão fixa 5.11.0 passa a ser só o último recurso de uma instalação nova.
+- Aviso de atualização no Painel (abaixo do botão do Mudfish) e na aba Mudfish, com a versão nova e a instalada.
+- Atualização em um clique na aba Mudfish: baixa exatamente a versão anunciada, troca o binário e religa o serviço se ele estava ligado. Atualizar nunca volta para uma versão anterior.
+- Falso 100% de perda corrigido na origem: o túnel só é medido depois que o cliente informa que o núcleo e o cliente estão prontos (`core_ready` e `client_ready`). Enquanto isso, a tela mostra "Mudfish iniciando".
+- Diagnóstico v4 em Conf: captura de onde vêm os itens (`iid`), do interruptor de Full VPN e de qualquer informação de versão da interface, com limite por página para que uma página grande não esconda as outras.
+
+### v0.12.1: interface
+- Ícones nas abas do topo: velocímetro (Painel), sinal sem fio (Wi-Fi), globo (Mudfish) e engrenagem (Conf).
+- Mini-cards de Com e Sem Mudfish alinhados: colunas iguais, valores à direita e sem estouro de texto.
+- Botão "Abrir painel do Mudfish" removido do Painel; continua na aba Mudfish.
+- Perfis de jogos sem sobreposição: o nome do jogo fica em um título próprio, com os botões abaixo dos controles.
 - Textos novos nos três idiomas e testes novos.
