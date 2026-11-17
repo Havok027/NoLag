@@ -1,5 +1,16 @@
+import { FaCog, FaGlobeAmericas, FaTachometerAlt, FaWifi } from "react-icons/fa";
+import type { ReactNode } from "react";
+
 export type TabKey = "dash" | "wifi" | "mudfish" | "conf";
 export const TAB_KEYS: TabKey[] = ["dash", "wifi", "mudfish", "conf"];
+
+// Painel: velocímetro · Wi-Fi: sinal sem fio · Mudfish: globo (rede otimizada) · Conf: engrenagem.
+const TAB_ICONS: Record<TabKey, ReactNode> = {
+  dash: <FaTachometerAlt size={16} />,
+  wifi: <FaWifi size={16} />,
+  mudfish: <FaGlobeAmericas size={16} />,
+  conf: <FaCog size={16} />,
+};
 
 interface Props {
   labels: Record<TabKey, string>;
@@ -25,8 +36,13 @@ export function TabNav({ labels, hint, active, onSelect }: Props) {
               style={{
                 flex: 1,
                 minWidth: 0,
-                padding: "9px 2px",
-                fontSize: 12,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 3,
+                padding: "8px 2px",
+                fontSize: 11,
                 textAlign: "center",
                 borderRadius: 16,
                 cursor: "pointer",
@@ -36,7 +52,8 @@ export function TabNav({ labels, hint, active, onSelect }: Props) {
                 background: on ? "#4b3fe0" : "rgba(255,255,255,0.08)",
               }}
             >
-              {labels[key]}
+              <span style={{ display: "flex" }}>{TAB_ICONS[key]}</span>
+              <span style={{ maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{labels[key]}</span>
             </div>
           );
         })}

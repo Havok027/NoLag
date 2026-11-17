@@ -92,11 +92,7 @@ export function ConfTab(p: Props) {
             <Card rows={[[t.gameCurrent, p.current.name || p.current.appid]]} />
             {!p.games[p.current.appid] && (
               <PanelSectionRow>
-                <ButtonItem
-                  layout="inline"
-                  label={p.current.name || p.current.appid}
-                  onClick={() => p.onGameModule(p.current.appid, "wifi", false)}
-                >
+                <ButtonItem layout="below" onClick={() => p.onGameModule(p.current.appid, "wifi", false)}>
                   {t.gameAddCurrent}
                 </ButtonItem>
               </PanelSectionRow>
@@ -105,10 +101,11 @@ export function ConfTab(p: Props) {
         )}
         {Object.keys(p.games).length === 0 && <Card rows={[[t.gamesNone, DASH]]} />}
         {Object.entries(p.games).map(([appid, g]) => (
-          <div key={appid}>
+          <Box key={appid} style={{ marginBottom: 10, padding: "8px 8px" }}>
+            <div style={{ fontWeight: 700, fontSize: 13, padding: "2px 4px 6px", overflowWrap: "anywhere", lineHeight: "17px" }}>{g.name}</div>
             <PanelSectionRow>
               <ToggleField
-                label={`${g.name} · ${t.gameWifi}`}
+                label={t.gameWifi}
                 description={t.gameModulesDesc}
                 checked={g.wifi === true}
                 onChange={(v) => p.onGameModule(appid, "wifi", v)}
@@ -116,18 +113,18 @@ export function ConfTab(p: Props) {
             </PanelSectionRow>
             <PanelSectionRow>
               <ToggleField
-                label={`${g.name} · ${t.gameMudfish}`}
+                label={t.gameMudfish}
                 description={t.gameModulesDesc}
                 checked={g.mudfish === true}
                 onChange={(v) => p.onGameModule(appid, "mudfish", v)}
               />
             </PanelSectionRow>
             <PanelSectionRow>
-              <ButtonItem layout="inline" label={g.name} onClick={() => p.onDropGame(appid)}>
+              <ButtonItem layout="below" onClick={() => p.onDropGame(appid)}>
                 {t.gameDelete}
               </ButtonItem>
             </PanelSectionRow>
-          </div>
+          </Box>
         ))}
       </Collapsible>
       <Collapsible

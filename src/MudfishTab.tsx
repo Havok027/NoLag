@@ -19,7 +19,9 @@ import {
   mudfishGetLogs,
   mudfishGetRoute,
   mudfishGetStatus,
+  mudfishCheckUpdate,
   mudfishInstall,
+  mudfishUpdate,
   mudfishSetEnabled,
   mudfishSetPingTarget,
   mudfishSetOption,
@@ -66,6 +68,8 @@ export function mudfishError(t: Texts, code: string): string {
       return t.mfErrPortClosed;
     case "fullvpn_blocked":
       return t.mfErrFullVpn;
+    case "update_check_failed":
+      return t.mfErrUpdateCheck;
     default:
       return t.mfErrGeneric;
   }
@@ -126,6 +130,12 @@ export function useMudfish(t: Texts) {
         setLoadError(`mudfish_available: ${String(e).slice(0, 160)}`);
       });
     refresh();
+    // Confere a versão nova do núcleo (o backend guarda o resultado por 6 h; só informa, não instala).
+    mudfishCheckUpdate()
+      .then(() => refresh())
+      .catch(() => {
+        /* sem rede ou sem módulo: o aviso simplesmente não aparece */
+      });
     const id = setInterval(refresh, POLL_MS);
     return () => {
       alive.current = false;
@@ -340,7 +350,7 @@ export function LiveChart({ t, helpOn }: { t: Texts; helpOn: boolean }) {
           </div>
         </div>
       </Box>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: 8, marginBottom: 10, alignItems: "stretch" }}>
         <MiniCard
           icon={<FaWaveSquare size={13} />}
           title={`${t.connJitter} (ms)`}
@@ -363,6 +373,7 @@ export function LiveChart({ t, helpOn }: { t: Texts; helpOn: boolean }) {
         />
       </div>
       {live?.running && !live.tunnel_iface && !live.full_vpn && <div style={SMALL}>{t.chartNoTunnel}</div>}
+      {live?.running && live.tunnel_waiting && <div style={SMALL}>{t.chartTunnelWaiting}</div>}
       {live?.running && live.tunnel_blocked && <div style={SMALL}>{t.chartTunnelBlocked}</div>}
       <Help show={helpOn} text={t.hChart} />
     </>
@@ -518,6 +529,19 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
     <>
       <MfWarning t={t} helpOn={helpOn} />
       <Card badge={badge.text} tone={badge.tone} rows={rows} />
+      {status?.update?.available && (
+        <>
+          <div style={WARN_BOX}>
+            <div style={{ fontWeight: 700, marginBottom: 6 }}>{t.mfUpdateTitle}</div>
+            <div>{t.mfUpdateAvail.replace("{v}", status.update.latest).replace("{c}", status.update.installed)}</div>
+          </div>
+          <PanelSectionRow>
+            <ButtonItem layout="below" disabled={busy || working} onClick={() => run(() => mudfishUpdate(), t.mfUpdateOk)}>
+              {t.mfUpdateBtn.replace("{v}", status.update.latest)}
+            </ButtonItem>
+          </PanelSectionRow>
+        </>
+      )}
       {status?.phase === "installing" && <div style={SMALL}>{t.mfInstalling}</div>}
       {status?.phase !== "installing" && note && <div style={SMALL}>{note}</div>}
       <div style={SMALL}>{hint}</div>

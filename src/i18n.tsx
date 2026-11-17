@@ -131,6 +131,12 @@ export interface Texts {
   onlyGameBadge: string;
   chartNoTunnel: string;
   chartTunnelBlocked: string;
+  chartTunnelWaiting: string;
+  mfUpdateTitle: string;
+  mfUpdateAvail: string;
+  mfUpdateBtn: string;
+  mfUpdateOk: string;
+  mfErrUpdateCheck: string;
   mfErrFullVpn: string;
   mfRttRow: string;
   mfRttReady: string;
@@ -374,6 +380,12 @@ export const TEXTS: Record<Lang, Texts> = {
     mfRttReady: "Medida",
     mfRttPending: "Medindo…",
     mfRttError: "Indisponível",
+    chartTunnelWaiting: "Mudfish iniciando: o túnel só é medido quando o núcleo ficar pronto",
+    mfUpdateTitle: "Atualização do Mudfish",
+    mfUpdateAvail: "Nova versão do núcleo disponível: {v} (instalada: {c})",
+    mfUpdateBtn: "Atualizar para {v}",
+    mfUpdateOk: "Mudfish atualizado",
+    mfErrUpdateCheck: "Não foi possível consultar a versão mais recente",
     btnMfOn: "Mudfish ATIVO · toque para desligar",
     btnMfOff: "Ligar Mudfish",
     btnMfSetup: "Mudfish: conclua a instalação na aba Mudfish",
@@ -610,6 +622,12 @@ export const TEXTS: Record<Lang, Texts> = {
     mfRttReady: "Measured",
     mfRttPending: "Measuring…",
     mfRttError: "Unavailable",
+    chartTunnelWaiting: "Mudfish is starting: the tunnel is only measured once the core is ready",
+    mfUpdateTitle: "Mudfish update",
+    mfUpdateAvail: "New core version available: {v} (installed: {c})",
+    mfUpdateBtn: "Update to {v}",
+    mfUpdateOk: "Mudfish updated",
+    mfErrUpdateCheck: "Could not check the latest version",
     btnMfOn: "Mudfish ON · tap to turn off",
     btnMfOff: "Turn on Mudfish",
     btnMfSetup: "Mudfish: finish setup in the Mudfish tab",
@@ -846,6 +864,12 @@ export const TEXTS: Record<Lang, Texts> = {
     mfRttReady: "Medida",
     mfRttPending: "Midiendo…",
     mfRttError: "No disponible",
+    chartTunnelWaiting: "Mudfish iniciando: el túnel solo se mide cuando el núcleo esté listo",
+    mfUpdateTitle: "Actualización de Mudfish",
+    mfUpdateAvail: "Nueva versión del núcleo disponible: {v} (instalada: {c})",
+    mfUpdateBtn: "Actualizar a {v}",
+    mfUpdateOk: "Mudfish actualizado",
+    mfErrUpdateCheck: "No se pudo consultar la versión más reciente",
     btnMfOn: "Mudfish ACTIVO · toca para apagar",
     btnMfOff: "Activar Mudfish",
     btnMfSetup: "Mudfish: termina la instalación en la pestaña Mudfish",

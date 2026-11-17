@@ -75,11 +75,9 @@ test("a rota interna antiga não existe mais no frontend", () => {
   }
 });
 
-test("v0.11.2: Painel tem botão Abrir painel do Mudfish sempre visível, e a aba Mudfish mantém o dela", () => {
+test("v0.12.1: botão Abrir painel do Mudfish existe só na aba Mudfish (sem duplicata no Painel)", () => {
   const dash = fs.readFileSync(path.join(__dirname, "..", "src", "DashControls.tsx"), "utf8");
-  assert.ok(dash.includes("t.mfOpenWeb") && dash.includes("NavigateToExternalWeb") && dash.includes("http://127.0.0.1:8282"));
-  const i = dash.indexOf("label={t.mfOpenWeb}");
-  assert.ok(!/(running|installed|ready|session|login_done)\s*&&/.test(dash.slice(i - 120, i)));
+  assert.ok(!dash.includes("t.mfOpenWeb") && !dash.includes("NavigateToExternalWeb"));
   assert.ok(fs.readFileSync(path.join(__dirname, "..", "src", "MudfishTab.tsx"), "utf8").includes("label={t.mfOpenWeb}"));
   const i18n = fs.readFileSync(path.join(__dirname, "..", "src", "i18n.tsx"), "utf8");
   for (const w of ["Abrir painel do Mudfish abre", "Open Mudfish panel button", "Abrir panel de Mudfish abre"]) assert.ok(i18n.includes(w), w);
@@ -104,7 +102,7 @@ test("v0.11.3: Painel tem anel de ping, gráfico com duas curvas e mini-cartões
   const mud = fs.readFileSync(path.join(__dirname, "..", "src", "MudfishTab.tsx"), "utf8");
   const comp = fs.readFileSync(path.join(__dirname, "..", "src", "components.tsx"), "utf8");
   assert.ok(mud.includes("<Ring") && (mud.match(/<MiniCard/g) || []).length === 2 && mud.includes("t.tmLoss"));
-  assert.ok(mud.includes('gridTemplateColumns: "1fr 1fr"') && mud.includes("gap: 8"));
+  assert.ok(mud.includes('gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)"') && mud.includes("gap: 8"));
   assert.ok(mud.includes("#3ddc84") && mud.includes("dashed") && comp.includes("strokeDasharray"));
   assert.ok(mud.includes("t.chartWith") && mud.includes("t.chartWithout"));
 });

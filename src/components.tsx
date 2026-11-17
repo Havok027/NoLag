@@ -397,19 +397,21 @@ export function MiniCard(props: {
   withOn: boolean;
 }) {
   return (
-    <div style={{ ...BOX, marginBottom: 0, padding: "10px 10px" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, opacity: 0.85 }}>
-        <span style={{ display: "flex", color: ACCENT }}>{props.icon}</span>
-        <span>{props.title}</span>
+    <div style={{ ...BOX, marginBottom: 0, padding: "10px 10px", minWidth: 0, boxSizing: "border-box", height: "100%", display: "flex", flexDirection: "column" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, opacity: 0.85, minWidth: 0, height: 16 }}>
+        <span style={{ display: "flex", flexShrink: 0, width: 14, justifyContent: "center", color: ACCENT }}>{props.icon}</span>
+        <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{props.title}</span>
       </div>
-      <div style={{ fontSize: 22, fontWeight: 800, margin: "4px 0 6px" }}>{props.value}</div>
-      <div style={{ fontSize: 11, display: "flex", justifyContent: "space-between", gap: 6, color: props.withOn ? "#3ddc84" : "inherit", opacity: props.withOn ? 1 : 0.6 }}>
-        <span>{props.withLabel}</span>
-        <span style={{ fontWeight: 700 }}>{props.withValue}</span>
-      </div>
-      <div style={{ fontSize: 11, display: "flex", justifyContent: "space-between", gap: 6, color: "#9aa4b2" }}>
-        <span>{props.withoutLabel}</span>
-        <span style={{ fontWeight: 700 }}>{props.withoutValue}</span>
+      <div style={{ fontSize: 22, fontWeight: 800, lineHeight: "28px", margin: "6px 0 8px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{props.value}</div>
+      <div style={{ marginTop: "auto", display: "grid", rowGap: 3 }}>
+        <div style={{ fontSize: 11, display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", columnGap: 8, color: props.withOn ? "#3ddc84" : "inherit", opacity: props.withOn ? 1 : 0.6 }}>
+          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{props.withLabel}</span>
+          <span style={{ fontWeight: 700, textAlign: "right", whiteSpace: "nowrap" }}>{props.withValue}</span>
+        </div>
+        <div style={{ fontSize: 11, display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", columnGap: 8, color: "#9aa4b2" }}>
+          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{props.withoutLabel}</span>
+          <span style={{ fontWeight: 700, textAlign: "right", whiteSpace: "nowrap" }}>{props.withoutValue}</span>
+        </div>
       </div>
     </div>
   );
