@@ -447,6 +447,9 @@ class Plugin:
     async def mudfish_update(self):
         return await self._mudfish_call("update_core")
 
+    async def mudfish_uninstall(self):
+        return await self._mudfish_call("uninstall")
+
     async def mudfish_set_enabled(self, enabled):
         return await self._mudfish_call("set_enabled", enabled)
 

@@ -40,6 +40,8 @@ O Mudfish cobra por tráfego. Por isso o NoLag **sempre começa com o Mudfish de
 
 - A instalação segue o guia oficial do SteamOS (instalador com `sh`, serviço `mudrun-headless` sem flags) numa pasta persistente ligada em `/opt/mudfish`, e mostra o motivo exato quando algo falha.
 - O plugin só **lê** a API local (status, sessão, telemetria) e usa as rotas oficiais de iniciar e parar. Ele detecta sozinho se você já entrou no painel.
+- **Versão dinâmica:** a versão instalada vem sempre da página oficial de versões (se ela não responder, a instalação nova usa o fallback 6.6.4). A aba Mudfish mostra a versão instalada e a última detectada.
+- **Desinstalar Mudfish:** botão na aba Mudfish, com confirmação. Encerra os processos do Mudfish, apaga `/opt/mudfish`, a pasta persistente, logs e restos, e zera a conta salva no plugin. Sua conta na nuvem do Mudfish não é afetada.
 - **Atualização do núcleo:** o NoLag consulta a página oficial de versões (no máximo a cada 6 horas) e avisa quando há núcleo novo. O botão **Atualizar** baixa, troca o binário e religa o serviço se estava ligado. Nada é instalado sem o seu toque.
 
 ## Wi-Fi (módulo independente)

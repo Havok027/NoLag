@@ -59,6 +59,7 @@ DETAIL_MAX = 400
 LOG_MAX = 200_000
 _VERSION = re.compile(r"^\d+\.\d+\.\d+$")
 _RELEASE_RX = re.compile(r"mudfish-(\d+\.\d+\.\d+)-linux-x86_64\.sh")
+PROC_NAMES = ("mudrun", "mudrun-headless", "mudflow", "mudfish")  # processos que a desinstalação encerra
 OPTION_KEYS = ("auto_selection", "multipath", "auto_on_game", "keep_on")
 _TUNNEL_DEV = core_state.TUNNEL_DEV
 # Caminhos de LEITURA do painel (mapeados no mudfish-api.json). Os que alteram estado ficam de fora de propósito.
@@ -162,6 +163,13 @@ def parse_release_versions(html):
     return sorted(found, key=_ver_key)
 
 
+def installer_url(version):
+    """URL direta do instalador de uma versão (a versão vem da página de releases ou do fallback, nunca fixa no código)."""
+    if not isinstance(version, str) or not _VERSION.match(version):
+        raise ValueError("versão inválida: %r" % (version,))
+    return RELEASES_URL + INSTALLER % version
+
+
 def mounted(mount_point, text=None):
     if text is None:
         try:
@@ -187,6 +195,27 @@ def find_daemon_pids(proc="/proc"):
         except OSError:
             continue
         if argv and os.path.basename(argv[0].decode(errors="ignore")) == "mudrun-headless":
+            pids.append(int(entry))
+    return pids
+
+
+def find_mudfish_pids(proc="/proc", names=PROC_NAMES, own=None):
+    """PIDs de qualquer processo do Mudfish (mudrun, mudrun-headless, mudflow, mudfish), exceto o do próprio plugin."""
+    own = os.getpid() if own is None else own
+    pids = []
+    try:
+        entries = os.listdir(proc)
+    except OSError:
+        return pids
+    for entry in entries:
+        if not entry.isdigit() or int(entry) == own:
+            continue
+        try:
+            with open(os.path.join(proc, entry, "cmdline"), "rb") as f:
+                argv = f.read(4096).split(b"\0")
+        except OSError:
+            continue
+        if argv and os.path.basename(argv[0].decode(errors="ignore")) in names:
             pids.append(int(entry))
     return pids
 
@@ -803,7 +832,7 @@ class MudfishManager:
 
     def _download(self, version, dest):
         """Baixa com urllib. Levanta ValueError com o motivo exato se falhar."""
-        url = RELEASES_URL + INSTALLER % version
+        url = installer_url(version)
         req = urllib.request.Request(url, headers={"User-Agent": "NoLag"})
         tmp = dest + ".part"
         try:
@@ -829,7 +858,7 @@ class MudfishManager:
         """Plano B: curl do sistema (certificados do SteamOS). Devolve o motivo ou ''."""
         if not shutil.which("curl"):
             return "curl não encontrado"
-        url = RELEASES_URL + INSTALLER % version
+        url = installer_url(version)
         tmp = dest + ".part"
         rc, out = await self.run(["curl", "-fsSL", "--retry", "2", "--connect-timeout", "15", "-o", tmp, url], 180)
         if rc != 0:
@@ -864,7 +893,7 @@ class MudfishManager:
         latest = self.update.get("latest", "")
         newer = bool(latest and installed and _VERSION.match(latest) and _ver_key(latest) > _ver_key(installed))
         return {"latest": latest, "installed": installed, "available": newer, "checked": bool(self.update.get("checked")),
-                "url": (RELEASES_URL + INSTALLER % latest) if latest else ""}
+                "url": installer_url(latest) if latest and _VERSION.match(latest) else ""}
 
     async def check_update(self, force=False):
         """Consulta a versão mais recente (cache de 6 h). Só informa: nunca baixa nem instala."""
@@ -1341,6 +1370,78 @@ class MudfishManager:
         finally:
             core_state.bus.unregister("mudfish")
             self.phase = "off"
+
+    async def _kill_all_mudfish(self):
+        """Encerra o serviço do plugin e qualquer outro processo do Mudfish (mudrun, mudflow, mudfish)."""
+        await self._kill()
+        for sig, wait in ((signal.SIGTERM, 4), (signal.SIGKILL, 2)):
+            pids = set(find_mudfish_pids())
+            if not pids:
+                return
+            for pid in pids:
+                try:
+                    os.kill(pid, sig)
+                except (ProcessLookupError, PermissionError, OSError):
+                    pass
+            end = time.monotonic() + wait
+            while time.monotonic() < end and find_mudfish_pids():
+                await asyncio.sleep(0.3)
+
+    async def uninstall(self):
+        """Remove o Mudfish: encerra os processos, desmonta e apaga /opt/mudfish e a pasta persistente, limpa logs e restos.
+        Mantém as preferências do plugin (só zera conta, login e 'manter ligado')."""
+        if self.lock.locked():
+            return {"ok": False, "error": "busy", "detail": ""}
+        async with self.lock:
+            self._cancel_connect()
+            self._set("stopping")
+            removed = []
+            try:
+                if await asyncio.to_thread(port_open):
+                    await asyncio.to_thread(self.api.core_stop)  # melhor esforço: encerra o núcleo antes de matar o processo
+                await self._kill_all_mudfish()
+                if mounted(self.mount_point):
+                    rc, _out = await self.run(["umount", self.mount_point], 15)
+                    if rc != 0 or mounted(self.mount_point):
+                        await self.run(["umount", "-l", self.mount_point], 15)
+                if os.path.isdir(self.store):
+                    shutil.rmtree(self.store, ignore_errors=True)
+                    removed.append(self.store)
+                if os.path.islink(self.mount_point):
+                    os.unlink(self.mount_point)
+                    removed.append(self.mount_point)
+                elif os.path.isdir(self.mount_point) and not mounted(self.mount_point):
+                    shutil.rmtree(self.mount_point, ignore_errors=True)
+                    if not os.path.exists(self.mount_point):
+                        removed.append(self.mount_point)
+                shutil.rmtree(os.path.join(self.runtime_dir, "tmp"), ignore_errors=True)
+                leftovers = [self.log_path, self.install_log_path, os.path.join(self.runtime_dir, "mudfish-api.json")]
+                try:
+                    leftovers += [os.path.join(self.runtime_dir, n) for n in os.listdir(self.runtime_dir)
+                                  if n.startswith("mudfish-") and n.endswith((".sh", ".part"))]
+                except OSError:
+                    pass
+                for path in leftovers:
+                    if os.path.exists(path):
+                        self._rm(path)
+                        removed.append(path)
+                cfg = self.load()
+                cfg.update({"login_done": False, "keep_on": False, "user": "", "password": ""})
+                self.save(cfg)
+                left = [pth for pth in (self.store,) if os.path.exists(pth)]
+                if left or find_mudfish_pids():
+                    return self._fail("uninstall_failed", "não foi possível remover: %s" % (", ".join(left) or "processo ainda ativo"))
+            except Exception as e:
+                decky.logger.error(f"NoLag Mudfish: desinstalação falhou: {e}")
+                return self._fail("uninstall_failed", _err(e))
+            self.rtt, self._rtt_at = {"static": "unknown", "vnodes": "unknown", "n_static": 0, "n_vnodes": 0}, 0.0
+            self.api.last = {}
+            self.update, self._update_at = {"latest": "", "checked": False}, 0.0
+            self.connect_state, self.connect_detail, self.option_state = "", "", ""
+            self._check_cache = (0.0, "unknown", False)
+            self.owned = False
+            self._set("off")
+        return {"ok": True, "error": "", "detail": "", "removed": removed}
 
     async def _uninstall(self):
         await self._unload()
