@@ -17,7 +17,8 @@ _ROUTE = {"dev": re.compile(r"\bdev (\S+)"), "src": re.compile(r"\bsrc (\S+)"), 
 
 DEFAULT_TARGET = "1.1.1.1"
 _IFACE = re.compile(r"^[A-Za-z0-9_.-]{1,15}$")
-TUNNEL_DEV = re.compile(r"^(tun|tap|ppp|mudfish|mud)", re.I)
+# msk: interface do Mudfish no Linux (o painel usa "msk" nas estatísticas de tráfego)
+TUNNEL_DEV = re.compile(r"^(tun|tap|ppp|mudfish|mud|msk)", re.I)
 
 
 def clean_target(value, default=DEFAULT_TARGET):

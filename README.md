@@ -25,7 +25,7 @@ As otimizações de Wi-Fi **nunca** são desfeitas ao fechar um jogo, ao ligar o
 
 ## API local do Mudfish
 
-O plugin só lê (GET) os caminhos de status do painel e usa a detecção de sessão. Os comandos que alteram estado (Auto Selection e itens equipados) ainda não são enviados: Conf > Diagnóstico captura, só em leitura, o contexto dessas chamadas em `mudfish-api.json` para conferi-las antes de ligá-las. Até lá, Auto Selection e Multi-Path ficam salvos e a tela avisa quando é preciso ativá-los no painel. O login automático com a conta opcional também depende dessa captura.
+O plugin lê (GET) o status do painel: a sessão vem do próprio cliente Mudfish (`isSignedIn`, sem JWT), o **Full VPN é travado em desligado** (se o painel o ligar, o serviço é encerrado para proteger créditos) e a medição de latência dos nós (`/do/rtt/*`) é acompanhada até ficar pronta. A interface `msk` do Mudfish é reconhecida na medição. Os comandos que alteram estado (Auto Selection e itens) ainda não são enviados: Conf > Diagnóstico captura, só em leitura, o contexto dessas chamadas em `mudfish-api.json` para conferi-las antes de ligá-las. Até lá, Auto Selection e Multi-Path ficam salvos e a tela avisa quando é preciso ativá-los no painel. O login automático com a conta opcional também depende dessa captura.
 
 ## Mudfish: proteção de créditos
 
@@ -42,7 +42,7 @@ Aba **Wi-Fi**: otimizações da rede local que funcionam sozinhas, sem o Mudfish
 
 - Desligar a economia de energia, corrigir ao acordar, buffers de rede maiores, fila CAKE, IPv6, trava no ponto de acesso, banda preferida e DNS.
 - Modo streaming (liga os ajustes só durante um stream) e correção de streams travados.
-- **Aplicar otimizações seguras** liga tudo de uma vez; **Restaurar** devolve o padrão do sistema.
+- **Aplicar otimizações seguras** liga tudo de uma vez; **Restaurar padrão** desliga os ajustes de rede e mantém **Corrigir ao acordar** ligado.
 - Os ajustes sobrevivem a suspensão, reconexão e atualização do sistema (SteamOS e Bazzite). Ao desinstalar o plugin, tudo é desfeito.
 - Não envia nada para a internet. Se o WiFi Optimizer original estiver instalado, desligue um dos dois.
 - Módulo derivado do WiFi Optimizer 0.25.0 (Arcada Labs, BSD 3-Clause): veja `THIRD_PARTY_NOTICES.md`.

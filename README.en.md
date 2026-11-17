@@ -25,7 +25,7 @@ Wi-Fi tweaks are **never** undone when a game closes, when the console boots or 
 
 ## Mudfish local API
 
-The plugin only reads (GET) the panel's status paths and uses session detection. Commands that change state (Auto Selection and equipped items) are not sent yet: Conf > Diagnostics captures, read-only, the context of those calls into `mudfish-api.json` so they can be verified before being wired. Until then, Auto Selection and Multi-Path are saved and the screen tells you when you must turn them on in the panel. Auto-login with the optional account also depends on that capture.
+The plugin reads (GET) the panel status: the session comes from the Mudfish client itself (`isSignedIn`, no JWT), **Full VPN is locked off** (if the panel turns it on, the service is stopped to protect credits) and the node latency measurement (`/do/rtt/*`) is followed until it is ready. Mudfish's `msk` interface is recognized when measuring. Commands that change state (Auto Selection and items) are not sent yet: Conf > Diagnostics captures, read-only, the context of those calls into `mudfish-api.json` so they can be verified before being wired. Until then, Auto Selection and Multi-Path are saved and the screen tells you when you must turn them on in the panel. Auto-login with the optional account also depends on that capture.
 
 ## Mudfish: credit protection
 
@@ -42,7 +42,7 @@ Mudfish bills by traffic, so NoLag **always starts with Mudfish off**, at boot a
 
 - Turn off power saving, fix after wake, larger network buffers, CAKE queue, IPv6, access point lock, preferred band and DNS.
 - Streaming mode (applies the tweaks only during a stream) and fix for stalled streams.
-- **Apply safe optimizations** turns everything on at once; **Restore** brings back the system defaults.
+- **Apply safe optimizations** turns everything on at once; **Restore default** turns the network tweaks off and keeps **Fix on wake** on.
 - Tweaks survive suspend, reconnect and system updates (SteamOS and Bazzite). Uninstalling the plugin undoes everything.
 - Sends nothing to the internet. If the original WiFi Optimizer is installed, turn one of the two off.
 - Module derived from WiFi Optimizer 0.25.0 (Arcada Labs, BSD 3-Clause): see `THIRD_PARTY_NOTICES.md`.

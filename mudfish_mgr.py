@@ -13,9 +13,15 @@ documentados pelo Mudfish, então a aplicação só roda depois de mapeados (pro
 
 Isolamento: o Mudfish nunca mexe no Wi-Fi. Só o daemon do Mudfish começa desligado e é encerrado ao fechar o jogo.
 
-API local (127.0.0.1:8282): o mudfish-api.json mapeado traz só os NOMES dos caminhos, sem método, parâmetros nem
-corpos. Por isso o plugin só LÊ (GET) os caminhos de status e nunca chama os que alteram estado
-(/do/node/autoselect, /item/conf_onoff) até o formato deles ser capturado pelo diagnóstico.
+API local (127.0.0.1:8282), mapeada pelo mudfish-api.json da v0.11.3 (Mudfish 5.11.0):
+  - /do/mudrun/status devolve JSON com isSignedIn, autologin, fullvpn_enabled, core_ready e client_ready. A API local
+    não pede JWT: a sessão é a do próprio cliente Mudfish (autologin), então o plugin só lê isSignedIn e NUNCA guarda,
+    registra nem repete o jwt/token (o diagnóstico os remove);
+  - /do/rtt/staticnodes e /do/rtt/vnodes respondem status 300 enquanto o cliente mede o RTT dos nós e 200 (com rtts)
+    quando termina: o plugin repete a leitura até ficar pronto e mostra o estado na tela;
+  - Full VPN (fullvpn_enabled) é travado em false: se o painel o ligar, o serviço é encerrado para proteger créditos;
+  - os caminhos que alteram estado (/do/node/autoselect, /item/conf_onoff) continuam NÃO chamados: o iid dos itens e o
+    endpoint do interruptor de Full VPN ainda não foram capturados (o diagnóstico v3 captura o que falta).
 
 Proteção de créditos (o Mudfish cobra por tráfego): o serviço nasce sempre desligado; só liga sozinho se o usuário
 ativar "keep_on" (ao reiniciar) ou "auto_on_game" (ao abrir jogo) na aba Conf, e é encerrado ao fechar qualquer
@@ -60,6 +66,11 @@ SESSION_PATH = "/item/list.html"
 LOGOUT_PATH = "/logout.html"
 SESSION_TTL = 6.0
 SESSION_WATCH = 6.0
+RTT_PENDING_EVERY = 6.0   # enquanto o cliente ainda mede (status 300)
+RTT_READY_EVERY = 120.0   # depois de pronto, só revalida de vez em quando
+SECRET_KEYS = ("jwt", "token")
+KEYWORD_PROBES = ("fullvpn", "conf_onoff", "autoselect", "iid")
+PAGE_PROBES = ("/item/list.html", "/item/manage.html")
 LIVE_COUNT = 3
 MAX_USER = 128
 MAX_PASS = 256
@@ -175,6 +186,31 @@ _ATTR_RX = re.compile(r"""\b(name|type|id)\s*=\s*["']([^"']{0,40})["']""", re.I)
 _LIB_RX = re.compile(r"(jquery|axios|polyfill|promise|\.min\.js)", re.I)
 
 
+def _redact(text):
+    """Remove jwt/token de qualquer corpo antes de guardar em disco (segredos da sessão do painel)."""
+    out = str(text or "")
+    for key in SECRET_KEYS:
+        out = re.sub(r'("%s"\s*:\s*)"[^"]*"' % key, r'\1"***"', out)
+    return re.sub(r"eyJ[A-Za-z0-9_\-]{8,}\.[A-Za-z0-9_\-]{8,}\.[A-Za-z0-9_\-]{8,}", "***", out)
+
+
+def _rtt_state(body):
+    """('ready'|'pending'|'error', quantidade) de uma resposta de /do/rtt/*."""
+    try:
+        obj = json.loads(body.decode("utf-8", "replace") if isinstance(body, (bytes, bytearray)) else str(body))
+    except Exception:
+        return "error", 0
+    if not isinstance(obj, dict):
+        return "error", 0
+    code = obj.get("status")
+    if code == 200:
+        rtts = obj.get("rtts")
+        return "ready", len(rtts) if isinstance(rtts, (list, dict)) else 0
+    if code == 300:
+        return "pending", 0
+    return "error", 0
+
+
 class MudfishApi:
     """Cliente da API local (127.0.0.1:8282). Só GET, só no próprio aparelho.
 
@@ -186,6 +222,7 @@ class MudfishApi:
     def __init__(self, host="127.0.0.1", port=PORT):
         self.base = "http://%s:%d" % (host, port)
         self._opener = urllib.request.build_opener(_NoRedirect)
+        self.last = {}  # último resumo de /do/mudrun/status (sem jwt/token)
 
     def mapped(self):
         return bool(self.ENDPOINTS)
@@ -204,10 +241,15 @@ class MudfishApi:
     def check(self):
         """(sessão, api_ok). Sessão: active | inactive | unknown (heurística, veja abaixo)."""
         try:
-            status, _ctype, _body = self._get("/do/mudrun/status", follow=False)
+            status, _ctype, raw = self._get("/do/mudrun/status", follow=False)
             api_ok = status == 200
         except Exception:
+            self.last = {}
             return "unknown", False
+        info = self._parse_status(raw) if api_ok else {}
+        self.last = info
+        if isinstance(info.get("signed_in"), bool):  # o próprio cliente diz se a sessão está ativa
+            return ("active" if info["signed_in"] else "inactive"), api_ok
         try:
             code, _ctype, body = self._get(SESSION_PATH, follow=False)
         except Exception:
@@ -219,6 +261,32 @@ class MudfishApi:
             # a lista de itens só existe com sessão: se vier um formulário de senha, é a tela de login
             return ("inactive" if ("type=\"password\"" in text or "type='password'" in text) else "active"), api_ok
         return "unknown", api_ok
+
+    @staticmethod
+    def _parse_status(raw):
+        """Resumo seguro de /do/mudrun/status: só os campos usados, nunca jwt/token."""
+        try:
+            obj = json.loads(raw.decode("utf-8", "replace"))
+        except Exception:
+            return {}
+        if not isinstance(obj, dict):
+            return {}
+        flag = lambda k: obj.get(k) if isinstance(obj.get(k), bool) else None  # noqa: E731
+        return {"signed_in": flag("isSignedIn"), "autologin": flag("autologin"), "fullvpn": flag("fullvpn_enabled"),
+                "core_ready": flag("core_ready"), "client_ready": flag("client_ready"),
+                "version": obj.get("version") if isinstance(obj.get("version"), str) else ""}
+
+    def rtt(self):
+        """Estado da medição de RTT dos nós (só leitura): {static, vnodes, n_static, n_vnodes}."""
+        out = {}
+        for key, path in (("static", "/do/rtt/staticnodes"), ("vnodes", "/do/rtt/vnodes")):
+            try:
+                st, _ct, body = self._get(path, follow=False)
+                state, n = _rtt_state(body) if st == 200 else ("error", 0)
+            except Exception:
+                state, n = "error", 0
+            out[key], out["n_" + key] = state, n
+        return out
 
     def logout(self):
         """Encerra a sessão do painel (GET /logout.html). True se o painel respondeu."""
@@ -261,7 +329,7 @@ class MudfishApi:
         for path in READ_ENDPOINTS:
             try:
                 st, ct, bd = self._get(path)
-                reads[path] = {"status": st, "type": ct, "bytes": len(bd), "body": bd.decode("utf-8", "replace")[:4000]}
+                reads[path] = {"status": st, "type": ct, "bytes": len(bd), "body": _redact(bd.decode("utf-8", "replace"))[:4000]}
             except Exception as e:
                 reads[path] = {"status": 0, "type": "", "bytes": 0, "body": "", "error": _err(e)}
         # contexto em volta de cada caminho (revela método e parâmetros da chamada) sem chamar o caminho
@@ -277,6 +345,25 @@ class MudfishApi:
                     start = i + len(path)
             if hits:
                 snippets[path] = hits
+        # v3: páginas de itens (só GET) e palavras-chave, para mapear o iid e o interruptor de Full VPN
+        for page in PAGE_PROBES:
+            try:
+                st, ct, bd = self._get(page)
+            except Exception as e:
+                snippets["page:" + page] = [{"in": page, "text": "erro: " + _err(e)}]
+                continue
+            txt = bd.decode("utf-8", "replace")
+            texts.append((page, txt))
+            snippets["page:" + page] = [{"in": page, "text": "status %s, %d bytes" % (st, len(bd))}]
+        for word in KEYWORD_PROBES:
+            hits = []
+            for name, txt in texts:
+                for m in re.finditer(re.escape(word), txt):
+                    if len(hits) >= 6:
+                        break
+                    hits.append({"in": name, "text": _redact(txt[max(0, m.start() - 300): m.end() + 300])})
+            if hits:
+                snippets["kw:" + word] = hits
         for tag in _FORM_RX.findall(root)[:6]:
             forms.append({"form": tag[:200]})
         for tag in _INPUT_RX.findall(root)[:20]:
@@ -302,6 +389,8 @@ class MudfishManager:
         self.option_state = ""  # "" | applied | api_unmapped | failed
         self._check_cache = (0.0, "unknown", False)
         self.owned = False  # ligado por perfil de jogo (não persiste ao reiniciar)
+        self.rtt = {"static": "unknown", "vnodes": "unknown", "n_static": 0, "n_vnodes": 0}
+        self._rtt_at = 0.0
 
     # ---------- arquivos ----------
     @property
@@ -410,6 +499,9 @@ class MudfishManager:
             "login_done": logged,
             "session": session,
             "api_ok": api_ok,
+            "full_vpn_api": self.api.last.get("fullvpn") is True,
+            "core_ready": self.api.last.get("core_ready"),
+            "rtt": dict(self.rtt),
             "user": cfg["user"],
             "has_password": bool(cfg["password"]),
             "step": "install" if not version else ("login" if not logged else "activate"),
@@ -460,11 +552,38 @@ class MudfishManager:
         try:
             while self._alive():
                 await self._check()
+                if await self._enforce_fullvpn():
+                    return
+                await self._poll_rtt()
                 await asyncio.sleep(SESSION_WATCH)
         except asyncio.CancelledError:
             raise
         except Exception as e:  # pragma: no cover - defensivo
             decky.logger.error(f"NoLag Mudfish: vigia de sessão parou: {e}")
+
+    async def _enforce_fullvpn(self):
+        """Full VPN gasta créditos com todo o tráfego do aparelho: travado em false. Se o painel o ligar, encerra."""
+        if self.api.last.get("fullvpn") is not True or not self._alive():
+            return False
+        decky.logger.error("NoLag Mudfish: Full VPN ligado no painel; serviço encerrado para proteger créditos")
+        async with self.lock:
+            self._watch = None  # esta própria tarefa: não deixa _kill cancelá-la
+            await self._kill()
+            self.option_state = ""
+            self._set("error", "fullvpn_blocked", "Full VPN estava ativo no painel; desative-o e ligue de novo")
+        return True
+
+    async def _poll_rtt(self, force=False):
+        """Lê o estado do RTT dos nós (300 = medindo, 200 = pronto). Só leitura; não toca em itens nem em créditos."""
+        now = time.monotonic()
+        pending = "pending" in (self.rtt.get("static"), self.rtt.get("vnodes")) or self.rtt.get("static") == "unknown"
+        if not force and now - self._rtt_at < (RTT_PENDING_EVERY if pending else RTT_READY_EVERY):
+            return
+        self._rtt_at = now
+        try:
+            self.rtt = await asyncio.to_thread(self.api.rtt)
+        except Exception:  # pragma: no cover - defensivo
+            self.rtt = {"static": "error", "vnodes": "error", "n_static": 0, "n_vnodes": 0}
 
     def _start_watch(self):
         self._stop_watch()
@@ -752,6 +871,8 @@ class MudfishManager:
                 pass
 
     async def _stop_locked(self):
+        self.rtt, self._rtt_at = {"static": "unknown", "vnodes": "unknown", "n_static": 0, "n_vnodes": 0}, 0.0
+        self.api.last = {}
         self._set("stopping")
         await self._kill()
         self.option_state = ""
@@ -864,9 +985,16 @@ class MudfishManager:
         ok = lambda x: None if isinstance(x, Exception) else x  # noqa: E731
         base, route = ok(res[0]), ok(res[1]) or {}
         tunnel = ok(res[2]) if tun else None
+        # Túnel sem resposta alguma com a linha base ok: no modo por jogo o alvo de ping pode não estar no item do
+        # Mudfish. Não mostra 100% de perda como se fosse a qualidade do túnel; avisa para usar o IP do servidor.
+        tunnel_blocked = bool(tunnel and base and isinstance(tunnel.get("loss"), (int, float)) and tunnel["loss"] >= 100
+                              and isinstance(base.get("loss"), (int, float)) and base["loss"] < 100)
+        if tunnel_blocked:
+            tunnel = None
         full_vpn = bool(running and (_TUNNEL_DEV.match(route.get("dev") or "") or _TUNNEL_DEV.match(base_dev or "")))
         return {"ok": True, "running": running, "base": base, "tunnel": tunnel, "base_iface": base_dev,
-                "tunnel_iface": tun, "full_vpn": full_vpn, "only_game": bool(running and not full_vpn)}
+                "tunnel_iface": tun, "full_vpn": full_vpn, "only_game": bool(running and not full_vpn),
+                "tunnel_blocked": tunnel_blocked, "rtt": dict(self.rtt)}
 
     async def test_ping(self):
         """Com o Mudfish desligado guarda o 'antes'; ligado, guarda o 'depois'."""
