@@ -247,6 +247,49 @@ export function Help({ show, text }: { show: boolean; text: string }) {
   );
 }
 
+export function TipButton(props: { label: string; title: string; open: boolean; onToggle: () => void }) {
+  const tap = useTap(props.onToggle);
+  return (
+    <Focusable
+      onActivate={tap}
+      onClick={tap}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        padding: "6px 10px",
+        margin: "0 0 8px",
+        borderRadius: 8,
+        border: "1px solid rgba(26, 159, 255, 0.55)",
+        background: props.open ? "rgba(26, 159, 255, 0.14)" : "rgba(255, 255, 255, 0.04)",
+        fontSize: 13,
+        boxSizing: "border-box",
+        maxWidth: "100%",
+      }}
+    >
+      <span
+        title={props.label}
+        style={{
+          flex: "0 0 auto",
+          width: 22,
+          height: 22,
+          lineHeight: "22px",
+          textAlign: "center",
+          borderRadius: 11,
+          background: "#1a9fff",
+          color: "#fff",
+          fontWeight: 700,
+          fontSize: 13,
+        }}
+      >
+        ?
+      </span>
+      <span style={{ flex: 1, minWidth: 0, overflowWrap: "anywhere" }}>{props.title}</span>
+      {props.open ? <FaChevronDown size={11} /> : <FaChevronRight size={11} />}
+    </Focusable>
+  );
+}
+
 export function HelpBar(props: { label: string; visible: boolean; onToggle: () => void }) {
   const tap = useTap(props.onToggle);
   return (

@@ -24,7 +24,7 @@ import {
   mudfishSetPingTarget,
 } from "./api";
 import { FaCog, FaFileAlt, FaPercent, FaWaveSquare } from "react-icons/fa";
-import { Box, Card, ChartLine, Collapsible, Help, LineChart, MiniCard, Ring } from "./components";
+import { Box, Card, ChartLine, Collapsible, Help, LineChart, MiniCard, Ring, TipButton } from "./components";
 import type { Texts } from "./i18n";
 
 const DASH = "—";
@@ -60,8 +60,6 @@ export function mudfishError(t: Texts, code: string): string {
       return t.mfErrBadOption;
     case "port_closed":
       return t.mfErrPortClosed;
-    case "fullvpn_blocked":
-      return t.mfErrFullVpn;
     case "uninstall_failed":
       return t.mfErrUninstall;
     case "update_check_failed":
@@ -259,6 +257,21 @@ export function MfWarning({ t, helpOn }: { t: Texts; helpOn: boolean }) {
   );
 }
 
+const INFO_BOX: CSSProperties = {
+  fontSize: 12,
+  padding: "6px 10px",
+  margin: "0 0 10px 0",
+  lineHeight: 1.4,
+  whiteSpace: "pre-line",
+  borderRadius: 8,
+  border: "1px solid rgba(26,159,255,0.45)",
+  background: "rgba(26,159,255,0.10)",
+  color: "#9ad4ff",
+  overflowWrap: "anywhere",
+  boxSizing: "border-box",
+  maxWidth: "100%",
+};
+
 const PILL: CSSProperties = {
   display: "inline-block",
   fontSize: 11,
@@ -328,7 +341,7 @@ export function LiveChart({ t, helpOn }: { t: Texts; helpOn: boolean }) {
     <>
       <div style={{ fontWeight: 700, fontSize: 14, margin: "6px 0 10px" }}>{t.chartTitle}</div>
       {live?.only_game && <div style={PILL}>{t.onlyGameBadge}</div>}
-      {live?.full_vpn && <div style={WARN_BOX}>{t.mfFullVpnWarn}</div>}
+      {live?.full_vpn && <div style={INFO_BOX}>{t.mfFullVpnWarn}</div>}
       <Box style={{ padding: "12px 10px" }}>
         <div style={{ display: "grid", gridTemplateColumns: "112px 1fr", gap: 10, alignItems: "center" }}>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
@@ -366,6 +379,7 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
   const { available, loadError, status, busy, note, run, refresh } = useMudfish(t);
   const [target, setTarget] = useState("");
   const [route, setRoute] = useState<RouteInfo | null>(null);
+  const [tipOpen, setTipOpen] = useState(false);
   const [logs, setLogs] = useState<{ service: string; install: string } | null>(null);
   const timer = useRef<number | undefined>(undefined);
   const filled = useRef(false);
@@ -501,6 +515,14 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
         </PanelSectionRow>
       )}
       <Help show={helpOn} text={t.hMfFlow} />
+      <TipButton label={t.mfTipBtn} title={t.mfTipTitle} open={tipOpen} onToggle={() => setTipOpen((v) => !v)} />
+      {tipOpen && (
+        <div style={INFO_BOX}>
+          <div>{t.mfTipItem}</div>
+          <div style={{ marginTop: 6 }}>{t.mfTipFull}</div>
+          <div style={{ marginTop: 6 }}>{t.mfTipDiff}</div>
+        </div>
+      )}
       {step !== "install" && (
         <>
           <div style={WARN_BOX}>
@@ -510,7 +532,7 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
           <Help show={helpOn} text={t.hMfFirst} />
         </>
       )}
-      {route?.full_vpn && <div style={WARN_BOX}>{t.mfFullVpnWarn}</div>}
+      {(route?.full_vpn || status?.full_vpn_api) && <div style={INFO_BOX}>{t.mfFullVpnWarn}</div>}
 
       {/* 4. Cuidados com os créditos */}
       <MfWarning t={t} helpOn={helpOn} />

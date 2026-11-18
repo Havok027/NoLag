@@ -139,7 +139,6 @@ export interface Texts {
   mfUpdateBtn: string;
   mfUpdateOk: string;
   mfErrUpdateCheck: string;
-  mfErrFullVpn: string;
   mfRttRow: string;
   mfRttReady: string;
   mfRttPending: string;
@@ -166,6 +165,11 @@ export interface Texts {
   mfWarnDownload: string;
   mfWarnSplit: string;
   mfFullVpnWarn: string;
+  mfTipBtn: string;
+  mfTipTitle: string;
+  mfTipItem: string;
+  mfTipFull: string;
+  mfTipDiff: string;
   hMfWarn: string;
   confAutoGame: string;
   confAutoGameDesc: string;
@@ -350,7 +354,6 @@ export const TEXTS: Record<Lang, Texts> = {
     mfErrArch: "Só funciona em aparelhos x86_64",
     mfErrGeneric: "Não foi possível concluir",
     onlyGameBadge: "Modo Apenas Jogo (Créditos Protegidos)",
-    mfErrFullVpn: "Full VPN estava ativo no painel e o Mudfish foi encerrado para proteger seus créditos. Desative o Full VPN e ligue de novo",
     mfRttRow: "Latência dos nós",
     mfRttReady: "Medida",
     mfRttPending: "Medindo…",
@@ -391,8 +394,13 @@ export const TEXTS: Record<Lang, Texts> = {
     mfErrBadOption: "Opção inválida",
     mfWarnTitle: "Cuidado com os créditos",
     mfWarnDownload: "Nunca baixe jogos, atualizações ou arquivos com o Mudfish ligado: o tráfego é cobrado.",
-    mfWarnSplit: "Use só o roteamento por jogo no painel do Mudfish. Não ative VPN total do sistema.",
-    mfFullVpnWarn: "Atenção: o tráfego do sistema parece passar pelo Mudfish (VPN total). Desligue e use só o modo por jogo.",
+    mfWarnSplit: "Prefira o item do jogo no painel do Mudfish. Full VPN é permitido (jogos sem item para a região), mas roteia todo o tráfego do sistema.",
+    mfFullVpnWarn: "Modo Full VPN ativo — todo o tráfego está sendo roteado. Mantenha downloads em segundo plano desativados para preservar créditos.",
+    mfTipBtn: "Dica",
+    mfTipTitle: "Item do jogo ou Full VPN?",
+    mfTipItem: "Item do jogo: use quando o Mudfish tem servidor dedicado para a região que você quer (Brasil, EUA, Europa). Adicione e equipe o item do jogo no painel web.",
+    mfTipFull: "Full VPN: use quando o jogo não tem item para a região desejada (ex.: servidor no Brasil, mas sem rota brasileira no Mudfish). Ative o Full VPN no painel web apontando para o nó mais próximo do servidor (ex.: São Paulo).",
+    mfTipDiff: "Diferença: o item roteia só o tráfego daquele jogo (gasta menos dados). O Full VPN roteia toda a conexão do sistema: vale para jogos sem suporte direto, desde que não haja downloads em segundo plano.",
     hMfWarn: "O Mudfish cobra por tráfego.\nLigado só enquanto joga e com roteamento por jogo, gasta pouco.\nDownloads e VPN total gastam seus créditos rápido.",
     confAutoGame: "Ativar ao abrir jogo",
     confAutoGameDesc: "Liga o Mudfish sozinho nos jogos marcados. Desligado por padrão",
@@ -575,7 +583,6 @@ export const TEXTS: Record<Lang, Texts> = {
     mfErrArch: "Only works on x86_64 devices",
     mfErrGeneric: "Could not complete",
     onlyGameBadge: "Game-only mode (credits protected)",
-    mfErrFullVpn: "Full VPN was on in the panel and Mudfish was stopped to protect your credits. Turn Full VPN off and start again",
     mfRttRow: "Node latency",
     mfRttReady: "Measured",
     mfRttPending: "Measuring…",
@@ -616,8 +623,13 @@ export const TEXTS: Record<Lang, Texts> = {
     mfErrBadOption: "Invalid option",
     mfWarnTitle: "Mind your credits",
     mfWarnDownload: "Never download games, updates or files while Mudfish is on: traffic is billed.",
-    mfWarnSplit: "Use only per-game routing in the Mudfish panel. Do not enable full-system VPN.",
-    mfFullVpnWarn: "Warning: system traffic seems to go through Mudfish (full VPN). Turn it off and use per-game mode only.",
+    mfWarnSplit: "Prefer the game item in the Mudfish panel. Full VPN is allowed (games with no item for the region), but it routes all system traffic.",
+    mfFullVpnWarn: "Full VPN mode on — all traffic is being routed. Keep background downloads off to save credits.",
+    mfTipBtn: "Tip",
+    mfTipTitle: "Game item or Full VPN?",
+    mfTipItem: "Game item: use it when Mudfish has a dedicated server for the region you want (Brazil, US, Europe). Add and equip the game item in the web panel.",
+    mfTipFull: "Full VPN: use it when the game has no item for the region you want (e.g. a Brazil server but no Brazilian route in Mudfish). Turn on Full VPN in the web panel pointing at the node closest to the server (e.g. São Paulo).",
+    mfTipDiff: "Difference: the item routes only that game's traffic (uses less data). Full VPN routes the whole system connection: good for games without direct support, as long as nothing downloads in the background.",
     hMfWarn: "Mudfish bills by traffic.\nOn only while you play and with per-game routing, it costs little.\nDownloads and full VPN burn credits fast.",
     confAutoGame: "Turn on when a game opens",
     confAutoGameDesc: "Turns Mudfish on by itself in the marked games. Off by default",
@@ -800,7 +812,6 @@ export const TEXTS: Record<Lang, Texts> = {
     mfErrArch: "Solo funciona en equipos x86_64",
     mfErrGeneric: "No se pudo completar",
     onlyGameBadge: "Modo solo juego (créditos protegidos)",
-    mfErrFullVpn: "Full VPN estaba activo en el panel y Mudfish se detuvo para proteger tus créditos. Desactiva Full VPN y vuelve a encender",
     mfRttRow: "Latencia de nodos",
     mfRttReady: "Medida",
     mfRttPending: "Midiendo…",
@@ -841,8 +852,13 @@ export const TEXTS: Record<Lang, Texts> = {
     mfErrBadOption: "Opción no válida",
     mfWarnTitle: "Cuidado con los créditos",
     mfWarnDownload: "Nunca descargues juegos, actualizaciones ni archivos con Mudfish activo: el tráfico se cobra.",
-    mfWarnSplit: "Usa solo el enrutamiento por juego en el panel de Mudfish. No actives VPN total del sistema.",
-    mfFullVpnWarn: "Atención: el tráfico del sistema parece pasar por Mudfish (VPN total). Apágalo y usa solo el modo por juego.",
+    mfWarnSplit: "Prefiere el ítem del juego en el panel de Mudfish. Full VPN está permitido (juegos sin ítem para la región), pero enruta todo el tráfico del sistema.",
+    mfFullVpnWarn: "Modo Full VPN activo — todo el tráfico se está enrutando. Mantén las descargas en segundo plano desactivadas para ahorrar créditos.",
+    mfTipBtn: "Consejo",
+    mfTipTitle: "¿Ítem del juego o Full VPN?",
+    mfTipItem: "Ítem del juego: úsalo cuando Mudfish tiene servidor dedicado para la región que quieres (Brasil, EE. UU., Europa). Agrega y equipa el ítem del juego en el panel web.",
+    mfTipFull: "Full VPN: úsalo cuando el juego no tiene ítem para la región que quieres (ej.: servidor en Brasil, pero sin ruta brasileña en Mudfish). Activa Full VPN en el panel web apuntando al nodo más cercano al servidor (ej.: São Paulo).",
+    mfTipDiff: "Diferencia: el ítem enruta solo el tráfico de ese juego (gasta menos datos). Full VPN enruta toda la conexión del sistema: sirve para juegos sin soporte directo, siempre que no haya descargas en segundo plano.",
     hMfWarn: "Mudfish cobra por tráfico.\nActivo solo mientras juegas y con enrutamiento por juego, gasta poco.\nLas descargas y la VPN total gastan créditos rápido.",
     confAutoGame: "Activar al abrir un juego",
     confAutoGameDesc: "Activa Mudfish solo en los juegos marcados. Desactivado por defecto",

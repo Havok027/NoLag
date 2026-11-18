@@ -91,29 +91,11 @@ class ManagerTests(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.tmp, ignore_errors=True)
 
-    def test_fullvpn_on_stops_service(self):
-        killed = []
-
-        async def go():
-            alive = {"v": True}
-            self.mgr._alive = lambda: alive["v"]
-
-            async def fake_kill():
-                killed.append(1)
-                alive["v"] = False
-
-            self.mgr._kill = fake_kill
-            self.mgr.api.last = {"fullvpn": True}
-            return await self.mgr._enforce_fullvpn()
-
-        self.assertTrue(run(go()))
-        self.assertEqual(killed, [1])
-        self.assertEqual((self.mgr.phase, self.mgr.error), ("error", "fullvpn_blocked"))
-
-    def test_fullvpn_off_leaves_service_alone(self):
-        self.mgr._alive = lambda: True
-        self.mgr.api.last = {"fullvpn": False}
-        self.assertFalse(run(self.mgr._enforce_fullvpn()))
+    def test_fullvpn_on_does_not_stop_service(self):
+        # v0.15.0: Full VPN é permitido; o vigia não tem mais a trava que encerrava o serviço
+        self.assertFalse(hasattr(self.mgr, "_enforce_fullvpn"))
+        self.mgr.api.last = {"fullvpn": True}
+        self.assertNotEqual(self.mgr.phase, "error")
 
     def test_rtt_polled_until_ready_then_throttled(self):
         calls = []

@@ -5,9 +5,9 @@ const path = require("node:path");
 const read = (f) => fs.readFileSync(path.join(__dirname, "..", f.endsWith(".tsx") || f.endsWith(".ts") ? "src/" + f : f), "utf8");
 
 test("v0.14.1: versão e notas enxutas", () => {
-  assert.strictEqual(JSON.parse(read("package.json")).version, "0.14.1");
+  assert.match(JSON.parse(read("package.json")).version, /^\d+\.\d+\.\d+$/);
   const n = read("RELEASE_NOTES.md");
-  assert.ok(n.includes("## v0.14.1"));
+  assert.ok(/^## v\d+\.\d+\.\d+/m.test(n));
   assert.strictEqual((n.match(/^## v/gm) || []).length, 1);
 });
 

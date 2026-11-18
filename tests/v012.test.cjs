@@ -29,11 +29,11 @@ test("Corrigir ao acordar não conta como otimização ativa (Painel volta ao pa
 test("textos novos da v0.12.0 existem nos 3 idiomas e são usados", () => {
   const src = read("i18n.tsx");
   const tab = read("MudfishTab.tsx");
-  for (const key of ["mfErrFullVpn", "mfRttRow", "mfRttReady", "mfRttPending", "mfRttError"]) {
+  for (const key of ["mfRttRow", "mfRttReady", "mfRttPending", "mfRttError"]) {
     assert.strictEqual((src.match(new RegExp("^\\s+" + key + ': "', "gm")) || []).length, 3, key);
     assert.ok(tab.includes("t." + key), "não usado: " + key);
   }
-  assert.ok(tab.includes('case "fullvpn_blocked"'));
+  assert.ok(!tab.includes('case "fullvpn_blocked"'));
 });
 
 test("tipos da API incluem RTT, Full VPN e túnel sem resposta", () => {

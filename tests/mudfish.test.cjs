@@ -46,7 +46,7 @@ test("avisos de crédito: sem downloads e sem VPN total, visíveis na UI", () =>
   const src = read("MudfishTab.tsx");
   assert.ok(src.includes("t.mfWarnDownload") && src.includes("t.mfWarnSplit") && src.includes("t.mfFullVpnWarn"));
   const i18n = read("i18n.tsx");
-  assert.ok(/mfWarnDownload: ".*(baixe|baixar).*"/i.test(i18n) && /mfWarnSplit: ".*VPN total/i.test(i18n));
+  assert.ok(/mfWarnDownload: ".*(baixe|baixar).*"/i.test(i18n) && /mfWarnSplit: ".*Full VPN/i.test(i18n));
   assert.ok(read("api.ts").includes("full_vpn"));
 });
 
