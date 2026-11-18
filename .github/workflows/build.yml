@@ -29,6 +29,13 @@ jobs:
             echo "Release v$V já existe. Suba a versão no package.json."
             exit 1
           fi
+          if [ ! -f RELEASE_NOTES.md ] || ! grep -q "^## v$V\b" RELEASE_NOTES.md; then
+            echo "RELEASE_NOTES.md precisa ter a seção '## v$V'."
+            exit 1
+          fi
+          if [ "$(grep -c '^## v' RELEASE_NOTES.md)" -gt 1 ]; then
+            echo "::warning::RELEASE_NOTES.md tem mais de uma versão; mantenha só a atual."
+          fi
 
       - name: Organizar arquivos
         run: |
@@ -42,6 +49,7 @@ jobs:
             [ -f "$f" ] || continue
             mv -f "$f" tests/
           done
+          git rm -rf --quiet --ignore-unmatch relay-setup.sh relay-code.txt
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
@@ -70,15 +78,21 @@ jobs:
       - name: Empacotar
         run: |
           V="${{ steps.ver.outputs.v }}"
+          PY="main.py wifi_mgr.py wifi_dispatcher.py mudfish_mgr.py core_state.py game_profiles.py"
+          for f in *.py; do
+            case " $PY " in *" $f "*) ;; *) echo "Módulo $f na raiz não está na lista de empacotamento."; exit 1;; esac
+          done
+          rm -rf out NoLag-v*.zip
           mkdir -p out/NoLag
           cp -r dist out/NoLag/
-          for f in main.py plugin.json package.json wifi_mgr.py wifi_dispatcher.py mudfish_mgr.py core_state.py game_profiles.py; do
+          for f in $PY plugin.json package.json; do
             cp "$f" out/NoLag/
           done
-          for f in LICENSE THIRD_PARTY_NOTICES.md README.md relay-code.txt; do
+          for f in LICENSE THIRD_PARTY_NOTICES.md README.md README.en.md README.es.md; do
             [ -f "$f" ] && cp "$f" out/NoLag/ || true
           done
-          (cd out && zip -qr "../NoLag-v$V.zip" NoLag)
+          find out -name '__pycache__' -prune -exec rm -rf {} + || true
+          (cd out && zip -qrX "../NoLag-v$V.zip" NoLag)
 
       - name: Validar Direct Updater
         run: python3 tests/check_direct_updater.py
