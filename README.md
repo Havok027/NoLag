@@ -33,7 +33,7 @@ Esse cadastro é feito uma única vez e fica salvo na nuvem da conta Mudfish. O 
 O Mudfish cobra por tráfego. Por isso o NoLag **sempre começa com o Mudfish desligado**, ao ligar o console e ao abrir um jogo, a menos que você ative a opção na aba Conf. Ao fechar qualquer jogo, o Mudfish é encerrado na hora. Ligar à mão nunca ativa a opção de manter ligado.
 
 - **Nunca baixe nada com o Mudfish ligado** (jogos, atualizações, arquivos): o tráfego é cobrado.
-- Use só o roteamento por jogo no painel do Mudfish. **Não ative VPN total do sistema.** Se o painel ligar o Full VPN, o NoLag encerra o serviço para proteger seus créditos.
+- Prefira o **item do jogo** no painel do Mudfish. O **Full VPN** é permitido (para jogos sem item na região, aponte para o nó mais próximo, ex.: São Paulo), mas roteia todo o tráfego do sistema: mantenha downloads em segundo plano desativados. O botão `?` da aba Mudfish explica quando usar cada um.
 - **Multi-Path** (configurado no painel) melhora estabilidade e jitter, mas gasta mais créditos.
 
 ## Detalhes técnicos do Mudfish

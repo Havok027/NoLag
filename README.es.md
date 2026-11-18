@@ -33,7 +33,7 @@ Este registro se hace una sola vez y queda guardado en la nube de la cuenta de M
 Mudfish cobra por tráfico. Por eso NoLag **siempre arranca con Mudfish apagado**, al encender la consola y al abrir un juego, salvo que actives la opción en Conf. Al cerrar cualquier juego, Mudfish se cierra al instante. Encenderlo a mano nunca activa la opción de mantener encendido.
 
 - **Nunca descargues nada con Mudfish encendido** (juegos, actualizaciones, archivos): el tráfico se cobra.
-- Usa solo el enrutamiento por juego en el panel de Mudfish. **No actives la VPN total del sistema.** Si el panel enciende Full VPN, NoLag cierra el servicio para proteger tus créditos.
+- Prefiere el **ítem del juego** en el panel de Mudfish. **Full VPN** está permitido (para juegos sin ítem en tu región, apúntalo al nodo más cercano, ej.: São Paulo), pero enruta todo el tráfico del sistema: mantén las descargas en segundo plano desactivadas. El botón `?` de la pestaña Mudfish explica cuándo usar cada uno.
 - **Multi-Path** (configurado en el panel) mejora la estabilidad y el jitter, pero gasta más créditos.
 
 ## Detalles técnicos de Mudfish

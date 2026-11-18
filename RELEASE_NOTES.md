@@ -1,7 +1,6 @@
-## v0.14.1
+## v0.15.0
 
-- **Interface simplificada:** removida a seção "Conta Mudfish (opcional)" (usuário, senha, salvar e apagar conta). O login é feito só no painel web do Mudfish (porta 8282). A aba mostra apenas o controle básico, o atalho para o painel e o ping atual. Textos e chaves de i18n correspondentes removidos nos 3 idiomas; o backend não mudou.
-- **Build (`build.yml`):** exige a seção da versão em `RELEASE_NOTES.md`; apaga `relay-setup.sh`/`relay-code.txt` do repositório sozinho; recusa `.py` novo na raiz fora da lista de empacotamento; limpa `out/` e zips antigos, ignora `__pycache__` e inclui os 3 READMEs no pacote.
-- **Validador do pacote (`check_direct_updater.py`):** agora também recusa resquícios (`tests/`, `src/`, zips, `test_*`, `__pycache__`), erro de sintaxe nos `.py` e import de módulo local ausente.
-- Teste de desinstalação corrigido para o coreutils novo do runner (não depende mais de copiar o `sleep`).
-- READMEs atualizados; novo `tests/v0141.test.cjs`.
+- **Full VPN permitido:** removida a trava que encerrava o Mudfish e mostrava erro quando o Full VPN estava ativo no painel. O serviço segue ligado e a tela mostra só um aviso informativo discreto: "Modo Full VPN ativo — todo o tráfego está sendo roteado", lembrando de manter downloads em segundo plano desativados. Útil para jogos sem item na região desejada.
+- **Botão `?` na seção Mudfish (distinto do `? Ajuda` do topo):** abre, só ao tocar, um guia curto: quando usar o item do jogo, quando usar o Full VPN (apontando para o nó mais próximo, ex.: São Paulo) e a diferença entre os dois.
+- Textos novos nos 3 idiomas (`mfTipBtn`, `mfTipTitle`, `mfTipItem`, `mfTipFull`, `mfTipDiff`); `mfFullVpnWarn` e `mfWarnSplit` reescritos; chave `mfErrFullVpn` removida.
+- Novos testes: `test_mudfish_v0150.py` e `v0150.test.cjs`.

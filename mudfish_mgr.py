@@ -19,7 +19,7 @@ API local (127.0.0.1:8282), mapeada pelo mudfish-api.json da v0.11.3 (Mudfish 5.
     registra nem repete o jwt/token (o diagnóstico os remove);
   - /do/rtt/staticnodes e /do/rtt/vnodes respondem status 300 enquanto o cliente mede o RTT dos nós e 200 (com rtts)
     quando termina: o plugin repete a leitura até ficar pronto e mostra o estado na tela;
-  - Full VPN (fullvpn_enabled) é travado em false: se o painel o ligar, o serviço é encerrado para proteger créditos;
+  - Full VPN (fullvpn_enabled) é PERMITIDO desde a v0.15.0 (jogos sem item para a região): o serviço segue ligado e a tela só informa;
   - os caminhos que alteram estado (/do/node/autoselect, /item/conf_onoff) continuam NÃO chamados: o iid dos itens e o
     endpoint do interruptor de Full VPN ainda não foram capturados. O diagnóstico v4 mostrou que user.items (iid, rid, active)
     vem de um POST GraphQL ao api.mudfish.net com o JWT do cliente; a URL ficou fora da captura. Sem ela e sem decisão
@@ -723,26 +723,12 @@ class MudfishManager:
         try:
             while self._alive():
                 await self._check()
-                if await self._enforce_fullvpn():
-                    return
                 await self._poll_rtt()
                 await asyncio.sleep(SESSION_WATCH)
         except asyncio.CancelledError:
             raise
         except Exception as e:  # pragma: no cover - defensivo
             decky.logger.error(f"NoLag Mudfish: vigia de sessão parou: {e}")
-
-    async def _enforce_fullvpn(self):
-        """Full VPN gasta créditos com todo o tráfego do aparelho: travado em false. Se o painel o ligar, encerra."""
-        if self.api.last.get("fullvpn") is not True or not self._alive():
-            return False
-        decky.logger.error("NoLag Mudfish: Full VPN ligado no painel; serviço encerrado para proteger créditos")
-        async with self.lock:
-            self._watch = None  # esta própria tarefa: não deixa _kill cancelá-la
-            await self._kill()
-            self.option_state = ""
-            self._set("error", "fullvpn_blocked", "Full VPN estava ativo no painel; desative-o e ligue de novo")
-        return True
 
     async def _poll_rtt(self, force=False):
         """Lê o estado do RTT dos nós (300 = medindo, 200 = pronto). Só leitura; não toca em itens nem em créditos."""
@@ -1172,7 +1158,7 @@ class MudfishManager:
         info = await core_state.route_get(cfg["ping_target"])
         info["running"] = self._alive()
         # Aviso de VPN total: com o Mudfish ligado, a rota até um destino qualquer não pode passar pelo túnel.
-        info["full_vpn"] = bool(info["running"] and _TUNNEL_DEV.match(info.get("dev") or ""))
+        info["full_vpn"] = bool(info["running"] and (_TUNNEL_DEV.match(info.get("dev") or "") or self.api.last.get("fullvpn") is True))
         return info
 
     async def get_live(self):
@@ -1217,7 +1203,8 @@ class MudfishManager:
         tunnel_source = "icmp" if tunnel else ""
         if api_m:
             tunnel, tunnel_source, tunnel_blocked, tunnel_idle = api_m, "api", False, False
-        full_vpn = bool(running and (_TUNNEL_DEV.match(route.get("dev") or "") or _TUNNEL_DEV.match(base_dev or "")))
+        full_vpn = bool(running and (_TUNNEL_DEV.match(route.get("dev") or "") or _TUNNEL_DEV.match(base_dev or "")
+                                     or self.api.last.get("fullvpn") is True))
         return {"ok": True, "running": running, "base": base, "tunnel": tunnel, "base_iface": base_dev,
                 "tunnel_iface": tun, "full_vpn": full_vpn, "only_game": bool(running and not full_vpn),
                 "tunnel_blocked": tunnel_blocked, "tunnel_idle": tunnel_idle, "tunnel_waiting": tunnel_waiting, "rtt": dict(self.rtt),

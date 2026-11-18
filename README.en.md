@@ -33,7 +33,7 @@ This setup is done once and saved in your Mudfish account's cloud. NoLag does no
 Mudfish bills per traffic. So NoLag **always starts with Mudfish off**, at boot and when a game opens, unless you enable the option in Conf. When any game closes, Mudfish is stopped right away. Turning it on by hand never enables keep-on.
 
 - **Never download anything with Mudfish on** (games, updates, files): the traffic is billed.
-- Use only per-game routing in the Mudfish panel. **Do not enable system-wide VPN.** If the panel turns Full VPN on, NoLag stops the service to protect your credits.
+- Prefer the **game item** in the Mudfish panel. **Full VPN** is allowed (for games with no item for your region, point it at the closest node, e.g. São Paulo), but it routes all system traffic: keep background downloads off. The `?` button in the Mudfish tab explains when to use each.
 - **Multi-Path** (set in the panel) improves stability and jitter but uses more credits.
 
 ## Mudfish technical notes
