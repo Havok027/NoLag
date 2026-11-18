@@ -1,3 +1,4 @@
+import ast
 import glob
 import json
 import os
@@ -7,6 +8,9 @@ import zipfile
 
 NAME = "NoLag"
 REQUIRED = ("main.py", "plugin.json", "package.json", "dist/index.js")
+
+
+FORBIDDEN = ("tests/", "src/", "node_modules/", ".github/", "out/", "relay-setup.sh", "relay-code.txt")
 
 
 def fail(msg):
@@ -28,6 +32,21 @@ def check(path):
         for r in REQUIRED:
             if NAME + "/" + r not in names:
                 fail("faltando " + NAME + "/" + r)
+        for n in names:
+            rel = n[len(NAME) + 1:]
+            if rel.endswith(".zip") or "__pycache__" in rel or rel.startswith("test_") or any(rel.startswith(f) for f in FORBIDDEN):
+                fail("resquício no pacote: " + n)
+        mods = {n[len(NAME) + 1:-3] for n in names if n.endswith(".py") and "/" not in n[len(NAME) + 1:]}
+        for mod in sorted(mods):
+            try:
+                tree = ast.parse(z.read(NAME + "/" + mod + ".py"))
+            except SyntaxError as e:
+                fail(mod + ".py com erro de sintaxe: " + str(e))
+            for node in ast.walk(tree):
+                for dep in ([a.name.split(".")[0] for a in node.names] if isinstance(node, ast.Import) else
+                            [node.module.split(".")[0]] if isinstance(node, ast.ImportFrom) and node.module and not node.level else []):
+                    if dep in ("core_state", "wifi_mgr", "wifi_dispatcher", "mudfish_mgr", "game_profiles") and dep not in mods:
+                        fail(mod + ".py importa " + dep + ", que não está no pacote")
         if z.getinfo(NAME + "/dist/index.js").file_size == 0:
             fail("dist/index.js vazio")
         plugin = json.loads(z.read(NAME + "/plugin.json"))

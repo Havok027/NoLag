@@ -156,17 +156,6 @@ export interface Texts {
   mfApiRow: string;
   mfApiOk: string;
   mfApiDown: string;
-  mfAccTitle: string;
-  mfAccDesc: string;
-  hMfAcc: string;
-  mfUser: string;
-  mfPass: string;
-  mfPassKept: string;
-  mfAccSave: string;
-  mfAccClear: string;
-  mfAccSaved: string;
-  mfAccCleared: string;
-  mfErrBadCreds: string;
   mfAdvWebui: string;
   mfResetSessionDesc: string;
   tabMudfish: string;
@@ -394,17 +383,6 @@ export const TEXTS: Record<Lang, Texts> = {
     mfApiRow: "API do painel",
     mfApiOk: "Responde",
     mfApiDown: "Sem resposta",
-    mfAccTitle: "Conta Mudfish (opcional)",
-    mfAccDesc: "Opcional. Fica só neste aparelho.\nO login é feito no painel do Mudfish e o plugin o detecta sozinho; estes dados não são usados para entrar automaticamente.",
-    hMfAcc: "Opcional.\nSalvar estes dados faz o plugin conferir a sessão na hora.\nO login em si continua sendo feito no painel do Mudfish.\nA senha nunca volta para a tela.",
-    mfUser: "Usuário",
-    mfPass: "Senha",
-    mfPassKept: "Senha salva (deixe vazio para manter)",
-    mfAccSave: "Salvar conta",
-    mfAccClear: "Apagar conta",
-    mfAccSaved: "Conta salva neste aparelho",
-    mfAccCleared: "Conta apagada",
-    mfErrBadCreds: "Usuário ou senha inválidos",
     mfAdvWebui: "Painel (WebUI)",
     mfResetSessionDesc: "Sai do painel e volta ao passo de login",
     tabMudfish: "Mudfish",
@@ -630,17 +608,6 @@ export const TEXTS: Record<Lang, Texts> = {
     mfApiRow: "Panel API",
     mfApiOk: "Responding",
     mfApiDown: "No response",
-    mfAccTitle: "Mudfish account (optional)",
-    mfAccDesc: "Optional. Stays on this device only.\nLogin is done in the Mudfish panel and the plugin detects it by itself; these details are not used to log in automatically.",
-    hMfAcc: "Optional.\nSaving these details makes the plugin check the session right away.\nLogging in is still done in the Mudfish panel.\nThe password never comes back to the screen.",
-    mfUser: "Username",
-    mfPass: "Password",
-    mfPassKept: "Password saved (leave empty to keep)",
-    mfAccSave: "Save account",
-    mfAccClear: "Delete account",
-    mfAccSaved: "Account saved on this device",
-    mfAccCleared: "Account deleted",
-    mfErrBadCreds: "Invalid username or password",
     mfAdvWebui: "Panel (WebUI)",
     mfResetSessionDesc: "Signs out of the panel and returns to the login step",
     tabMudfish: "Mudfish",
@@ -866,17 +833,6 @@ export const TEXTS: Record<Lang, Texts> = {
     mfApiRow: "API del panel",
     mfApiOk: "Responde",
     mfApiDown: "Sin respuesta",
-    mfAccTitle: "Cuenta Mudfish (opcional)",
-    mfAccDesc: "Opcional. Queda solo en este dispositivo.\nEl login se hace en el panel de Mudfish y el plugin lo detecta solo; estos datos no se usan para entrar automáticamente.",
-    hMfAcc: "Opcional.\nGuardar estos datos hace que el plugin compruebe la sesión al instante.\nEl login en sí se sigue haciendo en el panel de Mudfish.\nLa contraseña nunca vuelve a la pantalla.",
-    mfUser: "Usuario",
-    mfPass: "Contraseña",
-    mfPassKept: "Contraseña guardada (déjalo vacío para mantener)",
-    mfAccSave: "Guardar cuenta",
-    mfAccClear: "Borrar cuenta",
-    mfAccSaved: "Cuenta guardada en este equipo",
-    mfAccCleared: "Cuenta borrada",
-    mfErrBadCreds: "Usuario o contraseña no válidos",
     mfAdvWebui: "Panel (WebUI)",
     mfResetSessionDesc: "Sale del panel y vuelve al paso de acceso",
     tabMudfish: "Mudfish",

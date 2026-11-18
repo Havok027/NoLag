@@ -14,8 +14,8 @@ const read = (f) => {
 const keysOf = (src, key) => [...src.matchAll(new RegExp("^\\s+" + key + ': "(.*)",$', "gm"))].map((m) => m[1]);
 
 test("v0.14.0: versão do package.json e notas", () => {
-  assert.strictEqual(JSON.parse(read("package.json")).version, "0.14.0");
-  assert.ok(read("RELEASE_NOTES.md").includes("## v0.14.0"));
+  assert.match(JSON.parse(read("package.json")).version, /^\d+\.\d+\.\d+$/);
+  assert.ok(/^## v\d+\.\d+\.\d+/m.test(read("RELEASE_NOTES.md")));
 });
 
 test("v0.14.0: botão Desinstalar Mudfish pede confirmação antes de chamar o backend", () => {

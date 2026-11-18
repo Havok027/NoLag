@@ -28,7 +28,7 @@ function resetScrollX(e: { currentTarget: HTMLElement }) {
   }
 }
 
-const DEFAULT_COLLAPSED: Record<string, boolean> = { mudfishAdv: true, mudfishLogs: true, mudfishAcc: true };
+const DEFAULT_COLLAPSED: Record<string, boolean> = { mudfishAdv: true, mudfishLogs: true };
 
 export function Content() {
   const [lang, setLang] = useState<Lang>("pt");

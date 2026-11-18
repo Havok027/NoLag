@@ -11,10 +11,8 @@ import {
   Snapshot,
   getSnapshot,
   mudfishAvailable,
-  mudfishClearCredentials,
   mudfishGetLive,
   mudfishResetSession,
-  mudfishSetCredentials,
   mudfishGetLogs,
   mudfishGetRoute,
   mudfishGetStatus,
@@ -25,7 +23,7 @@ import {
   mudfishSetEnabled,
   mudfishSetPingTarget,
 } from "./api";
-import { FaCog, FaFileAlt, FaPercent, FaUser, FaWaveSquare } from "react-icons/fa";
+import { FaCog, FaFileAlt, FaPercent, FaWaveSquare } from "react-icons/fa";
 import { Box, Card, ChartLine, Collapsible, Help, LineChart, MiniCard, Ring } from "./components";
 import type { Texts } from "./i18n";
 
@@ -60,8 +58,6 @@ export function mudfishError(t: Texts, code: string): string {
       return t.mfErrArch;
     case "bad_option":
       return t.mfErrBadOption;
-    case "bad_credentials":
-      return t.mfErrBadCreds;
     case "port_closed":
       return t.mfErrPortClosed;
     case "fullvpn_blocked":
@@ -371,8 +367,6 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
   const [target, setTarget] = useState("");
   const [route, setRoute] = useState<RouteInfo | null>(null);
   const [logs, setLogs] = useState<{ service: string; install: string } | null>(null);
-  const [user, setUser] = useState("");
-  const [pass, setPass] = useState("");
   const timer = useRef<number | undefined>(undefined);
   const filled = useRef(false);
 
@@ -380,7 +374,6 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
     if (status && !filled.current) {
       filled.current = true;
       setTarget(status.ping_target ?? "");
-      setUser(status.user ?? "");
     }
   }, [status]);
 
@@ -443,23 +436,6 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
     mudfishGetLogs()
       .then((r) => setLogs({ service: r?.service ?? "", install: r?.install ?? "" }))
       .catch(() => setLogs({ service: "", install: "" }));
-
-  const saveAccount = () =>
-    run(async () => {
-      const r = await mudfishSetCredentials(user, pass);
-      if (r?.ok) setPass("");
-      return r;
-    }, t.mfAccSaved);
-
-  const clearAccount = () =>
-    run(async () => {
-      const r = await mudfishClearCredentials();
-      if (r?.ok) {
-        setUser("");
-        setPass("");
-      }
-      return r;
-    }, t.mfAccCleared);
 
   const askUninstall = () =>
     showModal(
@@ -566,38 +542,7 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
         </>
       )}
 
-      {/* 7. Conta opcional e opções avançadas (recolhidas) */}
-      <Collapsible
-        title={t.mfAccTitle}
-        icon={<FaUser size={14} />}
-        summary={status?.login_done ? t.mfAccConnected : t.mfAccWaiting}
-        collapsed={isCollapsed("mudfishAcc")} onToggle={(v) => toggleSection("mudfishAcc", v)}>
-        <div style={SMALL}>{t.mfAccDesc}</div>
-        <PanelSectionRow>
-          <TextField label={t.mfUser} value={user} onChange={(e) => setUser(e.target.value)} />
-        </PanelSectionRow>
-        <PanelSectionRow>
-          <TextField
-            label={status?.has_password ? t.mfPassKept : t.mfPass}
-            bIsPassword
-            value={pass}
-            onChange={(e) => setPass(e.target.value)}
-          />
-        </PanelSectionRow>
-        <PanelSectionRow>
-          <ButtonItem layout="below" label={t.mfAccSave} disabled={busy || !user.trim()} onClick={saveAccount}>
-            {t.mfAccSave}
-          </ButtonItem>
-        </PanelSectionRow>
-        {(status?.user || status?.has_password) && (
-          <PanelSectionRow>
-            <ButtonItem layout="below" label={t.mfAccClear} disabled={busy} onClick={clearAccount}>
-              {t.mfAccClear}
-            </ButtonItem>
-          </PanelSectionRow>
-        )}
-        <Help show={helpOn} text={t.hMfAcc} />
-      </Collapsible>
+      {/* 7. Opções avançadas (recolhidas) */}
       <Collapsible
         title={t.mfAdvTitle}
         icon={<FaCog size={14} />}

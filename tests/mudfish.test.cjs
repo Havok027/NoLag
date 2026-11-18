@@ -65,11 +65,11 @@ test("a senha nunca volta do backend para a tela", () => {
   assert.ok(!api.includes("mudfish_set_profile"));
 });
 
-test("conta opcional na aba Mudfish, recolhida por padrão, com campo de senha mascarado", () => {
+test("aba Mudfish sem campos de login nem conta salva (v0.14.1)", () => {
   const src = read("MudfishTab.tsx");
-  assert.ok(src.includes("bIsPassword") && src.includes("mudfishSetCredentials") && src.includes("mudfishClearCredentials"));
-  assert.ok(src.includes('isCollapsed("mudfishAcc")'));
-  assert.ok(read("Content.tsx").includes("mudfishAcc: true"));
+  assert.ok(!src.includes("bIsPassword") && !src.includes("mudfishSetCredentials") && !src.includes("mudfishClearCredentials"));
+  assert.ok(!src.includes('isCollapsed("mudfishAcc")'));
+  assert.ok(!read("api.ts").includes("mudfishSetCredentials"));
 });
 
 test("primeiro uso explica o cadastro único dos jogos no painel, nos 3 idiomas", () => {
@@ -103,7 +103,7 @@ test("api.ts expõe todos os métodos do roteador do main.py", () => {
   const api = read("api.ts");
   const py = read("main.py");
   for (const name of ["mudfish_available", "mudfish_get_status", "mudfish_install", "mudfish_set_enabled",
-    "mudfish_set_option", "mudfish_set_credentials", "mudfish_clear_credentials", "mudfish_reset_session", "mudfish_get_live", "mudfish_confirm_login", "mudfish_set_ping_target", "mudfish_get_route", "mudfish_test_ping",
+    "mudfish_set_option", "mudfish_reset_session", "mudfish_get_live", "mudfish_confirm_login", "mudfish_set_ping_target", "mudfish_get_route", "mudfish_test_ping",
     "mudfish_get_logs", "mudfish_probe_api", "get_snapshot", "get_current_game", "set_game_module"]) {
     assert.ok(api.includes('"' + name + '"'), "api " + name);
     assert.ok(py.includes("async def " + name + "("), "main " + name);

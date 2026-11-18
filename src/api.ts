@@ -195,10 +195,6 @@ export interface MudfishLive {
 export const mudfishCheckUpdate = callable<[], MudfishResult & { update?: MudfishUpdate }>("mudfish_check_update");
 export const mudfishUpdate = callable<[], MudfishResult & { updated?: boolean; version?: string }>("mudfish_update");
 export const mudfishGetLive = callable<[], MudfishLive>("mudfish_get_live");
-export const mudfishSetCredentials = callable<[user: string, password: string], MudfishResult & { has_password?: boolean }>(
-  "mudfish_set_credentials"
-);
-export const mudfishClearCredentials = callable<[], MudfishResult>("mudfish_clear_credentials");
 export const mudfishResetSession = callable<[], MudfishResult & { logged_out?: boolean }>("mudfish_reset_session");
 export const mudfishConfirmLogin = callable<[done: boolean], MudfishResult>("mudfish_confirm_login");
 export const mudfishGetLogs = callable<[], { ok: boolean; service: string; install: string }>("mudfish_get_logs");
