@@ -153,9 +153,8 @@ class UninstallTests(unittest.TestCase):
         self.assertTrue(cfg["auto_on_game"])
 
     def test_stops_every_mudfish_process(self):
-        exe = os.path.join(self.tmp, "mudflow")
-        shutil.copy("/bin/sleep", exe)
-        p = subprocess.Popen([exe, "30"])
+        exe = os.path.join(self.tmp, "mudflow")  # só o argv[0] importa; o binário é o Python (o coreutils novo recusa nomes alheios)
+        p = subprocess.Popen([exe, "-c", "import time; time.sleep(30)"], executable=sys.executable)
         try:
             for _ in range(40):  # espera o exec: logo após o Popen o cmdline ainda é o do processo pai
                 if p.pid in mudfish_mgr.find_mudfish_pids():
