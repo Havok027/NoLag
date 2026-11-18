@@ -1,6 +1,6 @@
-## v0.14.0
+## v0.14.1
 
-- **Versão do núcleo sempre dinâmica:** a URL do instalador é montada a partir da versão encontrada em `mudfish.net/releases/` (nova função `installer_url`), sem versão fixa. Se a consulta falhar, a instalação nova usa o fallback 6.6.4 (nunca a 5.11.0). A aba Mudfish mostra a versão instalada e a **última versão** detectada.
-- **Desinstalar Mudfish:** novo botão na aba Mudfish, com janela de confirmação. Encerra todos os processos (`mudrun`, `mudrun-headless`, `mudflow`, `mudfish`), desmonta e apaga `/opt/mudfish` e a pasta persistente, e limpa logs, instaladores e restos. Zera a conta salva no plugin, o login e "Manter ligado"; as demais preferências ficam. Sua conta e seus itens na nuvem do Mudfish não são afetados. Depois, o passo 1 (Instalar) volta e baixa a versão mais recente.
-- Novo método `mudfish_uninstall` no `main.py` (roteador fino) e texto nos 3 idiomas.
-- Testes novos: `tests/test_mudfish_v0140.py` (resolução da URL, página de releases, fallback, desinstalação, processos) e `tests/v0140.test.cjs`.
+- **Interface simplificada:** removida a seção "Conta Mudfish (opcional)" (usuário, senha, salvar e apagar conta). O login é feito só no painel web do Mudfish (porta 8282). A aba mostra apenas o controle básico, o atalho para o painel e o ping atual. Textos e chaves de i18n correspondentes removidos nos 3 idiomas; o backend não mudou.
+- **Build (`build.yml`):** exige a seção da versão em `RELEASE_NOTES.md`; apaga `relay-setup.sh`/`relay-code.txt` do repositório sozinho; recusa `.py` novo na raiz fora da lista de empacotamento; limpa `out/` e zips antigos, ignora `__pycache__` e inclui os 3 READMEs no pacote.
+- **Validador do pacote (`check_direct_updater.py`):** agora também recusa resquícios (`tests/`, `src/`, zips, `test_*`, `__pycache__`), erro de sintaxe nos `.py` e import de módulo local ausente.
+- READMEs atualizados; novo `tests/v0141.test.cjs`.

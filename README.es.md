@@ -17,7 +17,7 @@ El panel web no se muestra bien dentro del QAM en el Modo Juego, por eso **Abrir
 
 - **Panel:** ping actual en anillo y gráfico, con jitter y pérdida de paquetes. Con Mudfish encendido y el túnel respondiendo, la medida viene del túnel; si no, de la conexión normal (sin gastar créditos). Después: botón de **Mudfish** (verde cuando está activo), **Abrir panel de Mudfish**, aviso de créditos, tabla Conexión y botón **Optimizar Wi-Fi**.
 - **Wi-Fi:** acciones rápidas, optimizaciones, streaming y ajustes avanzados (abajo).
-- **Mudfish:** estado en 3 pasos (instalar, entrar en el panel, servicio encendido), interruptor del servicio, **Abrir panel de Mudfish**, guía de primer uso, aviso de créditos, actualización del núcleo, cuenta opcional y opciones avanzadas (puerto, ruta actual, objetivo del ping, reinstalar, rehacer login, logs).
+- **Mudfish:** estado en 3 pasos (instalar, entrar en el panel, servicio encendido), interruptor del servicio, **Abrir panel de Mudfish**, guía de primer uso, aviso de créditos, actualización del núcleo (sin campos de login: el login se hace solo en el panel web) y opciones avanzadas (puerto, ruta actual, objetivo del ping, reinstalar, rehacer login, logs).
 - **Conf:** activar al abrir un juego (apagado por defecto), mantener encendido al reiniciar (apagado por defecto), perfiles por juego con interruptores de Wi-Fi y Mudfish, idioma (PT, EN, ES) y diagnóstico.
 
 ## Mudfish: primer uso (una sola vez)
@@ -41,7 +41,7 @@ Mudfish cobra por tráfico. Por eso NoLag **siempre arranca con Mudfish apagado*
 - La instalación sigue la guía oficial de SteamOS (instalador con `sh`, servicio `mudrun-headless` sin flags) en una carpeta persistente enlazada en `/opt/mudfish`, y muestra el motivo exacto cuando algo falla.
 - El plugin solo **lee** la API local (estado, sesión, telemetría) y usa las rutas oficiales de inicio y parada. Detecta solo si ya iniciaste sesión en el panel.
 - **Versión dinámica:** la versión instalada sale siempre de la página oficial de versiones (si no responde, una instalación nueva usa el fallback 6.6.4). La pestaña Mudfish muestra la versión instalada y la última detectada.
-- **Desinstalar Mudfish:** botón en la pestaña Mudfish, con confirmación. Cierra los procesos de Mudfish, borra `/opt/mudfish`, la carpeta persistente, logs y restos, y limpia la cuenta guardada en el plugin. Tu cuenta en la nube de Mudfish no se ve afectada.
+- **Desinstalar Mudfish:** botón en la pestaña Mudfish, con confirmación. Cierra los procesos de Mudfish, borra `/opt/mudfish`, la carpeta persistente, logs y restos, y limpia el login y "Mantener encendido" guardados en el plugin. Tu cuenta en la nube de Mudfish no se ve afectada.
 - **Actualización del núcleo:** NoLag consulta la página oficial de versiones (como máximo cada 6 horas) y avisa cuando hay un núcleo nuevo. **Actualizar** lo descarga, cambia el binario y reinicia el servicio si estaba encendido. No se instala nada sin tu toque.
 
 ## Wi-Fi (módulo independiente)

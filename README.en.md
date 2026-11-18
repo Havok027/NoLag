@@ -17,7 +17,7 @@ The web panel does not render well inside the QAM in Game Mode, so **Open Mudfis
 
 - **Dash:** current ping as a ring and chart, with jitter and packet loss. With Mudfish on and the tunnel answering, the reading comes from the tunnel; otherwise from the normal connection (no credits used). Then: the **Mudfish** button (green when active), **Open Mudfish panel**, the credits warning, the Connection table and the **Optimize Wi-Fi** button.
 - **Wi-Fi:** quick actions, optimizations, streaming and advanced tweaks (below).
-- **Mudfish:** status in 3 steps (install, log in on the panel, service on), service switch, **Open Mudfish panel**, first-use guide, credits warning, core update, optional account and advanced options (port, current route, ping target, reinstall, redo login, logs).
+- **Mudfish:** status in 3 steps (install, log in on the panel, service on), service switch, **Open Mudfish panel**, first-use guide, credits warning, core update (no login fields: you log in only on the web panel) and advanced options (port, current route, ping target, reinstall, redo login, logs).
 - **Conf:** enable on game launch (off by default), keep on after restart (off by default), per-game profiles with Wi-Fi and Mudfish switches, language (PT, EN, ES) and diagnostics.
 
 ## Mudfish: first use (once)
@@ -41,7 +41,7 @@ Mudfish bills per traffic. So NoLag **always starts with Mudfish off**, at boot 
 - Install follows the official SteamOS guide (`sh` installer, `mudrun-headless` service without flags) in a persistent folder bound to `/opt/mudfish`, and shows the exact reason when something fails.
 - The plugin only **reads** the local API (status, session, telemetry) and uses the official start and stop routes. It detects on its own whether you have logged in on the panel.
 - **Dynamic version:** the installed version always comes from the official releases page (if it does not answer, a fresh install uses the 6.6.4 fallback). The Mudfish tab shows the installed and the latest detected versions.
-- **Uninstall Mudfish:** button in the Mudfish tab, with confirmation. Stops Mudfish processes, deletes `/opt/mudfish`, the persistent folder, logs and leftovers, and clears the account saved in the plugin. Your Mudfish cloud account is not affected.
+- **Uninstall Mudfish:** button in the Mudfish tab, with confirmation. Stops Mudfish processes, deletes `/opt/mudfish`, the persistent folder, logs and leftovers, and clears the login state and "Keep on" saved in the plugin. Your Mudfish cloud account is not affected.
 - **Core update:** NoLag checks the official versions page (at most every 6 hours) and warns when a newer core exists. **Update** downloads it, swaps the binary and restarts the service if it was on. Nothing is installed without your tap.
 
 ## Wi-Fi (independent module)

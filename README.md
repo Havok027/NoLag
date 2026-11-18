@@ -17,7 +17,7 @@ O painel web não renderiza bem no Modo Jogo dentro do QAM, por isso o botão **
 
 - **Painel:** ping atual em anel e gráfico, com jitter e perda de pacotes. Com o Mudfish ligado e o túnel respondendo, a medida vem do túnel; senão, da conexão normal (sem gastar créditos). Depois: botão do **Mudfish** (verde quando ativo), botão **Abrir painel do Mudfish**, aviso de créditos, tabela Conexão e botão **Otimizar Wi-Fi**.
 - **Wi-Fi:** ações rápidas, otimizações, streaming e ajustes avançados (abaixo).
-- **Mudfish:** estado em 3 passos (instalar, entrar no painel, serviço ligado), chave do serviço, **Abrir painel do Mudfish**, guia de primeiro uso, aviso de créditos, atualização do núcleo, conta opcional e opções avançadas (porta, rota atual, alvo do ping, reinstalar, refazer login, logs).
+- **Mudfish:** estado em 3 passos (instalar, entrar no painel, serviço ligado), chave do serviço, **Abrir painel do Mudfish**, guia de primeiro uso, aviso de créditos, atualização do núcleo (sem campos de login: o login é feito só no painel web) e opções avançadas (porta, rota atual, alvo do ping, reinstalar, refazer login, logs).
 - **Conf:** ativar ao abrir jogo (desligado por padrão), manter ligado ao reiniciar (desligado por padrão), perfis por jogo com chaves de Wi-Fi e Mudfish, idioma (PT, EN, ES) e diagnóstico.
 
 ## Mudfish: primeiro uso (só uma vez)
@@ -41,7 +41,7 @@ O Mudfish cobra por tráfego. Por isso o NoLag **sempre começa com o Mudfish de
 - A instalação segue o guia oficial do SteamOS (instalador com `sh`, serviço `mudrun-headless` sem flags) numa pasta persistente ligada em `/opt/mudfish`, e mostra o motivo exato quando algo falha.
 - O plugin só **lê** a API local (status, sessão, telemetria) e usa as rotas oficiais de iniciar e parar. Ele detecta sozinho se você já entrou no painel.
 - **Versão dinâmica:** a versão instalada vem sempre da página oficial de versões (se ela não responder, a instalação nova usa o fallback 6.6.4). A aba Mudfish mostra a versão instalada e a última detectada.
-- **Desinstalar Mudfish:** botão na aba Mudfish, com confirmação. Encerra os processos do Mudfish, apaga `/opt/mudfish`, a pasta persistente, logs e restos, e zera a conta salva no plugin. Sua conta na nuvem do Mudfish não é afetada.
+- **Desinstalar Mudfish:** botão na aba Mudfish, com confirmação. Encerra os processos do Mudfish, apaga `/opt/mudfish`, a pasta persistente, logs e restos, e zera o login e o "Manter ligado" guardados no plugin. Sua conta na nuvem do Mudfish não é afetada.
 - **Atualização do núcleo:** o NoLag consulta a página oficial de versões (no máximo a cada 6 horas) e avisa quando há núcleo novo. O botão **Atualizar** baixa, troca o binário e religa o serviço se estava ligado. Nada é instalado sem o seu toque.
 
 ## Wi-Fi (módulo independente)
