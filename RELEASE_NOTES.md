@@ -1,6 +1,6 @@
-## v0.15.0
+## v0.15.1
 
-- **Full VPN permitido:** removida a trava que encerrava o Mudfish e mostrava erro quando o Full VPN estava ativo no painel. O serviço segue ligado e a tela mostra só um aviso informativo discreto: "Modo Full VPN ativo — todo o tráfego está sendo roteado", lembrando de manter downloads em segundo plano desativados. Útil para jogos sem item na região desejada.
-- **Botão `?` na seção Mudfish (distinto do `? Ajuda` do topo):** abre, só ao tocar, um guia curto: quando usar o item do jogo, quando usar o Full VPN (apontando para o nó mais próximo, ex.: São Paulo) e a diferença entre os dois.
-- Textos novos nos 3 idiomas (`mfTipBtn`, `mfTipTitle`, `mfTipItem`, `mfTipFull`, `mfTipDiff`); `mfFullVpnWarn` e `mfWarnSplit` reescritos; chave `mfErrFullVpn` removida.
-- Novos testes: `test_mudfish_v0150.py` e `v0150.test.cjs`.
+- **Botão "Abrir painel do Mudfish" padronizado (aba Painel e aba Mudfish):** deixou o estilo genérico de pílula cinza do Decky e passou a usar o mesmo container dos demais cards do plugin (borda de 1 px, fundo translúcido, cantos de 10 px, mesma tipografia e brilho de foco do controle).
+- **Texto não se repete mais:** o título "Abrir painel do Mudfish" fica só dentro do botão, com um ícone de link externo; abaixo dele fica apenas a descrição discreta (login, itens, região e rotas em 127.0.0.1:8282).
+- Novo componente `PanelButton` em `components.tsx`, usado nas duas telas. Comportamento inalterado (abre o painel no navegador do Steam; desabilitado só com a porta 8282 fechada).
+- Só frontend. Nenhum texto novo de i18n. Novo teste: `v0151.test.cjs`.
