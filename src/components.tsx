@@ -1,7 +1,7 @@
 import { Focusable } from "@decky/ui";
 import { ReactNode, useRef, useState } from "react";
 import type { CSSProperties } from "react";
-import { FaCheck, FaChevronDown, FaChevronRight, FaCog, FaRoute, FaTachometerAlt } from "react-icons/fa";
+import { FaCheck, FaChevronDown, FaChevronRight, FaCog, FaExternalLinkAlt, FaRoute, FaTachometerAlt } from "react-icons/fa";
 
 const LINE = "rgba(255, 255, 255, 0.10)";
 const ACCENT = "#2aa7c9";
@@ -203,6 +203,50 @@ export function Collapsible(props: {
         </span>
       </Focusable>
       {!props.collapsed && <div style={{ padding: "8px 8px 4px", borderTop: `1px solid ${LINE}` }}>{props.children}</div>}
+    </div>
+  );
+}
+
+/** Botão de ação no padrão visual do plugin (mesmo container dos cards): ícone e título dentro do botão, descrição discreta abaixo. */
+export function PanelButton(props: { label: string; description?: string; disabled?: boolean; onPress: () => void }) {
+  const tap = useTap(() => {
+    if (!props.disabled) props.onPress();
+  });
+  const [focused, setFocused] = useState(false);
+  return (
+    <div style={{ width: "100%", maxWidth: "100%", boxSizing: "border-box", marginBottom: 10 }}>
+      <Focusable
+        onActivate={tap}
+        onClick={tap}
+        onGamepadFocus={() => setFocused(true)}
+        onGamepadBlur={() => setFocused(false)}
+        role="button"
+        aria-disabled={!!props.disabled}
+        style={{
+          ...BOX,
+          marginBottom: props.description ? 6 : 0,
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          padding: "12px 12px",
+          fontSize: 14,
+          fontWeight: 700,
+          userSelect: "none",
+          opacity: props.disabled ? 0.5 : 1,
+          border: focused ? FOCUS_BORDER : BOX.border,
+          boxShadow: focused ? FOCUS_GLOW : "none",
+        }}
+      >
+        <span style={{ display: "flex", flexShrink: 0, color: ACCENT }}>
+          <FaExternalLinkAlt size={14} />
+        </span>
+        <span style={{ flex: 1, minWidth: 0, overflowWrap: "anywhere" }}>{props.label}</span>
+      </Focusable>
+      {props.description ? (
+        <div style={{ fontSize: 11, lineHeight: 1.4, opacity: 0.7, padding: "0 4px", whiteSpace: "pre-line", overflowWrap: "anywhere" }}>
+          {props.description}
+        </div>
+      ) : null}
     </div>
   );
 }

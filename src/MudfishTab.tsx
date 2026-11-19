@@ -24,7 +24,7 @@ import {
   mudfishSetPingTarget,
 } from "./api";
 import { FaCog, FaFileAlt, FaPercent, FaWaveSquare } from "react-icons/fa";
-import { Box, Card, ChartLine, Collapsible, Help, LineChart, MiniCard, Ring, TipButton } from "./components";
+import { Box, Card, ChartLine, Collapsible, Help, LineChart, MiniCard, PanelButton, Ring, TipButton } from "./components";
 import type { Texts } from "./i18n";
 
 const DASH = "—";
@@ -503,15 +503,12 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
       {/* 3. Painel web: onde ficam login, itens, nós e rotas */}
       {(installed || !!status?.running) && (
         <PanelSectionRow>
-          <ButtonItem
-            layout="below"
+          <PanelButton
             label={t.mfOpenWeb}
             description={t.mfOpenWebDesc}
             disabled={!status?.port_open}
-            onClick={() => openMudfishWeb(status?.webui)}
-          >
-            {t.mfOpenWeb}
-          </ButtonItem>
+            onPress={() => openMudfishWeb(status?.webui)}
+          />
         </PanelSectionRow>
       )}
       <Help show={helpOn} text={t.hMfFlow} />

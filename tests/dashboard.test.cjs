@@ -77,7 +77,7 @@ test("a rota interna antiga não existe mais no frontend", () => {
 
 test("v0.13.0: botão Abrir painel do Mudfish existe no Painel e na aba Mudfish (mesma função)", () => {
   const dash = fs.readFileSync(path.join(__dirname, "..", "src", "DashControls.tsx"), "utf8");
-  assert.ok(dash.includes("t.mfOpenWeb") && dash.includes("openMudfishWeb") && dash.includes("!status?.port_open"));
+  assert.ok(dash.includes("t.mfOpenWeb") && dash.includes("openMudfishWeb") && dash.includes("!status?.port_open") && dash.includes("PanelButton"));
   assert.ok(fs.readFileSync(path.join(__dirname, "..", "src", "MudfishTab.tsx"), "utf8").includes("NavigateToExternalWeb"));
   assert.ok(fs.readFileSync(path.join(__dirname, "..", "src", "MudfishTab.tsx"), "utf8").includes("label={t.mfOpenWeb}"));
   const i18n = fs.readFileSync(path.join(__dirname, "..", "src", "i18n.tsx"), "utf8");
