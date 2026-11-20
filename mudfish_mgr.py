@@ -268,6 +268,21 @@ def _rtt_state(body):
     return "error", 0
 
 
+def _rtt_best(body):
+    """Menor `rttavg` (ms) entre os nós medidos de /do/rtt/*, ou None. Só entradas com sucesso e valor positivo."""
+    try:
+        obj = json.loads(body.decode("utf-8", "replace") if isinstance(body, (bytes, bytearray)) else str(body))
+    except Exception:
+        return None
+    rtts = obj.get("rtts") if isinstance(obj, dict) else None
+    if not isinstance(rtts, list):
+        return None
+    vals = [float(r["rttavg"]) for r in rtts
+            if isinstance(r, dict) and isinstance(r.get("rttavg"), (int, float)) and not isinstance(r.get("rttavg"), bool)
+            and r["rttavg"] > 0 and (r.get("success") or 0) > 0]
+    return min(vals) if vals else None
+
+
 class MudfishApi:
     """Cliente da API local (127.0.0.1:8282). Só GET, só no próprio aparelho.
 
@@ -340,9 +355,12 @@ class MudfishApi:
             try:
                 st, _ct, body = self._get(path, follow=False)
                 state, n = _rtt_state(body) if st == 200 else ("error", 0)
+                best = _rtt_best(body) if state == "ready" else None
             except Exception:
-                state, n = "error", 0
+                state, n, best = "error", 0, None
             out[key], out["n_" + key] = state, n
+            if best is not None and (out.get("best") is None or best < out["best"]):
+                out["best"] = best
         return out
 
     def netstat_recent(self, window=NET_WINDOW):
@@ -750,6 +768,11 @@ class MudfishManager:
                 live = None
             if live:
                 self.rtt = dict(self.rtt, live=True)
+                if isinstance(live.get("avg"), (int, float)):
+                    self.rtt["ms"] = int(round(live["avg"]))
+        # Sem RTT ao vivo, mostra a melhor medição entre os nós (só leitura de /do/rtt/*).
+        if "ms" not in self.rtt and isinstance(self.rtt.get("best"), (int, float)):
+            self.rtt["ms"] = int(round(self.rtt["best"]))
 
     def _start_watch(self):
         self._stop_watch()
