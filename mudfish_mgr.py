@@ -741,6 +741,15 @@ class MudfishManager:
             self.rtt = await asyncio.to_thread(self.api.rtt)
         except Exception:  # pragma: no cover - defensivo
             self.rtt = {"static": "error", "vnodes": "error", "n_static": 0, "n_vnodes": 0}
+        # /do/rtt/* pode ficar em "medindo" ou divergir entre si no 6.6.4 mesmo com o painel já mostrando o RTT em
+        # tempo real; se o pingstat (a fonte do gráfico do painel) traz dado recente, a medição está funcionando.
+        if not (self.rtt.get("static") == "ready" and self.rtt.get("vnodes") == "ready"):
+            try:
+                live = await asyncio.to_thread(self.api.pingstat)
+            except Exception:  # pragma: no cover - defensivo
+                live = None
+            if live:
+                self.rtt = dict(self.rtt, live=True)
 
     def _start_watch(self):
         self._stop_watch()
