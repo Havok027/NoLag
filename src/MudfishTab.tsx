@@ -425,7 +425,8 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
     rows.push([t.mfApiRow, status.api_ok ? t.mfApiOk : t.mfApiDown]);
     const r = status.rtt;
     if (status.api_ok && r) {
-      const st = r.static === "ready" && r.vnodes === "ready" ? t.mfRttReady : r.static === "error" && r.vnodes === "error" ? t.mfRttError : t.mfRttPending;
+      const anyReady = r.live || r.static === "ready" || r.vnodes === "ready";
+      const st = anyReady ? t.mfRttReady : r.static === "error" && r.vnodes === "error" ? t.mfRttError : t.mfRttPending;
       rows.push([t.mfRttRow, st]);
     }
   }

@@ -97,6 +97,7 @@ export interface MudfishRtt {
   vnodes: "unknown" | "pending" | "ready" | "error";
   n_static?: number;
   n_vnodes?: number;
+  live?: boolean;
 }
 
 export interface MudfishUpdate {
