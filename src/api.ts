@@ -98,6 +98,8 @@ export interface MudfishRtt {
   n_static?: number;
   n_vnodes?: number;
   live?: boolean;
+  best?: number;
+  ms?: number;
 }
 
 export interface MudfishUpdate {

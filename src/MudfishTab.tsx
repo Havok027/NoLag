@@ -427,7 +427,7 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
     if (status.api_ok && r) {
       const anyReady = r.live || r.static === "ready" || r.vnodes === "ready";
       const st = anyReady ? t.mfRttReady : r.static === "error" && r.vnodes === "error" ? t.mfRttError : t.mfRttPending;
-      rows.push([t.mfRttRow, st]);
+      rows.push([t.mfRttRow, anyReady && typeof r.ms === "number" ? `${st} · ${r.ms} ms` : st]);
     }
   }
   if (status?.phase === "error" && status.error) rows.push([t.mfBadgeError, mudfishErrorFull(t, status.error, status.detail)]);
