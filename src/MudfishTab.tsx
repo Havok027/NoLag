@@ -290,16 +290,17 @@ const avg = (xs: number[]) => (xs.length ? xs.reduce((x, y) => x + y, 0) / xs.le
 const lossText = (m: Metrics | null | undefined) => (m && typeof m.loss === "number" ? `${+m.loss.toFixed(1)} %` : DASH);
 
 /** Telemetria do Painel: só o ping atual (anel e gráfico), com jitter e perda de pacotes ao lado. */
+interface Sample {
+  base: Metrics | null;
+  tunnel: Metrics | null;
+}
+
+const hasAvg = (m: Metrics | null | undefined): m is Metrics => !!m && typeof m.avg === "number";
+
 export function LiveChart({ t, helpOn }: { t: Texts; helpOn: boolean }) {
-  const [samples, setSamples] = useState<(Metrics | null)[]>([]);
+  const [samples, setSamples] = useState<Sample[]>([]);
   const [live, setLive] = useState<MudfishLive | null>(null);
   const alive = useRef(true);
-
-  // Com o Mudfish ligado e o túnel medido, mostra o túnel; senão, a conexão normal. Nunca os dois.
-  const pick = (r: MudfishLive): { m: Metrics | null; viaMudfish: boolean } => {
-    const viaMudfish = !!r.running && !!r.tunnel && typeof r.tunnel.avg === "number";
-    return { m: (viaMudfish ? r.tunnel : r.base) ?? null, viaMudfish };
-  };
 
   useEffect(() => {
     alive.current = true;
@@ -308,7 +309,9 @@ export function LiveChart({ t, helpOn }: { t: Texts; helpOn: boolean }) {
         const r = await mudfishGetLive();
         if (!alive.current || !r || r.ok === false) return;
         setLive(r);
-        setSamples((cur) => [...cur, pick(r).m].slice(-CHART_MAX));
+        // "Com Mudfish" só existe com o serviço ligado e o túnel medido; "Sem Mudfish" é sempre a conexão normal.
+        const viaNow = !!r.running && hasAvg(r.tunnel);
+        setSamples((cur) => [...cur, { base: r.base ?? null, tunnel: viaNow ? r.tunnel : null }].slice(-CHART_MAX));
       } catch {
         /* mantém o gráfico como está */
       }
@@ -321,21 +324,25 @@ export function LiveChart({ t, helpOn }: { t: Texts; helpOn: boolean }) {
     };
   }, []);
 
-  const viaMudfish = live ? pick(live).viaMudfish : false;
+  const last = samples.length ? samples[samples.length - 1] : null;
+  const viaMudfish = !!live?.running && hasAvg(last?.tunnel);
   const color = viaMudfish ? "#3ddc84" : "#7c8cff";
-  const vals = samples.map((m) => (typeof m?.avg === "number" ? m.avg : null));
-  const pa = avg(vals.filter((v): v is number => v !== null));
-  const line: ChartLine = {
-    key: "now",
-    label: t.chartNow,
-    color,
-    dashed: false,
-    values: vals,
-    avg: pa === null ? DASH : `${pa.toFixed(0)} ms`,
-    best: false,
+  const numsOf = (pick: (s: Sample) => Metrics | null) => samples.map((x) => (hasAvg(pick(x)) ? (pick(x) as Metrics).avg : null));
+  const withVals = numsOf((x) => x.tunnel);
+  const withoutVals = numsOf((x) => x.base);
+  const avgText = (vals: (number | null)[]) => {
+    const a = avg(vals.filter((v): v is number => v !== null));
+    return a === null ? DASH : `${a.toFixed(0)} ms`;
   };
-  const now = samples.length ? samples[samples.length - 1] : null;
-  const pingNow = now && typeof now.avg === "number" ? now.avg : null;
+  const lines: ChartLine[] = [
+    { key: "without", label: t.chartWithout, color: "#9aa0a6", dashed: true, values: withoutVals, avg: avgText(withoutVals), best: false },
+  ];
+  if (withVals.some((v) => v !== null)) {
+    lines.push({ key: "with", label: t.chartWith, color: "#3ddc84", dashed: false, values: withVals, avg: avgText(withVals), best: false });
+  }
+  // Anel e mini-cartões seguem o Mudfish quando ele está medindo; senão, a conexão normal.
+  const now = viaMudfish ? last?.tunnel ?? null : last?.base ?? null;
+  const pingNow = hasAvg(now) ? now.avg : null;
 
   return (
     <>
@@ -345,18 +352,27 @@ export function LiveChart({ t, helpOn }: { t: Texts; helpOn: boolean }) {
       <Box style={{ padding: "12px 10px" }}>
         <div style={{ display: "grid", gridTemplateColumns: "112px 1fr", gap: 10, alignItems: "center" }}>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-            <Ring value={pingNow} max={200} color={color} unit="ms" sub={t.chartNow} />
+            <Ring value={pingNow} max={200} color={color} unit="ms" sub={viaMudfish ? t.chartWith : t.chartWithout} />
           </div>
           <div style={{ minWidth: 0 }}>
-            <LineChart lines={[line]} emptyText={t.chartEmpty} bestTag={t.chartBest} compact />
+            <LineChart lines={lines} emptyText={t.chartEmpty} bestTag={t.chartBest} compact />
           </div>
+        </div>
+        <div style={{ marginTop: 8 }}>
+          {lines.map((l) => (
+            <div key={l.key} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, padding: "2px 2px" }}>
+              <span style={{ width: 16, height: 0, borderTop: `3px ${l.dashed ? "dashed" : "solid"} ${l.color}`, flexShrink: 0 }} />
+              <span style={{ flex: 1, minWidth: 0, overflowWrap: "anywhere" }}>{l.label}</span>
+              <span style={{ fontWeight: 600 }}>{l.avg}</span>
+            </div>
+          ))}
         </div>
       </Box>
       <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: 8, marginBottom: 10, alignItems: "stretch" }}>
         <MiniCard icon={<FaWaveSquare size={13} />} title={`${t.connJitter} (ms)`} value={jitterText(now)} />
         <MiniCard icon={<FaPercent size={12} />} title={t.tmLoss} value={lossText(now)} />
       </div>
-      <div style={SMALL}>{viaMudfish ? t.chartSrcMudfish : t.chartSrcLocal}</div>
+      <div style={SMALL}>{viaMudfish ? `${t.chartSrcMudfish}\n${t.chartSrcLocal}` : t.chartSrcLocal}</div>
       {live?.running && live.connect === "manual" && <div style={{ ...WARN_BOX, marginBottom: 10 }}>{t.mfConnectManual}</div>}
       <Help show={helpOn} text={t.hChart} />
     </>

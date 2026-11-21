@@ -44,11 +44,11 @@ test("selo Modo Apenas Jogo aparece só com o Mudfish ativo sem VPN total", () =
   assert.ok(py.includes('"only_game": bool(running and not full_vpn)'));
 });
 
-test("gráfico ao vivo reaproveita o LineChart e mostra só o ping atual (sem comparação Com/Sem)", () => {
+test("gráfico ao vivo reaproveita o LineChart e compara Com/Sem Mudfish (v0.15.4)", () => {
   const mud = read("MudfishTab.tsx");
-  assert.ok(mud.includes("LineChart") && mud.includes("t.chartNow") && mud.includes("t.connJitter") && mud.includes("mudfishGetLive"));
-  assert.ok(!mud.includes("t.chartWith") && !mud.includes("t.chartWithout"));
-  assert.ok(mud.includes("lines={[line]}"), "uma única linha");
+  assert.ok(mud.includes("LineChart") && mud.includes("t.connJitter") && mud.includes("mudfishGetLive"));
+  assert.ok(mud.includes("t.chartWith") && mud.includes("t.chartWithout"));
+  assert.ok(mud.includes("lines={lines}"), "duas linhas");
 });
 
 test("aba Conf tem ativação ao abrir jogo e manter ligado, ambas opcionais, jogos, idioma e diagnóstico", () => {

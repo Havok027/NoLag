@@ -35,11 +35,11 @@ test("v0.13.0: botão da WebUI no Painel e na aba Mudfish, ambos pela mesma fun�
 
 test("v0.13.0: telemetria mostra só o ping atual, com a origem da medida", () => {
   const mud = read("MudfishTab.tsx");
-  assert.ok(mud.includes("t.chartSrcMudfish") && mud.includes("t.chartSrcLocal") && mud.includes("t.chartNow"));
+  assert.ok(mud.includes("t.chartSrcMudfish") && mud.includes("t.chartSrcLocal"));
   assert.ok(!/live\??\.tunnel_(idle|blocked|waiting)/.test(mud));
   const i18n = read("i18n.tsx");
   for (const k of ["chartNow", "chartSrcMudfish", "chartSrcLocal"]) assert.strictEqual(keysOf(i18n, k).length, 3, k);
-  for (const k of ["chartWith", "chartWithout", "mfAutoSel", "mfMultiPath", "hMfAutoSel", "hMfMultiPath", "mfPingBefore"]) assert.strictEqual(keysOf(i18n, k).length, 0, k);
+  for (const k of ["mfAutoSel", "mfMultiPath", "hMfAutoSel", "hMfMultiPath", "mfPingBefore"]) assert.strictEqual(keysOf(i18n, k).length, 0, k);
 });
 
 test("v0.13.0: Wi-Fi começa pelas ações rápidas e deixa o avançado por último", () => {

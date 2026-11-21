@@ -186,6 +186,8 @@ export interface Texts {
   tmLoss: string;
   chartEmpty: string;
   chartNow: string;
+  chartWith: string;
+  chartWithout: string;
   chartSrcMudfish: string;
   chartSrcLocal: string;
   chartBest: string;
@@ -417,10 +419,12 @@ export const TEXTS: Record<Lang, Texts> = {
     tmLoss: "Perda de pacotes",
     chartEmpty: "Aguardando medições…",
     chartNow: "agora",
+    chartWith: "Com Mudfish",
+    chartWithout: "Sem Mudfish",
     chartSrcMudfish: "Medido pelo túnel do Mudfish",
     chartSrcLocal: "Medido pela conexão normal (não gasta créditos)",
     chartBest: "MELHOR",
-    hChart: "Mostra só o ping atual, medido a cada 8 s, com o jitter e a perda de pacotes.\nCom o Mudfish ligado e o túnel respondendo, a medida vem do túnel; senão, vem da conexão normal e não gasta créditos.",
+    hChart: "Compara o ping a cada 8 s: Sem Mudfish (linha tracejada, conexão normal, não gasta créditos) e Com Mudfish (linha verde, medida pelo túnel, só com o serviço ligado).\nO anel, o jitter e a perda mostram o Mudfish quando ele está medindo; senão, a conexão normal.",
     mfStepInstall: "1. Instalar",
     mfStepLogin: "2. Entrar no painel",
     mfAccConnected: "Conta conectada",
@@ -646,10 +650,12 @@ export const TEXTS: Record<Lang, Texts> = {
     tmLoss: "Packet loss",
     chartEmpty: "Waiting for measurements…",
     chartNow: "now",
+    chartWith: "With Mudfish",
+    chartWithout: "Without Mudfish",
     chartSrcMudfish: "Measured through the Mudfish tunnel",
     chartSrcLocal: "Measured over the normal connection (uses no credits)",
     chartBest: "BEST",
-    hChart: "Shows only the current ping, measured every 8 s, with jitter and packet loss.\nWith Mudfish on and the tunnel answering, the reading comes from the tunnel; otherwise it comes from the normal connection and uses no credits.",
+    hChart: "Compares the ping every 8 s: Without Mudfish (dashed line, normal connection, uses no credits) and With Mudfish (green line, measured through the tunnel, only while the service is on).\nThe ring, jitter and loss show Mudfish when it is measuring; otherwise the normal connection.",
     mfStepInstall: "1. Install",
     mfStepLogin: "2. Log in on the panel",
     mfAccConnected: "Account connected",
@@ -875,10 +881,12 @@ export const TEXTS: Record<Lang, Texts> = {
     tmLoss: "Pérdida de paquetes",
     chartEmpty: "Esperando mediciones…",
     chartNow: "ahora",
+    chartWith: "Con Mudfish",
+    chartWithout: "Sin Mudfish",
     chartSrcMudfish: "Medido por el túnel de Mudfish",
     chartSrcLocal: "Medido por la conexión normal (no gasta créditos)",
     chartBest: "MEJOR",
-    hChart: "Muestra solo el ping actual, medido cada 8 s, con el jitter y la pérdida de paquetes.\nCon Mudfish encendido y el túnel respondiendo, la medida viene del túnel; si no, viene de la conexión normal y no gasta créditos.",
+    hChart: "Compara el ping cada 8 s: Sin Mudfish (línea discontinua, conexión normal, no gasta créditos) y Con Mudfish (línea verde, medida por el túnel, solo con el servicio encendido).\nEl anillo, el jitter y la pérdida muestran Mudfish cuando está midiendo; si no, la conexión normal.",
     mfStepInstall: "1. Instalar",
     mfStepLogin: "2. Entrar en el panel",
     mfAccConnected: "Cuenta conectada",
