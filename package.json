@@ -1,6 +1,6 @@
 {
   "name": "nolag",
-  "version": "0.15.3",
+  "version": "0.15.4",
   "description": "NoLag: otimização de Wi-Fi e rota por jogo com o Mudfish para o Decky Loader.",
   "type": "module",
   "scripts": {

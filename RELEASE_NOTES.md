@@ -1,4 +1,6 @@
-## v0.15.3
+## v0.15.4
 
-- **Latência dos nós agora mostra o valor em ms** na aba Mudfish (ex.: "Medida · 12 ms"). O valor é o RTT em tempo real, a mesma fonte do gráfico do painel do Mudfish; sem ele, mostra a melhor medição entre os nós (`/do/rtt/*`). Sem medida, a linha continua só com o estado.
-- Só leitura (GET local), sem custo de créditos. Sem texto novo de i18n. Novos testes: `test_mudfish_v0153.py` e `v0153.test.cjs`.
+- **Painel volta a comparar Sem Mudfish e Com Mudfish:** o gráfico mostra duas linhas, **Sem Mudfish** (tracejada cinza, conexão normal, não gasta créditos) e **Com Mudfish** (verde, medida pelo túnel, só com o serviço ligado), com a média de cada uma logo abaixo.
+- O anel, o Jitter e a Perda de pacotes mostram o Mudfish quando ele está medindo e a conexão normal quando não está; o rótulo do anel diz qual das duas é ("Com Mudfish" ou "Sem Mudfish").
+- Ajuda do gráfico e linha de origem da medida atualizadas. Textos novos nos 3 idiomas: `chartWith` e `chartWithout`.
+- Só frontend; nenhuma mudança no backend. Teste novo: `v0154.test.cjs`.
