@@ -1,6 +1,6 @@
-## v0.15.4
+## v0.15.5
 
-- **Painel volta a comparar Sem Mudfish e Com Mudfish:** o gráfico mostra duas linhas, **Sem Mudfish** (tracejada cinza, conexão normal, não gasta créditos) e **Com Mudfish** (verde, medida pelo túnel, só com o serviço ligado), com a média de cada uma logo abaixo.
-- O anel, o Jitter e a Perda de pacotes mostram o Mudfish quando ele está medindo e a conexão normal quando não está; o rótulo do anel diz qual das duas é ("Com Mudfish" ou "Sem Mudfish").
-- Ajuda do gráfico e linha de origem da medida atualizadas. Textos novos nos 3 idiomas: `chartWith` e `chartWithout`.
-- Só frontend; nenhuma mudança no backend. Teste novo: `v0154.test.cjs`.
+- **Jitter e Perda de pacotes agora comparam Sem Mudfish e Com Mudfish**, lado a lado, nos dois mini-cartões do Painel (antes mostravam só um valor).
+- **O melhor valor é marcado:** em ping (média), jitter e perda, o menor valor ganha um ✓ verde (e a etiqueta MELHOR na legenda do gráfico), só quando os dois lados foram medidos e diferem. Com o Mudfish desligado, o lado "Com" aparece como "—".
+- O anel segue o Mudfish quando ele está medindo; senão, a conexão normal. Ajuda do gráfico atualizada nos 3 idiomas.
+- Só frontend; nenhuma mudança no backend nem chave nova de i18n. Teste novo: `v0155.test.cjs`.
