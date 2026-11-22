@@ -24,7 +24,7 @@ import {
   mudfishSetPingTarget,
 } from "./api";
 import { FaCog, FaFileAlt, FaPercent, FaWaveSquare } from "react-icons/fa";
-import { Box, Card, ChartLine, Collapsible, Help, LineChart, MiniCard, PanelButton, Ring, TipButton } from "./components";
+import { Box, Card, ChartLine, Collapsible, Help, LineChart, MiniCard, MiniRow, PanelButton, Ring, TipButton } from "./components";
 import type { Texts } from "./i18n";
 
 const DASH = "—";
@@ -287,7 +287,6 @@ const PILL: CSSProperties = {
 const CHART_MAX = 30;
 const avg = (xs: number[]) => (xs.length ? xs.reduce((x, y) => x + y, 0) / xs.length : null);
 
-const lossText = (m: Metrics | null | undefined) => (m && typeof m.loss === "number" ? `${+m.loss.toFixed(1)} %` : DASH);
 
 /** Telemetria do Painel: só o ping atual (anel e gráfico), com jitter e perda de pacotes ao lado. */
 interface Sample {
@@ -334,15 +333,33 @@ export function LiveChart({ t, helpOn }: { t: Texts; helpOn: boolean }) {
     const a = avg(vals.filter((v): v is number => v !== null));
     return a === null ? DASH : `${a.toFixed(0)} ms`;
   };
+  const avgNum = (vals: (number | null)[]) => avg(vals.filter((v): v is number => v !== null));
+  const wAvg = avgNum(withVals);
+  const oAvg = avgNum(withoutVals);
+  // Menor é melhor (ping, jitter e perda); só marca quando os dois lados foram medidos e diferem.
+  const winner = (w: number | null | undefined, o: number | null | undefined): "with" | "without" | null =>
+    typeof w === "number" && typeof o === "number" && w !== o ? (w < o ? "with" : "without") : null;
+  const pingWin = winner(wAvg, oAvg);
   const lines: ChartLine[] = [
-    { key: "without", label: t.chartWithout, color: "#9aa0a6", dashed: true, values: withoutVals, avg: avgText(withoutVals), best: false },
+    { key: "without", label: t.chartWithout, color: "#9aa0a6", dashed: true, values: withoutVals, avg: avgText(withoutVals), best: pingWin === "without" },
   ];
   if (withVals.some((v) => v !== null)) {
-    lines.push({ key: "with", label: t.chartWith, color: "#3ddc84", dashed: false, values: withVals, avg: avgText(withVals), best: false });
+    lines.push({ key: "with", label: t.chartWith, color: "#3ddc84", dashed: false, values: withVals, avg: avgText(withVals), best: pingWin === "with" });
   }
-  // Anel e mini-cartões seguem o Mudfish quando ele está medindo; senão, a conexão normal.
+  // Anel segue o Mudfish quando ele está medindo; senão, a conexão normal.
   const now = viaMudfish ? last?.tunnel ?? null : last?.base ?? null;
   const pingNow = hasAvg(now) ? now.avg : null;
+  // Jitter e perda: último valor de cada lado, lado a lado.
+  const wm = viaMudfish ? last?.tunnel ?? null : null;
+  const om = last?.base ?? null;
+  const cmpRows = (w: number | null | undefined, o: number | null | undefined, fmt: (n: number) => string): MiniRow[] => {
+    const win = winner(w, o);
+    const show = (n: number | null | undefined) => (typeof n === "number" ? fmt(n) : DASH);
+    return [
+      { label: t.chartWithout, color: "#9aa0a6", value: show(o), best: win === "without" },
+      { label: t.chartWith, color: "#3ddc84", value: show(w), best: win === "with" },
+    ];
+  };
 
   return (
     <>
@@ -363,14 +380,15 @@ export function LiveChart({ t, helpOn }: { t: Texts; helpOn: boolean }) {
             <div key={l.key} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, padding: "2px 2px" }}>
               <span style={{ width: 16, height: 0, borderTop: `3px ${l.dashed ? "dashed" : "solid"} ${l.color}`, flexShrink: 0 }} />
               <span style={{ flex: 1, minWidth: 0, overflowWrap: "anywhere" }}>{l.label}</span>
+              {l.best && <span style={{ fontSize: 10, fontWeight: 800, color: "#3ddc84" }}>{t.chartBest}</span>}
               <span style={{ fontWeight: 600 }}>{l.avg}</span>
             </div>
           ))}
         </div>
       </Box>
       <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: 8, marginBottom: 10, alignItems: "stretch" }}>
-        <MiniCard icon={<FaWaveSquare size={13} />} title={`${t.connJitter} (ms)`} value={jitterText(now)} />
-        <MiniCard icon={<FaPercent size={12} />} title={t.tmLoss} value={lossText(now)} />
+        <MiniCard icon={<FaWaveSquare size={13} />} title={`${t.connJitter} (ms)`} rows={cmpRows(wm?.jitter, om?.jitter, (n) => `${n.toFixed(1)} ms`)} />
+        <MiniCard icon={<FaPercent size={12} />} title={t.tmLoss} rows={cmpRows(wm?.loss, om?.loss, (n) => `${+n.toFixed(1)} %`)} />
       </div>
       <div style={SMALL}>{viaMudfish ? `${t.chartSrcMudfish}\n${t.chartSrcLocal}` : t.chartSrcLocal}</div>
       {live?.running && live.connect === "manual" && <div style={{ ...WARN_BOX, marginBottom: 10 }}>{t.mfConnectManual}</div>}

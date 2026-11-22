@@ -476,14 +476,35 @@ export function Ring(props: { value: number | null; max: number; color: string; 
 }
 
 /** Mini-card de telemetria: ícone, valor atual e comparação Com / Sem Mudfish. */
-export function MiniCard(props: { icon: ReactNode; title: string; value: string }) {
+export interface MiniRow {
+  label: string;
+  color: string;
+  value: string;
+  best?: boolean;
+}
+
+/** Mini-cartão de métrica. Com `rows`, mostra uma linha por lado comparado (✓ marca o melhor); senão, um valor único. */
+export function MiniCard(props: { icon: ReactNode; title: string; value?: string; rows?: MiniRow[] }) {
   return (
     <div style={{ ...BOX, marginBottom: 0, padding: "10px 10px", minWidth: 0, boxSizing: "border-box", height: "100%", display: "flex", flexDirection: "column" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, opacity: 0.85, minWidth: 0, height: 16 }}>
         <span style={{ display: "flex", flexShrink: 0, width: 14, justifyContent: "center", color: ACCENT }}>{props.icon}</span>
         <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{props.title}</span>
       </div>
-      <div style={{ fontSize: 22, fontWeight: 800, lineHeight: "28px", margin: "6px 0 2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{props.value}</div>
+      {props.rows ? (
+        <div style={{ margin: "6px 0 2px" }}>
+          {props.rows.map((r) => (
+            <div key={r.label} style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0, lineHeight: "24px" }}>
+              <span style={{ width: 10, height: 0, borderTop: `3px solid ${r.color}`, flexShrink: 0 }} />
+              <span style={{ flex: 1, minWidth: 0, fontSize: 11, opacity: 0.8, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.label}</span>
+              <span style={{ fontSize: 15, fontWeight: 800, whiteSpace: "nowrap", color: r.best ? "#3ddc84" : undefined }}>{r.value}</span>
+              <span style={{ display: "flex", width: 12, flexShrink: 0, color: "#3ddc84" }}>{r.best ? <FaCheck size={11} /> : null}</span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div style={{ fontSize: 22, fontWeight: 800, lineHeight: "28px", margin: "6px 0 2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{props.value}</div>
+      )}
     </div>
   );
 }
