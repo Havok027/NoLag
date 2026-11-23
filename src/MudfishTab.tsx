@@ -23,7 +23,9 @@ import {
   mudfishSetEnabled,
   mudfishSetPingTarget,
 } from "./api";
-import { FaCog, FaFileAlt, FaPercent, FaWaveSquare } from "react-icons/fa";
+import { FaCheck, FaCog, FaFileAlt, FaPercent, FaWaveSquare } from "react-icons/fa";
+import { bestConnection, fromHistory } from "./bestConn";
+import { HistData, historyGet } from "./historyApi";
 import { HistoryExpandButton } from "./HistoryView";
 import { Box, Card, ChartLine, Collapsible, Help, LineChart, MiniCard, MiniRow, PanelButton, Ring, TipButton } from "./components";
 import type { Texts } from "./i18n";
@@ -285,6 +287,19 @@ const PILL: CSSProperties = {
   border: "1px solid #3ddc84",
 };
 
+const BEST_BADGE: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 8,
+  fontSize: 12,
+  padding: "6px 10px",
+  margin: "0 0 10px 0",
+  borderRadius: 8,
+  boxSizing: "border-box",
+  maxWidth: "100%",
+  overflowWrap: "anywhere",
+};
+
 const CHART_MAX = 30;
 const avg = (xs: number[]) => (xs.length ? xs.reduce((x, y) => x + y, 0) / xs.length : null);
 
@@ -300,10 +315,21 @@ const hasAvg = (m: Metrics | null | undefined): m is Metrics => !!m && typeof m.
 export function LiveChart({ t, helpOn }: { t: Texts; helpOn: boolean }) {
   const [samples, setSamples] = useState<Sample[]>([]);
   const [live, setLive] = useState<MudfishLive | null>(null);
+  const [hist, setHist] = useState<HistData | null>(null);
   const alive = useRef(true);
 
   useEffect(() => {
     alive.current = true;
+    const tickHist = async () => {
+      try {
+        const h = await historyGet();
+        if (alive.current && h && h.ok !== false) setHist(h);
+      } catch {
+        /* mantém o último histórico */
+      }
+    };
+    tickHist();
+    const hid = setInterval(tickHist, SNAP_MS);
     const tick = async () => {
       try {
         const r = await mudfishGetLive();
@@ -321,6 +347,7 @@ export function LiveChart({ t, helpOn }: { t: Texts; helpOn: boolean }) {
     return () => {
       alive.current = false;
       clearInterval(id);
+      clearInterval(hid);
     };
   }, []);
 
@@ -341,6 +368,14 @@ export function LiveChart({ t, helpOn }: { t: Texts; helpOn: boolean }) {
   const winner = (w: number | null | undefined, o: number | null | undefined): "with" | "without" | null =>
     typeof w === "number" && typeof o === "number" && w !== o ? (w < o ? "with" : "without") : null;
   const pingWin = winner(wAvg, oAvg);
+  // Destaque "Melhor conexão": média dos últimos 30 min do histórico; só compara com os dois lados medidos.
+  const best = hist ? bestConnection(fromHistory(hist.samples, hist.now)) : bestConnection([]);
+  const bestOn = best.state === "winner" && !!live?.running;
+  const bestText = bestOn
+    ? `${t.bestTitle}: ${best.side === "with" ? t.bestWith : t.bestWithout} · ${(best.side === "with" ? best.withAvg : best.withoutAvg)?.toFixed(0)} ms`
+    : best.state === "tie" && live?.running
+      ? `${t.bestTitle}: ${t.bestTie}`
+      : `${t.bestTitle}: ${live?.running ? t.bestWaiting : t.bestOff}`;
   const lines: ChartLine[] = [
     { key: "without", label: t.chartWithout, color: "#9aa0a6", dashed: true, values: withoutVals, avg: avgText(withoutVals), best: pingWin === "without" },
   ];
@@ -367,6 +402,19 @@ export function LiveChart({ t, helpOn }: { t: Texts; helpOn: boolean }) {
       <div style={{ fontWeight: 700, fontSize: 14, margin: "6px 0 10px" }}>{t.chartTitle}</div>
       {live?.only_game && <div style={PILL}>{t.onlyGameBadge}</div>}
       {live?.full_vpn && <div style={INFO_BOX}>{t.mfFullVpnWarn}</div>}
+      <div
+        data-best={best.state}
+        style={{
+          ...BEST_BADGE,
+          fontWeight: bestOn ? 700 : 500,
+          color: bestOn ? "#eafff3" : "rgba(255,255,255,0.65)",
+          background: bestOn ? "rgba(31, 143, 85, 0.75)" : "rgba(255,255,255,0.04)",
+          border: bestOn ? "1px solid #3ddc84" : "1px solid rgba(255,255,255,0.12)",
+        }}
+      >
+        <FaCheck size={11} style={{ flexShrink: 0, opacity: bestOn ? 1 : 0.4 }} />
+        <span style={{ minWidth: 0 }}>{bestText}</span>
+      </div>
       <Box style={{ padding: "12px 10px", position: "relative" }}>
         <HistoryExpandButton t={t} />
         <div style={{ display: "grid", gridTemplateColumns: "112px 1fr", gap: 10, alignItems: "center" }}>

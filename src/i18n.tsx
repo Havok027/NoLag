@@ -197,6 +197,12 @@ export interface Texts {
   chartSrcMudfish: string;
   chartSrcLocal: string;
   chartBest: string;
+  bestTitle: string;
+  bestWith: string;
+  bestWithout: string;
+  bestTie: string;
+  bestOff: string;
+  bestWaiting: string;
   hChart: string;
   mfStepInstall: string;
   mfStepLogin: string;
@@ -436,6 +442,12 @@ export const TEXTS: Record<Lang, Texts> = {
     chartSrcMudfish: "Medido pelo túnel do Mudfish",
     chartSrcLocal: "Medido pela conexão normal (não gasta créditos)",
     chartBest: "MELHOR",
+    bestTitle: "Melhor conexão (30 min)",
+    bestWith: "Com Mudfish",
+    bestWithout: "Sem Mudfish",
+    bestTie: "Empate técnico entre as duas",
+    bestOff: "Ligue o Mudfish para comparar",
+    bestWaiting: "Reunindo amostras…",
     hChart: "Compara o ping a cada 8 s: Sem Mudfish (linha tracejada, conexão normal, não gasta créditos) e Com Mudfish (linha verde, medida pelo túnel, só com o serviço ligado).\nO anel mostra o Mudfish quando ele está medindo; senão, a conexão normal.\nJitter e perda aparecem dos dois lados, e o ✓ marca o melhor (menor) valor.",
     mfStepInstall: "1. Instalar",
     mfStepLogin: "2. Entrar no painel",
@@ -673,6 +685,12 @@ export const TEXTS: Record<Lang, Texts> = {
     chartSrcMudfish: "Measured through the Mudfish tunnel",
     chartSrcLocal: "Measured over the normal connection (uses no credits)",
     chartBest: "BEST",
+    bestTitle: "Best connection (30 min)",
+    bestWith: "With Mudfish",
+    bestWithout: "Without Mudfish",
+    bestTie: "Too close to call",
+    bestOff: "Turn Mudfish on to compare",
+    bestWaiting: "Collecting samples…",
     hChart: "Compares the ping every 8 s: Without Mudfish (dashed line, normal connection, uses no credits) and With Mudfish (green line, measured through the tunnel, only while the service is on).\nThe ring shows Mudfish when it is measuring; otherwise the normal connection.\nJitter and loss appear for both sides, and the ✓ marks the better (lower) value.",
     mfStepInstall: "1. Install",
     mfStepLogin: "2. Log in on the panel",
@@ -910,6 +928,12 @@ export const TEXTS: Record<Lang, Texts> = {
     chartSrcMudfish: "Medido por el túnel de Mudfish",
     chartSrcLocal: "Medido por la conexión normal (no gasta créditos)",
     chartBest: "MEJOR",
+    bestTitle: "Mejor conexión (30 min)",
+    bestWith: "Con Mudfish",
+    bestWithout: "Sin Mudfish",
+    bestTie: "Empate técnico entre ambas",
+    bestOff: "Activa Mudfish para comparar",
+    bestWaiting: "Reuniendo muestras…",
     hChart: "Compara el ping cada 8 s: Sin Mudfish (línea discontinua, conexión normal, no gasta créditos) y Con Mudfish (línea verde, medida por el túnel, solo con el servicio encendido).\nEl anillo muestra Mudfish cuando está midiendo; si no, la conexión normal.\nEl jitter y la pérdida aparecen en ambos lados, y el ✓ marca el mejor valor (el menor).",
     mfStepInstall: "1. Instalar",
     mfStepLogin: "2. Entrar en el panel",
