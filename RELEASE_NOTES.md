@@ -1,5 +1,6 @@
-## v0.16.1
+## v0.16.2
 
-- **Histórico em tela cheia na escala certa:** o conteúdo era dimensionado em `vw`/`vh` e saía maior que a moldura do modal (gráficos cortados e botão de fechar fora do painel). Agora usa largura fixa em px, e os três gráficos (ping, jitter e perda) cabem inteiros.
-- **Eixo do tempo se ajusta ao histórico acumulado:** com pouco histórico (por exemplo, logo após ligar), o eixo mostra só o intervalo medido (mínimo de 2 min) com marcas de 30 s, 1 min, 2 min, 5 min ou 10 min, em vez de espremer tudo num trecho minúsculo à direita. Quando há 30 min de dados, o eixo mostra os 30 min.
-- Gráficos um pouco mais baixos e com textos maiores. Só frontend; nenhuma mudança no backend, no `build.yml` nem no i18n.
+- **Destaque "Melhor conexão" no topo do Painel:** faixa compacta acima do gráfico indica qual lado teve o melhor desempenho nos últimos 30 min do histórico (Com Mudfish ou Sem Mudfish), com a média de ping de referência.
+- **Regra de comparação:** compara a média de ping dos 30 min de histórico (mesma fonte do histórico em tela cheia, atualizada a cada 8 s) dos dois lados (mínimo de 3 amostras válidas em cada um). Se a diferença for menor que 3 ms, desempata por jitter e depois por perda; se ainda empatar, mostra "empate técnico".
+- **Sem comparação falsa:** com o Mudfish desligado, sem medição do túnel ou com poucas amostras, a faixa fica neutra ("Ligue o Mudfish para comparar" / "Reunindo amostras…").
+- Textos novos em PT, EN e ES. Só frontend; nenhuma mudança no backend nem no `build.yml`.
