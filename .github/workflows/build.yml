@@ -78,7 +78,7 @@ jobs:
       - name: Empacotar
         run: |
           V="${{ steps.ver.outputs.v }}"
-          PY="main.py wifi_mgr.py wifi_dispatcher.py mudfish_mgr.py core_state.py game_profiles.py"
+          PY="main.py wifi_mgr.py wifi_dispatcher.py mudfish_mgr.py core_state.py game_profiles.py history_mgr.py"
           for f in *.py; do
             case " $PY " in *" $f "*) ;; *) echo "Módulo $f na raiz não está na lista de empacotamento."; exit 1;; esac
           done
