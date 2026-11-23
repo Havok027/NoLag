@@ -17,6 +17,7 @@ test("v0.16.0: gráfico responde ao toque e marca o valor", () => {
   }
   assert.ok(c.includes("p.interval * 3"), "buraco quebra a linha");
   assert.ok(c.includes("aW < aO"), "menor é melhor");
+  assert.ok(c.includes("Math.max(120, p.now - first)"), "eixo X se ajusta ao histórico curto");
 });
 
 test("v0.16.0: tela cheia com ping, jitter e perda, Sem e Com, janela de 30 min e botão de fechar", () => {
@@ -27,6 +28,7 @@ test("v0.16.0: tela cheia com ping, jitter e perda, Sem e Com, janela de 30 min 
   assert.ok(v.includes("index: 0") && v.includes("index: 1") && v.includes("index: 2"));
   assert.ok(v.includes("t.chartWith") && v.includes("t.chartWithout"));
   assert.ok(v.includes("1800"));
+  assert.ok(v.includes("PAGE_WIDTH") && !/\b\d+v[wh]\b/.test(v), "tamanho em px, sem vw/vh (fora de escala no modal)");
 });
 
 test("v0.16.0: Painel só ganha o botão; módulos novos não são importados pelo código antigo além disso", () => {

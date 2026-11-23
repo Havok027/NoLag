@@ -6,6 +6,8 @@ import { HistData, historyGet } from "./historyApi";
 import type { Texts } from "./i18n";
 
 const REFRESH_MS = 10000;
+// Largura fixa em px (1280x800 lógicos): a moldura do modal é calculada antes do conteúdo, então vw/vh saem fora de escala.
+const PAGE_WIDTH = 1040;
 const FOCUS_BORDER = "1px solid rgba(124, 140, 255, 0.95)";
 const FOCUS_GLOW = "0 0 0 2px rgba(124, 140, 255, 0.35)";
 const PLAIN_BORDER = "1px solid rgba(255, 255, 255, 0.12)";
@@ -93,7 +95,7 @@ function HistoryModal({ t, closeModal }: { t: Texts; closeModal?: () => void }) 
 
   return (
     <ModalRoot closeModal={closeModal} {...({ bAllowFullSize: true } as any)}>
-      <div style={{ width: "min(94vw, 1180px)", maxHeight: "88vh", boxSizing: "border-box", display: "flex", flexDirection: "column", gap: 8 }}>
+      <div style={{ width: PAGE_WIDTH, maxWidth: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", gap: 8 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 16, fontWeight: 700 }}>{t.histTitle}</div>

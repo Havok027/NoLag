@@ -37,10 +37,10 @@ function niceMax(v: number): number {
 }
 
 const W = 1000;
-const H = 150;
+const H = 128;
 const L = 46;
 const R = 14;
-const T = 24;
+const T = 22;
 const B = 20;
 
 interface Props {
@@ -62,9 +62,12 @@ function fmt(v: number | null, m: HistMetric): string {
 
 export function HistoryChart(p: Props) {
   const ref = useRef<SVGSVGElement>(null);
-  const t0 = p.now - p.window;
-  const xOf = (t: number) => L + ((t - t0) / p.window) * (W - L - R);
-  const tOf = (x: number) => t0 + ((x - L) / (W - L - R)) * p.window;
+  // Eixo X: com pouco histórico acumulado ele se ajusta ao que existe (mínimo 2 min), até o máximo da janela (30 min).
+  const first = p.samples.length ? p.samples[0].t : p.now;
+  const span = Math.min(p.window, Math.max(120, p.now - first));
+  const t0 = p.now - span;
+  const xOf = (t: number) => L + ((t - t0) / span) * (W - L - R);
+  const tOf = (x: number) => t0 + ((x - L) / (W - L - R)) * span;
   const idx = p.metric.index;
 
   const all: number[] = [];
@@ -123,7 +126,10 @@ export function HistoryChart(p: Props) {
   };
 
   const yLabel = (v: number) => `${+v.toFixed(v < 10 ? 1 : 0)}`;
-  const ticks = [0, 10, 20, 30].filter((m) => m * 60 <= p.window);
+  const step = [30, 60, 120, 300, 600].find((st) => span / st <= 5) ?? 600;
+  const ticks: number[] = [];
+  for (let sec = 0; sec <= span; sec += step) ticks.push(sec);
+  const tickLabel = (sec: number) => (sec === 0 ? p.nowLabel : sec < 60 ? `-${sec}s` : `-${+(sec / 60).toFixed(1)}m`);
 
   return (
     <svg
@@ -143,10 +149,10 @@ export function HistoryChart(p: Props) {
         if (e.buttons > 0 || e.pointerType === "mouse") move(e);
       }}
     >
-      <text x={L} y={15} fontSize={13} fontWeight={700} fill="rgba(255,255,255,0.92)">
+      <text x={L} y={15} fontSize={14} fontWeight={700} fill="rgba(255,255,255,0.92)">
         {p.metric.title}
       </text>
-      <text x={W - R} y={15} fontSize={12} textAnchor="end">
+      <text x={W - R} y={15} fontSize={13} textAnchor="end">
         <tspan fill={COLOR_WITHOUT}>{`${p.withoutLabel} ${fmt(aO, p.metric)}${best === "b" ? " ✓" : ""}`}</tspan>
         <tspan dx={16} fill={COLOR_WITH}>{`${p.withLabel} ${fmt(aW, p.metric)}${best === "w" ? " ✓" : ""}`}</tspan>
       </text>
@@ -161,9 +167,9 @@ export function HistoryChart(p: Props) {
           </g>
         );
       })}
-      {ticks.map((m) => (
-        <text key={m} x={xOf(p.now - m * 60)} y={H - 4} fontSize={11} textAnchor={m === 0 ? "end" : "middle"} fill="rgba(255,255,255,0.6)">
-          {m === 0 ? p.nowLabel : `-${m}m`}
+      {ticks.map((sec) => (
+        <text key={sec} x={xOf(p.now - sec)} y={H - 4} fontSize={12} textAnchor={sec === 0 ? "end" : "middle"} fill="rgba(255,255,255,0.6)">
+          {tickLabel(sec)}
         </text>
       ))}
       {without.segs.map((d, i) => (
