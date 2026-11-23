@@ -1,6 +1,7 @@
-## v0.15.5
+## v0.16.0
 
-- **Jitter e Perda de pacotes agora comparam Sem Mudfish e Com Mudfish**, lado a lado, nos dois mini-cartões do Painel (antes mostravam só um valor).
-- **O melhor valor é marcado:** em ping (média), jitter e perda, o menor valor ganha um ✓ verde (e a etiqueta MELHOR na legenda do gráfico), só quando os dois lados foram medidos e diferem. Com o Mudfish desligado, o lado "Com" aparece como "—".
-- O anel segue o Mudfish quando ele está medindo; senão, a conexão normal. Ajuda do gráfico atualizada nos 3 idiomas.
-- Só frontend; nenhuma mudança no backend nem chave nova de i18n. Teste novo: `v0155.test.cjs`.
+- **Histórico em tela cheia:** novo botão (setas na diagonal) no canto superior do gráfico do Painel abre um dashboard em tela cheia com as medições dos **últimos 30 min**, **Sem Mudfish** (tracejada cinza) e **Com Mudfish** (verde), em três gráficos: **Ping**, **Jitter** e **Perda de pacotes**.
+- **Interativo:** toque ou arraste o dedo em qualquer gráfico para marcar um instante; os três gráficos mostram o marcador no mesmo momento e a barra do topo exibe a hora e os valores dos dois lados (ping, jitter e perda). Cada gráfico mostra a média de cada lado com ✓ no melhor. O histórico se atualiza sozinho a cada 10 s enquanto a tela está aberta.
+- **Histórico salvo no aparelho:** novo módulo independente `history_mgr.py` grava uma medição a cada 10 s (usando o mesmo `get_live` do Painel, só leitura) e guarda os últimos 30 min em `history.json` (0600), inclusive com o menu rápido fechado e após reiniciar o plugin. Se ele falhar, o resto do NoLag segue normalmente.
+- **Novo no `build.yml`:** `history_mgr.py` entra na lista de empacotamento (enviar o `build.yml` junto).
+- Textos novos nos 3 idiomas (`histOpen`, `histTitle`, `histHint`, `histClose`, `histEmpty`, `histPing`). Novos módulos de interface: `HistoryChart.tsx`, `HistoryView.tsx`, `historyApi.ts`. Alterações em arquivos existentes: só o botão no `MudfishTab.tsx`, o `main.py` (liga o módulo e expõe `history_get`) e as chaves de `i18n.tsx`. Testes novos: `test_history_mgr.py` e `v0160.test.cjs`.

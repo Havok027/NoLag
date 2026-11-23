@@ -31,6 +31,12 @@ except Exception as _e:  # pragma: no cover - só em ambiente quebrado
     MudfishManager = None  # type: ignore
     MUDFISH_IMPORT_ERROR = f"{type(_e).__name__}: {_e}"[:300]
     decky.logger.error(f"NoLag Mudfish: módulo não carregou: {MUDFISH_IMPORT_ERROR}")
+# O histórico de medições (tela cheia) também é independente: sem ele, só não há histórico.
+try:
+    from history_mgr import HistoryRecorder
+except Exception as _e:  # pragma: no cover
+    HistoryRecorder = None  # type: ignore
+    decky.logger.error(f"NoLag histórico: não carregou: {_e}")
 try:
     from game_profiles import GameProfiles
 except Exception as _e:  # pragma: no cover
@@ -204,6 +210,7 @@ class Plugin:
         self.wifi_task = None
         self.mudfish = MudfishManager() if MudfishManager is not None else None
         self.profiles = None
+        self.history = None
         self.modules_task = None
 
     async def get_settings(self):
@@ -247,6 +254,12 @@ class Plugin:
         if GameProfiles is not None:
             self.profiles = GameProfiles(self._detect_game, lambda: _load()["games"])
             self.profiles.start()
+        if HistoryRecorder is not None and self.mudfish is not None:
+            try:
+                self.history = HistoryRecorder(self.mudfish.get_live, _path("history.json"))
+                self.history.start()
+            except Exception as e:
+                decky.logger.error(f"NoLag histórico: falha ao iniciar: {e}")
 
     async def _detect_game(self):
         pids = await asyncio.to_thread(find_game_pids)
@@ -282,6 +295,11 @@ class Plugin:
     async def _unload(self):
         if self.modules_task is not None and not self.modules_task.done():
             self.modules_task.cancel()
+        if self.history is not None:
+            try:
+                await self.history.stop()
+            except Exception as e:
+                decky.logger.error(f"NoLag histórico: falha ao descarregar: {e}")
         if self.profiles is not None:
             try:
                 await self.profiles.stop()
@@ -487,6 +505,11 @@ class Plugin:
         return await self._mudfish_call("probe_api")
 
     # ---- Painel e perfis por jogo ----
+    async def history_get(self):
+        if self.history is None:
+            return {"ok": False, "error": "history_unavailable", "now": 0, "interval": 10, "window": 1800, "samples": []}
+        return self.history.snapshot()
+
     async def get_snapshot(self):
         """Métricas da conexão para o Painel (rota ativa, ping e estado de cada módulo)."""
         if core_state is None:
