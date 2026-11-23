@@ -24,6 +24,7 @@ import {
   mudfishSetPingTarget,
 } from "./api";
 import { FaCog, FaFileAlt, FaPercent, FaWaveSquare } from "react-icons/fa";
+import { HistoryExpandButton } from "./HistoryView";
 import { Box, Card, ChartLine, Collapsible, Help, LineChart, MiniCard, MiniRow, PanelButton, Ring, TipButton } from "./components";
 import type { Texts } from "./i18n";
 
@@ -366,7 +367,8 @@ export function LiveChart({ t, helpOn }: { t: Texts; helpOn: boolean }) {
       <div style={{ fontWeight: 700, fontSize: 14, margin: "6px 0 10px" }}>{t.chartTitle}</div>
       {live?.only_game && <div style={PILL}>{t.onlyGameBadge}</div>}
       {live?.full_vpn && <div style={INFO_BOX}>{t.mfFullVpnWarn}</div>}
-      <Box style={{ padding: "12px 10px" }}>
+      <Box style={{ padding: "12px 10px", position: "relative" }}>
+        <HistoryExpandButton t={t} />
         <div style={{ display: "grid", gridTemplateColumns: "112px 1fr", gap: 10, alignItems: "center" }}>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
             <Ring value={pingNow} max={200} color={color} unit="ms" sub={viaMudfish ? t.chartWith : t.chartWithout} />

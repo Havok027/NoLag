@@ -188,6 +188,12 @@ export interface Texts {
   chartNow: string;
   chartWith: string;
   chartWithout: string;
+  histOpen: string;
+  histTitle: string;
+  histHint: string;
+  histClose: string;
+  histEmpty: string;
+  histPing: string;
   chartSrcMudfish: string;
   chartSrcLocal: string;
   chartBest: string;
@@ -421,6 +427,12 @@ export const TEXTS: Record<Lang, Texts> = {
     chartNow: "agora",
     chartWith: "Com Mudfish",
     chartWithout: "Sem Mudfish",
+    histOpen: "Tela cheia",
+    histTitle: "Histórico · últimos 30 min",
+    histHint: "Toque ou arraste no gráfico para ver os valores.",
+    histClose: "Fechar",
+    histEmpty: "Ainda sem medidas salvas.\nO histórico é gravado a cada 10 s enquanto o plugin estiver ativo.",
+    histPing: "Ping",
     chartSrcMudfish: "Medido pelo túnel do Mudfish",
     chartSrcLocal: "Medido pela conexão normal (não gasta créditos)",
     chartBest: "MELHOR",
@@ -652,6 +664,12 @@ export const TEXTS: Record<Lang, Texts> = {
     chartNow: "now",
     chartWith: "With Mudfish",
     chartWithout: "Without Mudfish",
+    histOpen: "Full screen",
+    histTitle: "History · last 30 min",
+    histHint: "Touch or drag on a chart to see the values.",
+    histClose: "Close",
+    histEmpty: "No saved measurements yet.\nHistory is recorded every 10 s while the plugin is active.",
+    histPing: "Ping",
     chartSrcMudfish: "Measured through the Mudfish tunnel",
     chartSrcLocal: "Measured over the normal connection (uses no credits)",
     chartBest: "BEST",
@@ -883,6 +901,12 @@ export const TEXTS: Record<Lang, Texts> = {
     chartNow: "ahora",
     chartWith: "Con Mudfish",
     chartWithout: "Sin Mudfish",
+    histOpen: "Pantalla completa",
+    histTitle: "Historial · últimos 30 min",
+    histHint: "Toca o arrastra en el gráfico para ver los valores.",
+    histClose: "Cerrar",
+    histEmpty: "Aún no hay medidas guardadas.\nEl historial se graba cada 10 s mientras el plugin esté activo.",
+    histPing: "Ping",
     chartSrcMudfish: "Medido por el túnel de Mudfish",
     chartSrcLocal: "Medido por la conexión normal (no gasta créditos)",
     chartBest: "MEJOR",

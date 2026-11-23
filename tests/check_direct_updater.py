@@ -45,7 +45,7 @@ def check(path):
             for node in ast.walk(tree):
                 for dep in ([a.name.split(".")[0] for a in node.names] if isinstance(node, ast.Import) else
                             [node.module.split(".")[0]] if isinstance(node, ast.ImportFrom) and node.module and not node.level else []):
-                    if dep in ("core_state", "wifi_mgr", "wifi_dispatcher", "mudfish_mgr", "game_profiles") and dep not in mods:
+                    if dep in ("core_state", "wifi_mgr", "wifi_dispatcher", "mudfish_mgr", "game_profiles", "history_mgr") and dep not in mods:
                         fail(mod + ".py importa " + dep + ", que não está no pacote")
         if z.getinfo(NAME + "/dist/index.js").file_size == 0:
             fail("dist/index.js vazio")
