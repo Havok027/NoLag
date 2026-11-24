@@ -216,6 +216,8 @@ CHROMIUM_FLAGS = ("--ozone-platform-hint=auto", "--new-window")
 WAYLAND_SOCKETS = ("gamescope-0", "wayland-0", "wayland-1")
 RUNTIME_ROOT = "/run/user"
 X11_DIR = "/tmp/.X11-unix"
+HEAD_MAX = 200
+LAUNCH_LOG = "browser-launch.log"
 LAUNCH_WAIT = 0.5  # segundos: se o processo morrer com erro nesse prazo, o motivo vai para a tela
 _X11_SOCKET = re.compile(r"^X(\d{1,3})$")
 
@@ -1325,6 +1327,18 @@ class MudfishManager:
         self.save(cfg)
         return {"ok": True, "selected": cfg["panel_browser"]}
 
+    def _write_launch_log(self, cmd, env, code, text):
+        """Grava o comando, o ambiente gráfico usado e a saída completa do navegador que falhou (melhor esforço)."""
+        try:
+            keys = ("DISPLAY", "WAYLAND_DISPLAY", "XDG_RUNTIME_DIR", "DBUS_SESSION_BUS_ADDRESS", "HOME")
+            lines = ["comando: " + " ".join(cmd), "código de saída: %s" % code]
+            lines += ["%s=%s" % (k, env.get(k, "")) for k in keys]
+            lines += ["--- stderr ---", str(text)[-4000:]]
+            with open(os.path.join(self.runtime_dir, LAUNCH_LOG), "w", encoding="utf-8") as f:
+                f.write("\n".join(lines) + "\n")
+        except Exception:
+            pass
+
     async def open_panel_browser(self):
         """Abre o painel (127.0.0.1:8282) no navegador escolhido. `external` false = o frontend usa o navegador do Steam."""
         sel = self.load()["panel_browser"]
@@ -1359,7 +1373,10 @@ class MudfishManager:
                     text = errfile.read(20000).decode("utf-8", "replace")
                 except Exception:
                     text = ""
-                detail = _tail(text) or "código de saída %s" % code
+                # Começo da saída (onde o erro costuma estar): a notificação mostra só uma linha e corta o resto.
+                head = " | ".join([ln.strip() for ln in text.splitlines() if ln.strip()][:3])[:HEAD_MAX]
+                detail = ("%s (código %s)" % (head, code)) if head else "código de saída %s" % code
+                self._write_launch_log(cmd, env, code, text)
                 decky.logger.error(f"NoLag Mudfish: o navegador {sel} encerrou com erro ({code}): {detail}")
                 return {"ok": False, "external": False, "error": "browser_launch_failed", "detail": detail}
             return {"ok": True, "external": True}

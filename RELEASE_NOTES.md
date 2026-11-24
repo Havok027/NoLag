@@ -1,7 +1,5 @@
-## v0.16.4
+## v0.16.5
 
-- **Navegador externo no Modo Jogo (Gamescope/Wayland/Flatpak):** o plugin agora detecta a sessão gráfica ativa do usuário em vez de assumir valores fixos: socket Wayland (`gamescope-0`, `wayland-0` ou `wayland-1` em `/run/user/<uid>`), display X11 ativo (`/tmp/.X11-unix`), barramento DBus (`unix:path=/run/user/<uid>/bus`), `XDG_RUNTIME_DIR` e `HOME`. Essas variáveis também vão para `runuser -u <usuário> -- env ...`, inclusive para Flatpak.
-- **Chromium e derivados** (Chrome, Edge, Brave, Chromium, Opera, Vivaldi, nativos ou Flatpak): abrem com `--ozone-platform-hint=auto --new-window` antes da URL.
-- **Diagnóstico de falha:** se o navegador encerrar com erro nos primeiros 500 ms, o motivo (stderr) é devolvido em `browser_launch_failed` em vez de um sucesso cego.
-- **Aviso na tela:** quando o navegador externo escolhido falha, aparece um aviso com o motivo antes de abrir o painel no navegador do Steam.
-- Textos novos em PT, EN e ES. Nenhum `.py` novo na raiz; nenhuma mudança no `build.yml`.
+- **Aviso de falha do navegador externo mais útil:** o motivo (começo da saída de erro do navegador e o código de saída) agora vem primeiro no aviso, antes do texto fixo, porque a notificação do Steam mostra só uma linha.
+- **`browser-launch.log`:** quando o navegador externo falha, o plugin grava na pasta de runtime o comando usado, o ambiente gráfico (DISPLAY, WAYLAND_DISPLAY, XDG_RUNTIME_DIR, DBUS, HOME) e a saída completa do erro.
+- Nenhuma chave de texto nova; nenhum `.py` novo na raiz; nenhuma mudança no `build.yml`.
