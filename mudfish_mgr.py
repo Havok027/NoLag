@@ -35,6 +35,8 @@ import json
 import os
 import platform
 import re
+import hashlib
+import shlex
 import shutil
 import signal
 import socket
@@ -149,7 +151,7 @@ def _ver_key(v):
 def sanitize_settings(raw):
     """Só guarda o que o módulo usa. Usuário e senha de versões antigas são descartados."""
     data = {"login_done": False, "keep_on": False, "auto_on_game": False, "auto_selection": True,
-            "user": "", "password": "", "multipath": False, "panel_browser": STEAM_BROWSER, "ping_target": core_state.DEFAULT_TARGET, "ping_before": None, "ping_after": None}
+            "user": "", "password": "", "multipath": False, "panel_browser": STEAM_BROWSER, "panel_shortcut": None, "ping_target": core_state.DEFAULT_TARGET, "ping_before": None, "ping_after": None}
     if not isinstance(raw, dict):
         return data
     data["login_done"] = raw.get("login_done") is True
@@ -158,6 +160,7 @@ def sanitize_settings(raw):
     data["auto_selection"] = raw.get("auto_selection") is not False  # padrão: ligado
     data["multipath"] = raw.get("multipath") is True
     data["panel_browser"] = clean_browser(raw.get("panel_browser"))
+    data["panel_shortcut"] = clean_shortcut(raw.get("panel_shortcut"))
     for key, limit in (("user", MAX_USER), ("password", MAX_PASS)):
         v = raw.get(key)
         data[key] = v[:limit] if isinstance(v, str) and all(ch.isprintable() for ch in v) else ""
@@ -170,6 +173,37 @@ def sanitize_settings(raw):
             if ok(avg) and ok(jit) and isinstance(loss, (int, float)) and not isinstance(loss, bool):
                 data[key] = {"avg": avg, "jitter": jit, "loss": loss}
     return data
+
+def clean_shortcut(value):
+    """Atalho do Steam criado para o painel: {appid, sig} ou None."""
+    if not isinstance(value, dict):
+        return None
+    appid, sig = value.get("appid"), value.get("sig")
+    if isinstance(appid, bool) or not isinstance(appid, int) or not (0 < appid < 2 ** 32):
+        return None
+    if not isinstance(sig, str) or not re.match(r"^[0-9a-f]{8,64}$", sig):
+        return None
+    return {"appid": appid, "sig": sig}
+
+
+def is_panel_game_id(value, appid):
+    """True se o SteamGameId (appid curto ou id de 64 bits de atalho) é o do atalho do painel."""
+    try:
+        v, a = int(value), int(appid)
+    except (TypeError, ValueError):
+        return False
+    return a > 0 and v in (a, (a << 32) | 0x02000000)
+
+
+def launch_spec(argv, browser):
+    """Como o Steam deve lançar o navegador: executável, opções (com a URL fixa do painel) e pasta inicial."""
+    exe = argv[0]
+    args = list(argv[1:]) + browser_flags(browser) + [WEBUI_URL]
+    options = shlex.join(args)
+    sig = hashlib.sha1(("%s\0%s" % (exe, options)).encode("utf-8")).hexdigest()[:16]
+    return {"name": SHORTCUT_NAME, "exe": exe, "launch_options": options,
+            "start_dir": os.path.dirname(exe) or "/", "sig": sig}
+
 
 def clean_browser(value):
     """Só aceita "steam_default" ou um id do catálogo; qualquer outra coisa volta ao navegador do Steam."""
@@ -217,6 +251,7 @@ WAYLAND_SOCKETS = ("gamescope-0", "wayland-0", "wayland-1")
 RUNTIME_ROOT = "/run/user"
 X11_DIR = "/tmp/.X11-unix"
 HEAD_MAX = 200
+SHORTCUT_NAME = "NoLag - Painel Mudfish"
 LAUNCH_LOG = "browser-launch.log"
 LAUNCH_WAIT = 0.5  # segundos: se o processo morrer com erro nesse prazo, o motivo vai para a tela
 _X11_SOCKET = re.compile(r"^X(\d{1,3})$")
@@ -1338,6 +1373,41 @@ class MudfishManager:
                 f.write("\n".join(lines) + "\n")
         except Exception:
             pass
+
+    # ---------- atalho do Steam para o painel (v0.16.6) ----------
+    def panel_shortcut_appid(self):
+        sc = self.load().get("panel_shortcut")
+        return sc["appid"] if sc else 0
+
+    async def panel_launch_spec(self):
+        """O que o frontend precisa para criar/executar o atalho do navegador escolhido (detectado nesta máquina)."""
+        cfg = self.load()
+        sel = cfg["panel_browser"]
+        if sel == STEAM_BROWSER:
+            return {"ok": True, "steam": True}
+        argv = (await asyncio.to_thread(detect_browsers)).get(sel)
+        if not argv:
+            cfg["panel_browser"], cfg["panel_shortcut"] = STEAM_BROWSER, None
+            self.save(cfg)
+            return {"ok": False, "steam": False, "error": "browser_missing"}
+        spec = launch_spec(argv, sel)
+        spec.update({"ok": True, "steam": False, "saved": cfg.get("panel_shortcut")})
+        return spec
+
+    async def save_panel_shortcut(self, appid, sig):
+        sc = clean_shortcut({"appid": appid, "sig": sig})
+        if sc is None:
+            return {"ok": False, "error": "bad_shortcut"}
+        cfg = self.load()
+        cfg["panel_shortcut"] = sc
+        self.save(cfg)
+        return {"ok": True}
+
+    async def clear_panel_shortcut(self):
+        cfg = self.load()
+        cfg["panel_shortcut"] = None
+        self.save(cfg)
+        return {"ok": True}
 
     async def open_panel_browser(self):
         """Abre o painel (127.0.0.1:8282) no navegador escolhido. `external` false = o frontend usa o navegador do Steam."""

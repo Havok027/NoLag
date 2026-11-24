@@ -24,11 +24,12 @@ except Exception as _e:  # pragma: no cover - só em ambiente quebrado
 # O módulo Mudfish e o barramento compartilhado também são independentes do Wi-Fi.
 try:
     import core_state
-    from mudfish_mgr import MudfishManager
+    from mudfish_mgr import MudfishManager, is_panel_game_id
     MUDFISH_IMPORT_ERROR = ""
 except Exception as _e:  # pragma: no cover - só em ambiente quebrado
     core_state = None  # type: ignore
     MudfishManager = None  # type: ignore
+    is_panel_game_id = None  # type: ignore
     MUDFISH_IMPORT_ERROR = f"{type(_e).__name__}: {_e}"[:300]
     decky.logger.error(f"NoLag Mudfish: módulo não carregou: {MUDFISH_IMPORT_ERROR}")
 # O histórico de medições (tela cheia) também é independente: sem ele, só não há histórico.
@@ -134,8 +135,8 @@ def find_game_pids():
     return pids
 
 
-def game_id(pids):
-    """appid do Steam (SteamGameId) do primeiro processo do jogo, ou ''."""
+def game_id(pids, skip=None):
+    """appid do Steam (SteamGameId) do primeiro processo do jogo, ou ''. `skip(valor)` ignora ids (ex.: atalho do painel)."""
     for pid in pids:
         try:
             with open("/proc/%d/environ" % pid, "rb") as f:
@@ -145,7 +146,7 @@ def game_id(pids):
         for item in env.split(b"\0"):
             if item.startswith(b"SteamGameId="):
                 value = item[12:].decode("ascii", "ignore").strip()
-                if _APPID.match(value) and value != "0":
+                if _APPID.match(value) and value != "0" and not (skip and skip(value)):
                     return value
                 break
     return ""
@@ -265,7 +266,10 @@ class Plugin:
         pids = await asyncio.to_thread(find_game_pids)
         if not pids:
             return "", ""
-        appid = await asyncio.to_thread(game_id, pids)
+        # O atalho do painel do Mudfish (v0.16.6) não é jogo: abrir ou fechar o navegador não liga nem desliga nada.
+        panel = self.mudfish.panel_shortcut_appid() if self.mudfish is not None else 0
+        skip = (lambda v: is_panel_game_id(v, panel)) if panel else None
+        appid = await asyncio.to_thread(game_id, pids, skip)
         if not appid:
             return "", ""
         name = _load()["games"].get(appid, {}).get("name", "")
@@ -497,6 +501,15 @@ class Plugin:
 
     async def mudfish_set_panel_browser(self, value):
         return await self._mudfish_call("set_panel_browser", value)
+
+    async def mudfish_panel_launch_spec(self):
+        return await self._mudfish_call("panel_launch_spec")
+
+    async def mudfish_save_panel_shortcut(self, appid, sig):
+        return await self._mudfish_call("save_panel_shortcut", appid, sig)
+
+    async def mudfish_clear_panel_shortcut(self):
+        return await self._mudfish_call("clear_panel_shortcut")
 
     async def mudfish_open_panel_browser(self):
         return await self._mudfish_call("open_panel_browser")
