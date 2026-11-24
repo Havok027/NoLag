@@ -124,6 +124,12 @@ class LaunchDiagnosticTests(unittest.TestCase):
         self.assertFalse(r["ok"])
         self.assertEqual(r["error"], "browser_launch_failed")
         self.assertIn("Cannot open display", r["detail"])
+        self.assertTrue(r["detail"].startswith("Authorization required"), "começo da saída primeiro")
+        log = open(os.path.join(self.tmp.name, mudfish_mgr.LAUNCH_LOG), encoding="utf-8").read()
+        self.assertIn("comando: ", log)
+        self.assertIn("código de saída: 1", log)
+        self.assertIn("DISPLAY=", log)
+        self.assertIn("Cannot open display", log)
         self.assertFalse(r["external"])
 
     def test_early_exit_without_stderr_reports_code(self):

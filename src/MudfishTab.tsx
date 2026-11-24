@@ -238,7 +238,7 @@ async function warnBrowserFailed(detail?: string) {
   try {
     const s = await getSettings();
     const t = TEXTS[normalizeLang(s?.language)];
-    toaster.toast({ title: t.mfBrowserFailTitle, body: detail ? `${t.mfBrowserFailBody}\n${detail}` : t.mfBrowserFailBody, duration: 10000 });
+    toaster.toast({ title: t.mfBrowserFailTitle, body: detail ? `${detail}\n${t.mfBrowserFailBody}` : t.mfBrowserFailBody, duration: 10000 });
   } catch {
     /* sem aviso na tela: o navegador do Steam abre do mesmo jeito */
   }
