@@ -35,3 +35,13 @@ test("v0.16.3: i18n com as 3 chaves nos 3 idiomas", () => {
   const i = read("i18n.tsx");
   for (const k of ["confBrowser", "confBrowserSteam", "hConfBrowser"]) assert.equal(i.split(`${k}:`).length - 1, 4, k);
 });
+
+test("v0.16.3: textos do i18n novos não têm aspas duplas sem escape (quebrariam o build)", () => {
+  const i = read("i18n.tsx");
+  const lines = i.split("\n").filter((l) => /^\s*(confBrowser|confBrowserSteam|hConfBrowser):\s*"/.test(l));
+  assert.equal(lines.length, 9);
+  for (const l of lines) {
+    const body = l.replace(/^\s*\w+:\s*"/, "").replace(/",\s*$/, "");
+    assert.ok(!/(^|[^\\])"/.test(body), l.slice(0, 60));
+  }
+});
