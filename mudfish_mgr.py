@@ -38,6 +38,7 @@ import re
 import shutil
 import signal
 import socket
+import subprocess
 import time
 import urllib.error
 import urllib.request
@@ -108,6 +109,22 @@ _SRC_RX = re.compile(r"""(?:src|href)=["']([^"'#?]+\.(?:js|json))["']""", re.I)
 _API_RX = re.compile(r"""["'](/[A-Za-z0-9_\-./]{2,80})["']""")
 _API_WORDS = ("api", "json", "node", "fast", "status", "login", "item", "route", "config", "log")
 
+# v0.16.3: navegador usado pelo botão "Abrir painel do Mudfish". "steam_default" = navegador interno do Steam (feito no frontend).
+STEAM_BROWSER = "steam_default"
+# id -> (nome, apps Flatpak, binários nativos). Só o que for encontrado no aparelho aparece na lista.
+BROWSERS = {
+    "chrome": ("Google Chrome", ("com.google.Chrome",), ("google-chrome-stable", "google-chrome")),
+    "firefox": ("Mozilla Firefox", ("org.mozilla.firefox",), ("firefox",)),
+    "edge": ("Microsoft Edge", ("com.microsoft.Edge",), ("microsoft-edge-stable", "microsoft-edge")),
+    "brave": ("Brave", ("com.brave.Browser",), ("brave", "brave-browser")),
+    "chromium": ("Chromium", ("org.chromium.Chromium",), ("chromium", "chromium-browser")),
+    "opera": ("Opera", ("com.opera.Opera",), ("opera",)),
+    "vivaldi": ("Vivaldi", ("com.vivaldi.Vivaldi",), ("vivaldi-stable", "vivaldi")),
+}
+FLATPAK_EXPORTS = ("/var/lib/flatpak/exports/share/applications", "~/.local/share/flatpak/exports/share/applications")
+BIN_DIRS = ("/usr/bin", "/usr/local/bin", "/var/lib/flatpak/exports/bin")
+_BROWSER_ID = re.compile(r"^[a-z0-9_]{1,24}$")
+
 
 def _tail(text, limit=DETAIL_MAX):
     """Final de uma saída de comando em uma linha só, para mostrar na tela."""
@@ -131,7 +148,7 @@ def _ver_key(v):
 def sanitize_settings(raw):
     """Só guarda o que o módulo usa. Usuário e senha de versões antigas são descartados."""
     data = {"login_done": False, "keep_on": False, "auto_on_game": False, "auto_selection": True,
-            "user": "", "password": "", "multipath": False, "ping_target": core_state.DEFAULT_TARGET, "ping_before": None, "ping_after": None}
+            "user": "", "password": "", "multipath": False, "panel_browser": STEAM_BROWSER, "ping_target": core_state.DEFAULT_TARGET, "ping_before": None, "ping_after": None}
     if not isinstance(raw, dict):
         return data
     data["login_done"] = raw.get("login_done") is True
@@ -139,6 +156,7 @@ def sanitize_settings(raw):
     data["auto_on_game"] = raw.get("auto_on_game") is True
     data["auto_selection"] = raw.get("auto_selection") is not False  # padrão: ligado
     data["multipath"] = raw.get("multipath") is True
+    data["panel_browser"] = clean_browser(raw.get("panel_browser"))
     for key, limit in (("user", MAX_USER), ("password", MAX_PASS)):
         v = raw.get(key)
         data[key] = v[:limit] if isinstance(v, str) and all(ch.isprintable() for ch in v) else ""
@@ -151,6 +169,58 @@ def sanitize_settings(raw):
             if ok(avg) and ok(jit) and isinstance(loss, (int, float)) and not isinstance(loss, bool):
                 data[key] = {"avg": avg, "jitter": jit, "loss": loss}
     return data
+
+def clean_browser(value):
+    """Só aceita "steam_default" ou um id do catálogo; qualquer outra coisa volta ao navegador do Steam."""
+    if isinstance(value, str) and _BROWSER_ID.match(value) and (value in BROWSERS):
+        return value
+    return STEAM_BROWSER
+
+
+def _home():
+    return getattr(decky, "DECKY_USER_HOME", None) or os.path.expanduser("~")
+
+
+def detect_browsers(exports=None, bin_dirs=None, path_env=None, home=None):
+    """Navegadores instalados: {id: argv_base}. Flatpak (arquivos .desktop exportados) e binários no PATH."""
+    home = home or _home()
+    exports = [e.replace("~", home, 1) if e.startswith("~") else e for e in (FLATPAK_EXPORTS if exports is None else exports)]
+    dirs = list(BIN_DIRS if bin_dirs is None else bin_dirs)
+    env_path = os.environ.get("PATH", "") if path_env is None else path_env
+    search = os.pathsep.join([d for d in dirs if d] + ([env_path] if env_path else []))
+    found = {}
+    for bid, (_name, flatpaks, bins) in BROWSERS.items():
+        exe = next((w for w in (shutil.which(b, path=search) for b in bins) if w), None)
+        if exe:
+            found[bid] = [exe]
+            continue
+        for app in flatpaks:
+            if any(os.path.isfile(os.path.join(d, app + ".desktop")) for d in exports):
+                flatpak = shutil.which("flatpak", path=search)
+                if flatpak:
+                    found[bid] = [flatpak, "run", app]
+                break
+    return found
+
+
+def list_browsers(**kw):
+    """Lista limpa: o navegador do Steam sempre primeiro, depois só os encontrados."""
+    found = detect_browsers(**kw)
+    return [{"id": STEAM_BROWSER, "name": "Steam"}] + [{"id": b, "name": BROWSERS[b][0]} for b in BROWSERS if b in found]
+
+
+def browser_command(argv, url=WEBUI_URL, user=None, uid=None, is_root=None):
+    """Comando final e ambiente para abrir o navegador na sessão gráfica ativa (Modo Jogo roda o plugin como root)."""
+    env = dict(os.environ)
+    env.setdefault("DISPLAY", ":0")
+    if uid is not None:
+        env.setdefault("XDG_RUNTIME_DIR", "/run/user/%d" % uid)
+    cmd = list(argv) + [url]
+    root = (os.geteuid() == 0) if is_root is None else is_root
+    if root and user and user != "root" and shutil.which("runuser"):
+        keep = ["%s=%s" % (k, env[k]) for k in ("DISPLAY", "WAYLAND_DISPLAY", "XDG_RUNTIME_DIR") if env.get(k)]
+        cmd = ["runuser", "-u", user, "--", "env"] + keep + cmd
+    return cmd, env
 
 
 def _lines_tail(text, count=12, width=160):
@@ -1183,6 +1253,52 @@ class MudfishManager:
         cfg["ping_before"], cfg["ping_after"] = None, None
         self.save(cfg)
         return {"ok": True, "target": cfg["ping_target"]}
+
+    # ---------- navegador do painel (v0.16.3) ----------
+    async def list_browsers(self):
+        """Navegadores detectados e a escolha efetiva (volta ao do Steam se o salvo foi desinstalado)."""
+        items = await asyncio.to_thread(list_browsers)
+        ids = {i["id"] for i in items}
+        cfg = self.load()
+        sel = cfg["panel_browser"] if cfg["panel_browser"] in ids else STEAM_BROWSER
+        if sel != cfg["panel_browser"]:
+            cfg["panel_browser"] = sel
+            self.save(cfg)
+        return {"ok": True, "browsers": items, "selected": sel}
+
+    async def set_panel_browser(self, value):
+        cfg = self.load()
+        cfg["panel_browser"] = clean_browser(value)
+        self.save(cfg)
+        return {"ok": True, "selected": cfg["panel_browser"]}
+
+    async def open_panel_browser(self):
+        """Abre o painel (127.0.0.1:8282) no navegador escolhido. `external` false = o frontend usa o navegador do Steam."""
+        sel = self.load()["panel_browser"]
+        if sel == STEAM_BROWSER:
+            return {"ok": True, "external": False}
+        argv = (await asyncio.to_thread(detect_browsers)).get(sel)
+        if not argv:
+            cfg = self.load()
+            cfg["panel_browser"] = STEAM_BROWSER
+            self.save(cfg)
+            return {"ok": False, "external": False, "error": "browser_missing"}
+        try:
+            uid = None
+            user = getattr(decky, "DECKY_USER", None)
+            if user:
+                try:
+                    import pwd
+                    uid = pwd.getpwnam(user).pw_uid
+                except Exception:
+                    uid = None
+            cmd, env = browser_command(argv, WEBUI_URL, user=user, uid=uid)
+            subprocess.Popen(cmd, env=env, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                             start_new_session=True, close_fds=True)
+            return {"ok": True, "external": True}
+        except Exception as e:
+            decky.logger.error(f"NoLag Mudfish: não abriu o navegador {sel}: {e}")
+            return {"ok": False, "external": False, "error": "browser_launch_failed", "detail": _err(e)}
 
     # ---------- rota e ping ----------
     async def get_route(self):

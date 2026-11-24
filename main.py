@@ -492,6 +492,15 @@ class Plugin:
     async def mudfish_set_ping_target(self, target):
         return await self._mudfish_call("set_ping_target", target)
 
+    async def mudfish_list_browsers(self):
+        return await self._mudfish_call("list_browsers")
+
+    async def mudfish_set_panel_browser(self, value):
+        return await self._mudfish_call("set_panel_browser", value)
+
+    async def mudfish_open_panel_browser(self):
+        return await self._mudfish_call("open_panel_browser")
+
     async def mudfish_get_route(self):
         return await self._mudfish_call("get_route")
 
