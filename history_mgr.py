@@ -147,6 +147,14 @@ class HistoryRecorder:
                 pass
         await asyncio.to_thread(self.flush)
 
+    # ---------- reinício ----------
+    def reset(self):
+        """Apaga todas as amostras (memória e arquivo) e recomeça a métrica a partir de agora."""
+        self.samples = []
+        self._dirty = True
+        self.flush()
+        return self.snapshot()
+
     # ---------- leitura para a tela ----------
     def snapshot(self):
         now = int(self.clock())

@@ -527,6 +527,11 @@ class Plugin:
         return await self._mudfish_call("probe_api")
 
     # ---- Painel e perfis por jogo ----
+    async def history_reset(self):
+        if self.history is None:
+            return {"ok": False, "error": "history_unavailable", "now": 0, "interval": 10, "window": 1800, "samples": []}
+        return await asyncio.to_thread(self.history.reset)
+
     async def history_get(self):
         if self.history is None:
             return {"ok": False, "error": "history_unavailable", "now": 0, "interval": 10, "window": 1800, "samples": []}

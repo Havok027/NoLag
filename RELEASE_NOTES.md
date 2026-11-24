@@ -1,6 +1,5 @@
-## v0.16.7
+## v0.16.8
 
-- **Navegador do painel em tela cheia:** o atalho "NoLag - Painel Mudfish" agora abre o navegador escolhido já em tela cheia no Modo Jogo. As opções são montadas conforme o navegador detectado (Flatpak ou nativo): Firefox e derivados usam `--kiosk`; Chrome, Chromium, Edge, Brave, Opera e Vivaldi usam `--start-fullscreen` e `--window-size=1280,800` (mantendo `--ozone-platform-hint=auto`); navegador desconhecido recebe só a URL, sem flags que possam quebrar a execução.
-- O atalho já criado é atualizado sozinho na próxima abertura (as opções mudaram, então a assinatura muda), sem duplicar.
-- **Layout de controle "Navegação Web":** ao criar o atalho, o plugin tenta aplicar o template de navegação web do Steam Deck. É melhor esforço: se a API do Steam não existir ou falhar, o navegador abre normalmente, sem aviso.
-- Nenhum texto novo; nenhum `.py` novo na raiz; nenhuma mudança no `build.yml`.
+- **Botão Reiniciar no histórico em tela cheia:** apaga as medições salvas (memória e `history.json`) e recomeça os gráficos de ping, jitter e perda a partir do momento atual. A gravação continua normalmente a cada 10 s.
+- A faixa "Melhor conexão (30 min)" do Painel usa o mesmo histórico, então também recomeça (volta a "aguardando dados" até haver medidas suficientes).
+- Texto novo (`histReset`) nos 3 idiomas; nenhum `.py` novo na raiz; nenhuma mudança no `build.yml`.
