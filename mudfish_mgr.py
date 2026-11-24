@@ -39,6 +39,7 @@ import shutil
 import signal
 import socket
 import subprocess
+import tempfile
 import time
 import urllib.error
 import urllib.request
@@ -209,16 +210,68 @@ def list_browsers(**kw):
     return [{"id": STEAM_BROWSER, "name": "Steam"}] + [{"id": b, "name": BROWSERS[b][0]} for b in BROWSERS if b in found]
 
 
-def browser_command(argv, url=WEBUI_URL, user=None, uid=None, is_root=None):
+# v0.16.4: navegadores Chromium (e Flatpaks deles) precisam de flags para abrir direto no compositor do Gamescope.
+CHROMIUM_IDS = ("chrome", "edge", "brave", "chromium", "opera", "vivaldi")
+CHROMIUM_FLAGS = ("--ozone-platform-hint=auto", "--new-window")
+WAYLAND_SOCKETS = ("gamescope-0", "wayland-0", "wayland-1")
+RUNTIME_ROOT = "/run/user"
+X11_DIR = "/tmp/.X11-unix"
+LAUNCH_WAIT = 0.5  # segundos: se o processo morrer com erro nesse prazo, o motivo vai para a tela
+_X11_SOCKET = re.compile(r"^X(\d{1,3})$")
+
+
+def detect_wayland(runtime_dir):
+    """Primeiro socket Wayland existente em /run/user/<uid> (gamescope-0, wayland-0, wayland-1) ou ''."""
+    for name in WAYLAND_SOCKETS:
+        if os.path.exists(os.path.join(runtime_dir, name)):
+            return name
+    return ""
+
+
+def detect_x_display(x11_dir=X11_DIR):
+    """Primeiro display X11 com socket ativo em /tmp/.X11-unix (X0 -> ':0', X1 -> ':1') ou ''."""
+    try:
+        nums = sorted(int(m.group(1)) for m in (_X11_SOCKET.match(n) for n in os.listdir(x11_dir)) if m)
+    except OSError:
+        return ""
+    return ":%d" % nums[0] if nums else ""
+
+
+def session_env(uid=None, home=None, runtime_root=RUNTIME_ROOT, x11_dir=X11_DIR, environ=None):
+    """Variáveis da sessão gráfica do usuário (Gamescope/Wayland/XWayland/DBus), detectadas em vez de fixas."""
+    base = os.environ if environ is None else environ
+    env = {}
+    if uid is not None:
+        runtime = os.path.join(runtime_root, str(uid))
+        env["XDG_RUNTIME_DIR"] = runtime
+        wayland = detect_wayland(runtime)
+        if wayland:
+            env["WAYLAND_DISPLAY"] = wayland
+        env["DBUS_SESSION_BUS_ADDRESS"] = "unix:path=%s/bus" % runtime
+    elif base.get("XDG_RUNTIME_DIR"):
+        env["XDG_RUNTIME_DIR"] = base["XDG_RUNTIME_DIR"]
+    if home:
+        env["HOME"] = home
+    display = detect_x_display(x11_dir) or base.get("DISPLAY") or ":0"
+    env["DISPLAY"] = display
+    return env
+
+
+def browser_flags(browser):
+    """Flags extras antes da URL: só para Chromium e derivados."""
+    return list(CHROMIUM_FLAGS) if browser in CHROMIUM_IDS else []
+
+
+def browser_command(argv, url=WEBUI_URL, user=None, uid=None, is_root=None, browser=None, home=None,
+                    runtime_root=RUNTIME_ROOT, x11_dir=X11_DIR):
     """Comando final e ambiente para abrir o navegador na sessão gráfica ativa (Modo Jogo roda o plugin como root)."""
     env = dict(os.environ)
-    env.setdefault("DISPLAY", ":0")
-    if uid is not None:
-        env.setdefault("XDG_RUNTIME_DIR", "/run/user/%d" % uid)
-    cmd = list(argv) + [url]
+    env.update(session_env(uid, home, runtime_root, x11_dir, environ=os.environ))
+    cmd = list(argv) + browser_flags(browser) + [url]
     root = (os.geteuid() == 0) if is_root is None else is_root
     if root and user and user != "root" and shutil.which("runuser"):
-        keep = ["%s=%s" % (k, env[k]) for k in ("DISPLAY", "WAYLAND_DISPLAY", "XDG_RUNTIME_DIR") if env.get(k)]
+        keys = ("DISPLAY", "WAYLAND_DISPLAY", "XDG_RUNTIME_DIR", "DBUS_SESSION_BUS_ADDRESS", "HOME")
+        keep = ["%s=%s" % (k, env[k]) for k in keys if env.get(k)]
         cmd = ["runuser", "-u", user, "--", "env"] + keep + cmd
     return cmd, env
 
@@ -1283,6 +1336,7 @@ class MudfishManager:
             cfg["panel_browser"] = STEAM_BROWSER
             self.save(cfg)
             return {"ok": False, "external": False, "error": "browser_missing"}
+        errfile = None
         try:
             uid = None
             user = getattr(decky, "DECKY_USER", None)
@@ -1292,13 +1346,32 @@ class MudfishManager:
                     uid = pwd.getpwnam(user).pw_uid
                 except Exception:
                     uid = None
-            cmd, env = browser_command(argv, WEBUI_URL, user=user, uid=uid)
-            subprocess.Popen(cmd, env=env, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                             start_new_session=True, close_fds=True)
+            cmd, env = browser_command(argv, WEBUI_URL, user=user, uid=uid, browser=sel, home=_home())
+            # stderr vai para um arquivo temporário (não para um pipe): se o navegador continuar rodando, nada trava.
+            errfile = tempfile.TemporaryFile()
+            proc = subprocess.Popen(cmd, env=env, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=errfile,
+                                    start_new_session=True, close_fds=True)
+            await asyncio.sleep(LAUNCH_WAIT)
+            code = proc.poll()
+            if code is not None and code != 0:
+                try:
+                    errfile.seek(0)
+                    text = errfile.read(20000).decode("utf-8", "replace")
+                except Exception:
+                    text = ""
+                detail = _tail(text) or "código de saída %s" % code
+                decky.logger.error(f"NoLag Mudfish: o navegador {sel} encerrou com erro ({code}): {detail}")
+                return {"ok": False, "external": False, "error": "browser_launch_failed", "detail": detail}
             return {"ok": True, "external": True}
         except Exception as e:
             decky.logger.error(f"NoLag Mudfish: não abriu o navegador {sel}: {e}")
             return {"ok": False, "external": False, "error": "browser_launch_failed", "detail": _err(e)}
+        finally:
+            if errfile is not None:
+                try:
+                    errfile.close()
+                except Exception:
+                    pass
 
     # ---------- rota e ping ----------
     async def get_route(self):
