@@ -197,6 +197,7 @@ export interface Texts {
   histTitle: string;
   histHint: string;
   histClose: string;
+  histReset: string;
   histEmpty: string;
   histPing: string;
   chartSrcMudfish: string;
@@ -447,6 +448,7 @@ export const TEXTS: Record<Lang, Texts> = {
     histTitle: "Histórico · últimos 30 min",
     histHint: "Toque ou arraste no gráfico para ver os valores.",
     histClose: "Fechar",
+    histReset: "Reiniciar",
     histEmpty: "Ainda sem medidas salvas.\nO histórico é gravado a cada 10 s enquanto o plugin estiver ativo.",
     histPing: "Ping",
     chartSrcMudfish: "Medido pelo túnel do Mudfish",
@@ -695,6 +697,7 @@ export const TEXTS: Record<Lang, Texts> = {
     histTitle: "History · last 30 min",
     histHint: "Touch or drag on a chart to see the values.",
     histClose: "Close",
+    histReset: "Reset",
     histEmpty: "No saved measurements yet.\nHistory is recorded every 10 s while the plugin is active.",
     histPing: "Ping",
     chartSrcMudfish: "Measured through the Mudfish tunnel",
@@ -943,6 +946,7 @@ export const TEXTS: Record<Lang, Texts> = {
     histTitle: "Historial · últimos 30 min",
     histHint: "Toca o arrastra en el gráfico para ver los valores.",
     histClose: "Cerrar",
+    histReset: "Reiniciar",
     histEmpty: "Aún no hay medidas guardadas.\nEl historial se graba cada 10 s mientras el plugin esté activo.",
     histPing: "Ping",
     chartSrcMudfish: "Medido por el túnel de Mudfish",

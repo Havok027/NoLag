@@ -1,8 +1,8 @@
 import { Focusable, ModalRoot, Navigation, showModal } from "@decky/ui";
 import { CSSProperties, ReactNode, useEffect, useRef, useState } from "react";
-import { FaExpandAlt, FaTimes } from "react-icons/fa";
+import { FaExpandAlt, FaRedoAlt, FaTimes } from "react-icons/fa";
 import { COLOR_WITH, COLOR_WITHOUT, HistMetric, HistoryChart, Side, nearestSample, valueOf } from "./HistoryChart";
-import { HistData, historyGet } from "./historyApi";
+import { HistData, historyGet, historyReset } from "./historyApi";
 import type { Texts } from "./i18n";
 
 const REFRESH_MS = 10000;
@@ -81,6 +81,18 @@ function HistoryModal({ t, closeModal }: { t: Texts; closeModal?: () => void }) 
     };
   }, []);
 
+  const reset = async () => {
+    try {
+      const r = await historyReset();
+      if (r) {
+        setData(r);
+        setCursorT(null);
+      }
+    } catch {
+      /* mantém o que já está na tela */
+    }
+  };
+
   const samples = data?.samples ?? [];
   const metrics: HistMetric[] = [
     { index: 0, title: `${t.histPing} (ms)`, unit: "ms", decimals: 0, floor: 10 },
@@ -101,6 +113,10 @@ function HistoryModal({ t, closeModal }: { t: Texts; closeModal?: () => void }) 
             <div style={{ fontSize: 16, fontWeight: 700 }}>{t.histTitle}</div>
             <div style={{ fontSize: 11, opacity: 0.7 }}>{t.histHint}</div>
           </div>
+          <IconButton label={t.histReset} onPress={reset} style={{ width: "auto", padding: "0 10px", gap: 6 }}>
+            <FaRedoAlt size={12} />
+            <span style={{ fontSize: 12, fontWeight: 700 }}>{t.histReset}</span>
+          </IconButton>
           <IconButton label={t.histClose} onPress={() => closeModal?.()}>
             <FaTimes size={14} />
           </IconButton>

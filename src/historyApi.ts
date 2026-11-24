@@ -20,3 +20,5 @@ export interface HistData {
 }
 
 export const historyGet = callable<[], HistData>("history_get");
+/** v0.16.8: apaga o histórico e devolve o estado já vazio (a métrica recomeça de agora). */
+export const historyReset = callable<[], HistData>("history_reset");
