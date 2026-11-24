@@ -195,10 +195,41 @@ def is_panel_game_id(value, appid):
     return a > 0 and v in (a, (a << 32) | 0x02000000)
 
 
+# v0.16.7: tela cheia dinâmica por família de navegador (o atalho do Steam abria em janela pequena no Gamescope).
+GECKO_HINTS = ("firefox", "librewolf", "waterfox", "floorp", "zen")
+CHROMIUM_HINTS = ("chrome", "chromium", "edge", "brave", "opera", "vivaldi", "thorium")
+CHROMIUM_FULLSCREEN = ("--start-fullscreen", "--window-size=1280,800")
+GECKO_FULLSCREEN = ("--kiosk",)
+
+
+def browser_family(browser, argv=None):
+    """'gecko', 'chromium' ou '' (desconhecido): pelo id do catálogo e, se preciso, pelo executável/app id do comando."""
+    if browser in CHROMIUM_IDS:
+        return "chromium"
+    if browser == "firefox":
+        return "gecko"
+    text = " ".join(str(a) for a in (argv or [])).lower()
+    if any(h in text for h in GECKO_HINTS):
+        return "gecko"
+    if any(h in text for h in CHROMIUM_HINTS):
+        return "chromium"
+    return ""
+
+
+def fullscreen_flags(browser, argv=None):
+    """Flags de tela cheia antes da URL. Desconhecido: nenhuma flag (só a URL), para não quebrar a execução."""
+    family = browser_family(browser, argv)
+    if family == "gecko":
+        return list(GECKO_FULLSCREEN)
+    if family == "chromium":
+        return list(CHROMIUM_FLAGS) + list(CHROMIUM_FULLSCREEN)
+    return []
+
+
 def launch_spec(argv, browser):
     """Como o Steam deve lançar o navegador: executável, opções (com a URL fixa do painel) e pasta inicial."""
     exe = argv[0]
-    args = list(argv[1:]) + browser_flags(browser) + [WEBUI_URL]
+    args = list(argv[1:]) + fullscreen_flags(browser, argv) + [WEBUI_URL]
     options = shlex.join(args)
     sig = hashlib.sha1(("%s\0%s" % (exe, options)).encode("utf-8")).hexdigest()[:16]
     return {"name": SHORTCUT_NAME, "exe": exe, "launch_options": options,

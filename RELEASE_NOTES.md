@@ -1,7 +1,6 @@
-## v0.16.6
+## v0.16.7
 
-- **Navegador externo pelo Steam:** o Firefox/Chrome lançado direto pelo plugin caía no sandbox (EPERM) no Modo Jogo. Agora, com um navegador escolhido na Conf, o plugin cria um atalho do Steam ("NoLag - Painel Mudfish") para ele, com a URL `127.0.0.1:8282`, e o executa pelo Steam, dentro da sessão de jogo, como qualquer atalho não-Steam. A lista de navegadores continua vindo dos que estão instalados no aparelho (Flatpak ou nativo), e o atalho usa o executável e as opções do navegador detectado.
-- O atalho é criado na primeira vez e reaproveitado depois. Se você trocar de navegador (ou o atalho for apagado), o antigo é removido e um novo é criado.
-- O atalho do painel não conta como jogo: abrir ou fechar o navegador não liga nem desliga o Mudfish nem o Wi-Fi.
-- Se o Steam recusar criar ou executar o atalho, o aviso mostra o motivo e o painel abre no navegador do Steam.
-- O navegador do Steam (padrão) continua igual. Nenhum texto novo; nenhum `.py` novo na raiz; nenhuma mudança no `build.yml`.
+- **Navegador do painel em tela cheia:** o atalho "NoLag - Painel Mudfish" agora abre o navegador escolhido já em tela cheia no Modo Jogo. As opções são montadas conforme o navegador detectado (Flatpak ou nativo): Firefox e derivados usam `--kiosk`; Chrome, Chromium, Edge, Brave, Opera e Vivaldi usam `--start-fullscreen` e `--window-size=1280,800` (mantendo `--ozone-platform-hint=auto`); navegador desconhecido recebe só a URL, sem flags que possam quebrar a execução.
+- O atalho já criado é atualizado sozinho na próxima abertura (as opções mudaram, então a assinatura muda), sem duplicar.
+- **Layout de controle "Navegação Web":** ao criar o atalho, o plugin tenta aplicar o template de navegação web do Steam Deck. É melhor esforço: se a API do Steam não existir ou falhar, o navegador abre normalmente, sem aviso.
+- Nenhum texto novo; nenhum `.py` novo na raiz; nenhuma mudança no `build.yml`.
