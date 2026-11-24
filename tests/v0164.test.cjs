@@ -7,7 +7,7 @@ const read = (f) => fs.readFileSync(path.join(__dirname, "..", "src", f), "utf8"
 test("v0.16.4: falha do navegador externo mostra toast com o motivo antes do fallback", () => {
   const m = read("MudfishTab.tsx");
   const body = m.slice(m.indexOf("export async function openMudfishWeb"), m.indexOf("const WARN_BOX"));
-  assert.ok(body.includes("r.ok === false") && body.includes("warnBrowserFailed(r.detail || r.error)"));
+  assert.ok(body.includes("warnBrowserFailed(r.error)") && body.includes("warnBrowserFailed(spec.error)"));
   assert.ok(body.indexOf("warnBrowserFailed") < body.indexOf("openMudfishNative(url)"), "aviso antes do fallback");
   const warn = m.slice(m.indexOf("async function warnBrowserFailed"), m.indexOf("export async function openMudfishWeb"));
   assert.ok(warn.includes("toaster.toast") && warn.includes("t.mfBrowserFailTitle") && warn.includes("t.mfBrowserFailBody"));

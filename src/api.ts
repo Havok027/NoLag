@@ -212,6 +212,20 @@ export interface PanelBrowser {
 export const mudfishListBrowsers = callable<[], { ok: boolean; browsers: PanelBrowser[]; selected: string }>("mudfish_list_browsers");
 export const mudfishSetPanelBrowser = callable<[value: string], { ok: boolean; selected: string }>("mudfish_set_panel_browser");
 export const mudfishOpenPanelBrowser = callable<[], { ok: boolean; external: boolean; error?: string; detail?: string }>("mudfish_open_panel_browser");
+export interface PanelLaunchSpec {
+  ok: boolean;
+  steam?: boolean;
+  error?: string;
+  name?: string;
+  exe?: string;
+  start_dir?: string;
+  launch_options?: string;
+  sig?: string;
+  saved?: { appid: number; sig: string } | null;
+}
+export const mudfishPanelLaunchSpec = callable<[], PanelLaunchSpec>("mudfish_panel_launch_spec");
+export const mudfishSavePanelShortcut = callable<[appid: number, sig: string], { ok: boolean }>("mudfish_save_panel_shortcut");
+export const mudfishClearPanelShortcut = callable<[], { ok: boolean }>("mudfish_clear_panel_shortcut");
 export const mudfishGetRoute = callable<[], RouteInfo & { running: boolean }>("mudfish_get_route");
 export const mudfishTestPing = callable<[], MudfishPing>("mudfish_test_ping");
 export const getSnapshot = callable<[], Snapshot>("get_snapshot");

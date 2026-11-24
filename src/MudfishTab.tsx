@@ -19,7 +19,8 @@ import {
   mudfishGetStatus,
   mudfishCheckUpdate,
   mudfishInstall,
-  mudfishOpenPanelBrowser,
+  mudfishPanelLaunchSpec,
+  mudfishSavePanelShortcut,
   mudfishUpdate,
   mudfishUninstall,
   mudfishSetEnabled,
@@ -27,6 +28,7 @@ import {
 } from "./api";
 import { FaCheck, FaCog, FaFileAlt, FaPercent, FaWaveSquare } from "react-icons/fa";
 import { bestConnection, fromHistory } from "./bestConn";
+import { launchPanelShortcut } from "./panelShortcut";
 import { HistData, historyGet } from "./historyApi";
 import { HistoryExpandButton } from "./HistoryView";
 import { Box, Card, ChartLine, Collapsible, Help, LineChart, MiniCard, MiniRow, PanelButton, Ring, TipButton } from "./components";
@@ -244,19 +246,47 @@ async function warnBrowserFailed(detail?: string) {
   }
 }
 
-/** Abre o painel do Mudfish: no navegador escolhido na Conf ou, por padrão (e se o comando falhar, com aviso), no navegador do Steam. */
+/** Funções do cliente Steam (globais do próprio Steam, fora dos tipos do Decky). */
+function steamGlobals() {
+  const w = window as unknown as { SteamClient?: { Apps?: any }; appStore?: { GetAppOverviewByAppID?: (id: number) => { m_gameid?: string } | null } };
+  return {
+    apps: w.SteamClient?.Apps,
+    gameIdOf: (appid: number): string | null => {
+      try {
+        const g = w.appStore?.GetAppOverviewByAppID?.(appid)?.m_gameid;
+        return g ? String(g) : null;
+      } catch {
+        return null;
+      }
+    },
+  };
+}
+
+/** Abre o painel do Mudfish: por padrão no navegador do Steam; com outro navegador escolhido na Conf, por um atalho do Steam
+ * (criado na primeira vez e reaproveitado). Se falhar, avisa o motivo e abre no navegador do Steam. */
 export async function openMudfishWeb(url?: string) {
   try {
-    const r = await mudfishOpenPanelBrowser();
-    if (r?.ok && r.external) {
-      try {
-        Navigation.CloseSideMenus();
-      } catch {
-        /* sem menu para fechar */
+    const spec = await mudfishPanelLaunchSpec();
+    if (spec?.ok && !spec.steam) {
+      const g = steamGlobals();
+      const r = await launchPanelShortcut(spec, {
+        apps: g.apps,
+        gameIdOf: g.gameIdOf,
+        save: (appid, sig) => mudfishSavePanelShortcut(appid, sig),
+        wait: (ms) => new Promise<void>((res) => setTimeout(res, ms)),
+      });
+      if (r.ok) {
+        try {
+          Navigation.CloseSideMenus();
+        } catch {
+          /* sem menu para fechar */
+        }
+        return;
       }
-      return;
+      await warnBrowserFailed(r.error);
+    } else if (spec && spec.ok === false) {
+      await warnBrowserFailed(spec.error);
     }
-    if (r && r.ok === false) await warnBrowserFailed(r.detail || r.error);
   } catch {
     /* cai no navegador do Steam */
   }

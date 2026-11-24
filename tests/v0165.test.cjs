@@ -9,9 +9,7 @@ test("v0.16.5: aviso mostra o motivo antes do texto fixo", () => {
   assert.ok(m.includes("`${detail}\\n${t.mfBrowserFailBody}`"));
 });
 
-test("v0.16.5: versão 0.16.5 e notas só da versão atual", () => {
-  assert.equal(JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8")).version, "0.16.5");
+test("v0.16.5: notas só com a versão atual", () => {
   const notes = fs.readFileSync(path.join(root, "RELEASE_NOTES.md"), "utf8");
-  assert.ok(/^## v0\.16\.5\b/m.test(notes));
   assert.equal((notes.match(/^## v/gm) || []).length, 1);
 });

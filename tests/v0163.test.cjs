@@ -13,12 +13,12 @@ test("v0.16.3: ConfTab tem o dropdown de navegador dentro de Box, carrega ao abr
   assert.ok(c.includes("t.confBrowserSteam"), "primeira opção traduzida");
 });
 
-test("v0.16.3: openMudfishWeb usa o backend e cai no navegador do Steam", () => {
+test("v0.16.3: openMudfishWeb cai no navegador do Steam (a partir da v0.16.6 o navegador externo vai por atalho do Steam)", () => {
   const m = read("MudfishTab.tsx");
   const body = m.slice(m.indexOf("export async function openMudfishWeb"));
-  assert.ok(body.includes("mudfishOpenPanelBrowser()") && body.includes("r.external"));
+  assert.ok(body.includes("mudfishPanelLaunchSpec()") && body.includes("launchPanelShortcut("));
   assert.ok(body.includes("openMudfishNative(url)"), "fallback");
-  const native = m.slice(m.indexOf("function openMudfishNative"), m.indexOf("export async function openMudfishWeb"));
+  const native = m.slice(m.indexOf("function openMudfishNative"), m.indexOf("async function warnBrowserFailed"));
   assert.ok(native.includes("Navigation.CloseSideMenus()") && native.includes("Navigation.NavigateToExternalWeb(url || WEBUI_URL)"));
   // os dois botões continuam chamando a mesma função
   assert.ok(read("DashControls.tsx").includes("openMudfishWeb(status?.webui)") && m.includes("openMudfishWeb(status?.webui)"));
