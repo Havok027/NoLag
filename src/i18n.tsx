@@ -15,6 +15,9 @@ export interface Texts {
   tabHint: string;
   helpBtn: string;
   hLang: string;
+  confBrowser: string;
+  confBrowserSteam: string;
+  hConfBrowser: string;
   gamesTitle: string;
   gamesNone: string;
   gameDelete: string;
@@ -260,6 +263,9 @@ export const TEXTS: Record<Lang, Texts> = {
     tabHint: "L1 / R1 · trocar guia",
     helpBtn: "Ajuda",
     hLang: "Idioma da interface do plugin.",
+    confBrowser: "Navegador do painel Mudfish",
+    confBrowserSteam: "Navegador do Steam (padrão)",
+    hConfBrowser: "Navegador usado pelo botão "Abrir painel do Mudfish". Navegadores externos instalados no aparelho costumam funcionar melhor para login e configuração no Modo Jogo. Se o navegador escolhido for desinstalado ou não abrir, o plugin usa o do Steam.",
     gamesTitle: "Perfis de jogos",
     gamesNone: "Nenhum jogo salvo ainda",
     gameDelete: "Excluir",
@@ -503,6 +509,9 @@ export const TEXTS: Record<Lang, Texts> = {
     tabHint: "L1 / R1 · switch tab",
     helpBtn: "Help",
     hLang: "Plugin interface language.",
+    confBrowser: "Mudfish panel browser",
+    confBrowserSteam: "Steam browser (default)",
+    hConfBrowser: "Browser used by the "Open Mudfish panel" button. External browsers installed on the device usually work better for login and setup in Game Mode. If the chosen browser is uninstalled or fails to open, the plugin uses the Steam one.",
     gamesTitle: "Game profiles",
     gamesNone: "No saved game yet",
     gameDelete: "Delete",
@@ -746,6 +755,9 @@ export const TEXTS: Record<Lang, Texts> = {
     tabHint: "L1 / R1 · cambiar pestaña",
     helpBtn: "Ayuda",
     hLang: "Idioma de la interfaz del plugin.",
+    confBrowser: "Navegador del panel Mudfish",
+    confBrowserSteam: "Navegador de Steam (predeterminado)",
+    hConfBrowser: "Navegador que usa el botón "Abrir panel de Mudfish". Los navegadores externos instalados en el equipo suelen funcionar mejor para iniciar sesión y configurar en Modo Juego. Si el navegador elegido se desinstala o no abre, el plugin usa el de Steam.",
     gamesTitle: "Perfiles de juegos",
     gamesNone: "Aún no hay juegos guardados",
     gameDelete: "Eliminar",

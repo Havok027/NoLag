@@ -18,6 +18,7 @@ import {
   mudfishGetStatus,
   mudfishCheckUpdate,
   mudfishInstall,
+  mudfishOpenPanelBrowser,
   mudfishUpdate,
   mudfishUninstall,
   mudfishSetEnabled,
@@ -221,13 +222,31 @@ export function ConnCard({ t, helpOn }: { t: Texts; helpOn: boolean }) {
 const WEBUI_URL = "http://127.0.0.1:8282";
 
 /** Abre o painel web nativo do Mudfish (porta 8282) no navegador do Steam, fora do QAM. */
-export function openMudfishWeb(url?: string) {
+function openMudfishNative(url?: string) {
   try {
     Navigation.CloseSideMenus();
     Navigation.NavigateToExternalWeb(url || WEBUI_URL);
   } catch {
     /* sem navegador interno, nada a fazer */
   }
+}
+
+/** Abre o painel do Mudfish: no navegador escolhido na Conf ou, por padrão (e se o comando falhar), no navegador do Steam. */
+export async function openMudfishWeb(url?: string) {
+  try {
+    const r = await mudfishOpenPanelBrowser();
+    if (r?.ok && r.external) {
+      try {
+        Navigation.CloseSideMenus();
+      } catch {
+        /* sem menu para fechar */
+      }
+      return;
+    }
+  } catch {
+    /* cai no navegador do Steam */
+  }
+  openMudfishNative(url);
 }
 
 const WARN_BOX: CSSProperties = {

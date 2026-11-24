@@ -205,6 +205,13 @@ export const mudfishProbeApi = callable<[], { ok: boolean; error: string; detail
   "mudfish_probe_api"
 );
 export const mudfishSetPingTarget = callable<[target: string], { ok: boolean; target: string }>("mudfish_set_ping_target");
+export interface PanelBrowser {
+  id: string;
+  name: string;
+}
+export const mudfishListBrowsers = callable<[], { ok: boolean; browsers: PanelBrowser[]; selected: string }>("mudfish_list_browsers");
+export const mudfishSetPanelBrowser = callable<[value: string], { ok: boolean; selected: string }>("mudfish_set_panel_browser");
+export const mudfishOpenPanelBrowser = callable<[], { ok: boolean; external: boolean; error?: string; detail?: string }>("mudfish_open_panel_browser");
 export const mudfishGetRoute = callable<[], RouteInfo & { running: boolean }>("mudfish_get_route");
 export const mudfishTestPing = callable<[], MudfishPing>("mudfish_test_ping");
 export const getSnapshot = callable<[], Snapshot>("get_snapshot");

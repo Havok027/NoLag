@@ -30,7 +30,7 @@ test("v0.13.0: botão da WebUI no Painel e na aba Mudfish, ambos pela mesma fun�
   const dash = read("DashControls.tsx");
   const mud = read("MudfishTab.tsx");
   assert.ok(dash.includes("openMudfishWeb(status?.webui)") && mud.includes("openMudfishWeb(status?.webui)"));
-  assert.ok(mud.includes("export function openMudfishWeb") && mud.includes("Navigation.NavigateToExternalWeb"));
+  assert.ok(mud.includes("export async function openMudfishWeb") && mud.includes("Navigation.NavigateToExternalWeb"));
 });
 
 test("v0.13.0: telemetria mostra só o ping atual, com a origem da medida", () => {

@@ -1,12 +1,14 @@
 import { ButtonItem, DropdownItem, PanelSectionRow, ToggleField } from "@decky/ui";
-import { useState } from "react";
-import { CurrentGame, GameProfile, mudfishProbeApi, mudfishSetOption } from "./api";
+import { useEffect, useState } from "react";
+import { CurrentGame, GameProfile, PanelBrowser, mudfishListBrowsers, mudfishProbeApi, mudfishSetOption, mudfishSetPanelBrowser } from "./api";
 import { FaGamepad, FaHeartbeat } from "react-icons/fa";
 import { Box, Card, Collapsible, Help } from "./components";
 import { LANGS, LANG_NAMES, Lang, Texts } from "./i18n";
 import { MfWarning, mudfishErrorFull, useMudfish } from "./MudfishTab";
 
 const DASH = "—";
+const STEAM_BROWSER = "steam_default";
+
 
 interface Props {
   t: Texts;
@@ -26,6 +28,30 @@ export function ConfTab(p: Props) {
   const { t, helpOn } = p;
   const { status, busy, run } = useMudfish(t);
   const [probeNote, setProbeNote] = useState("");
+  const [browsers, setBrowsers] = useState<PanelBrowser[]>([{ id: STEAM_BROWSER, name: "Steam" }]);
+  const [browser, setBrowser] = useState(STEAM_BROWSER);
+
+  // Detecta os navegadores instalados ao abrir a aba.
+  useEffect(() => {
+    let alive = true;
+    mudfishListBrowsers()
+      .then((r) => {
+        if (!alive || !r?.ok) return;
+        setBrowsers(r.browsers);
+        setBrowser(r.selected);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const pickBrowser = (id: string) => {
+    setBrowser(id);
+    mudfishSetPanelBrowser(id)
+      .then((r) => r?.ok && setBrowser(r.selected))
+      .catch(() => {});
+  };
 
   const probe = async () => {
     setProbeNote(t.mfProbing);
@@ -60,6 +86,17 @@ export function ConfTab(p: Props) {
       </PanelSectionRow>
       </Box>
       <Help show={helpOn} text={t.hLang} />
+      <Box>
+        <PanelSectionRow>
+          <DropdownItem
+            label={t.confBrowser}
+            rgOptions={browsers.map((b) => ({ data: b.id, label: b.id === STEAM_BROWSER ? t.confBrowserSteam : b.name }))}
+            selectedOption={browser}
+            onChange={(opt) => pickBrowser(opt.data as string)}
+          />
+        </PanelSectionRow>
+      </Box>
+      <Help show={helpOn} text={t.hConfBrowser} />
       <MfWarning t={t} helpOn={helpOn} />
       <PanelSectionRow>
         <ToggleField
