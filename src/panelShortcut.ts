@@ -1,4 +1,5 @@
 /**
+ * v0.16.7: ao criar o atalho, tenta aplicar o layout de controle "Navegação Web" (melhor esforço, falhas ignoradas).
  * v0.16.6: abre o painel do Mudfish pelo Steam. O Decky roda como root e o navegador lançado por ele cai no sandbox (EPERM);
  * um atalho do Steam roda dentro da sessão de jogo do usuário, como qualquer atalho não-Steam.
  * Módulo sem dependências do Decky: as funções do Steam entram por `deps` (testável com um Steam falso).
@@ -22,6 +23,8 @@ export interface SteamApps {
 
 export interface PanelDeps {
   apps: SteamApps | undefined;
+  /** SteamClient.Input (opcional): usado só para aplicar o layout de Navegação Web. */
+  input?: Record<string, unknown> | undefined;
   /** gameid do Steam de um atalho já existente (null = o atalho não existe mais). */
   gameIdOf(appid: number): string | null;
   save(appid: number, sig: string): Promise<unknown>;
@@ -31,6 +34,30 @@ export interface PanelDeps {
 export interface PanelResult {
   ok: boolean;
   error?: string;
+}
+
+export const WEB_BROWSER_TEMPLATE = "controller_neptune_web_browser.vdf";
+const INPUT_METHODS = ["SetAppControllerConfiguration", "SetControllerMapping"];
+
+/** Melhor esforço: aplica o template de Navegação Web ao atalho. Nunca lança, nunca espera, nunca avisa. */
+export function applyWebBrowserLayout(input: Record<string, unknown> | undefined, appid: number): boolean {
+  try {
+    if (!input) return false;
+    for (const name of INPUT_METHODS) {
+      const fn = input[name];
+      if (typeof fn !== "function") continue;
+      try {
+        const r = (fn as (...a: unknown[]) => unknown).call(input, appid, WEB_BROWSER_TEMPLATE);
+        if (r && typeof (r as Promise<unknown>).catch === "function") (r as Promise<unknown>).catch(() => undefined);
+        return true;
+      } catch {
+        /* tenta o próximo método */
+      }
+    }
+  } catch {
+    /* sem a API interna: segue sem o layout */
+  }
+  return false;
 }
 
 const READY_TRIES = 10;
@@ -77,6 +104,7 @@ export async function launchPanelShortcut(spec: PanelSpec, deps: PanelDeps): Pro
     } catch {
       /* algumas versões já aplicam tudo no AddShortcut */
     }
+    applyWebBrowserLayout(deps.input, appid);
     try {
       await deps.save(appid, spec.sig);
     } catch {

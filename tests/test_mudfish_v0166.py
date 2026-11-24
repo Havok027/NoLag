@@ -15,13 +15,13 @@ class SpecTests(unittest.TestCase):
     def test_flatpak_firefox_spec(self):
         spec = mudfish_mgr.launch_spec(["/usr/bin/flatpak", "run", "org.mozilla.firefox"], "firefox")
         self.assertEqual(spec["exe"], "/usr/bin/flatpak")
-        self.assertEqual(spec["launch_options"], "run org.mozilla.firefox http://127.0.0.1:8282")
+        self.assertEqual(spec["launch_options"], "run org.mozilla.firefox --kiosk http://127.0.0.1:8282")
         self.assertEqual(spec["start_dir"], "/usr/bin")
         self.assertEqual(spec["name"], "NoLag - Painel Mudfish")
 
     def test_native_chromium_gets_flags(self):
         spec = mudfish_mgr.launch_spec(["/usr/bin/google-chrome-stable"], "chrome")
-        self.assertEqual(spec["launch_options"], "--ozone-platform-hint=auto --new-window http://127.0.0.1:8282")
+        self.assertEqual(spec["launch_options"], "--ozone-platform-hint=auto --new-window --start-fullscreen --window-size=1280,800 http://127.0.0.1:8282")
 
     def test_flatpak_chromium_flags_after_app_id(self):
         spec = mudfish_mgr.launch_spec(["/var/lib/flatpak/exports/bin/flatpak", "run", "com.brave.Browser"], "brave")

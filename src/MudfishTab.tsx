@@ -248,9 +248,10 @@ async function warnBrowserFailed(detail?: string) {
 
 /** Funções do cliente Steam (globais do próprio Steam, fora dos tipos do Decky). */
 function steamGlobals() {
-  const w = window as unknown as { SteamClient?: { Apps?: any }; appStore?: { GetAppOverviewByAppID?: (id: number) => { m_gameid?: string } | null } };
+  const w = window as unknown as { SteamClient?: { Apps?: any; Input?: any }; appStore?: { GetAppOverviewByAppID?: (id: number) => { m_gameid?: string } | null } };
   return {
     apps: w.SteamClient?.Apps,
+    input: w.SteamClient?.Input,
     gameIdOf: (appid: number): string | null => {
       try {
         const g = w.appStore?.GetAppOverviewByAppID?.(appid)?.m_gameid;
@@ -271,6 +272,7 @@ export async function openMudfishWeb(url?: string) {
       const g = steamGlobals();
       const r = await launchPanelShortcut(spec, {
         apps: g.apps,
+        input: g.input,
         gameIdOf: g.gameIdOf,
         save: (appid, sig) => mudfishSavePanelShortcut(appid, sig),
         wait: (ms) => new Promise<void>((res) => setTimeout(res, ms)),
