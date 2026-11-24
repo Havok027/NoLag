@@ -9,6 +9,7 @@ import {
   MudfishStatus,
   RouteInfo,
   Snapshot,
+  getSettings,
   getSnapshot,
   mudfishAvailable,
   mudfishGetLive,
@@ -29,6 +30,7 @@ import { bestConnection, fromHistory } from "./bestConn";
 import { HistData, historyGet } from "./historyApi";
 import { HistoryExpandButton } from "./HistoryView";
 import { Box, Card, ChartLine, Collapsible, Help, LineChart, MiniCard, MiniRow, PanelButton, Ring, TipButton } from "./components";
+import { TEXTS, normalizeLang } from "./i18n";
 import type { Texts } from "./i18n";
 
 const DASH = "—";
@@ -231,7 +233,18 @@ function openMudfishNative(url?: string) {
   }
 }
 
-/** Abre o painel do Mudfish: no navegador escolhido na Conf ou, por padrão (e se o comando falhar), no navegador do Steam. */
+/** Avisa (toast) que o navegador externo escolhido falhou, antes de cair no navegador do Steam. */
+async function warnBrowserFailed(detail?: string) {
+  try {
+    const s = await getSettings();
+    const t = TEXTS[normalizeLang(s?.language)];
+    toaster.toast({ title: t.mfBrowserFailTitle, body: detail ? `${t.mfBrowserFailBody}\n${detail}` : t.mfBrowserFailBody, duration: 10000 });
+  } catch {
+    /* sem aviso na tela: o navegador do Steam abre do mesmo jeito */
+  }
+}
+
+/** Abre o painel do Mudfish: no navegador escolhido na Conf ou, por padrão (e se o comando falhar, com aviso), no navegador do Steam. */
 export async function openMudfishWeb(url?: string) {
   try {
     const r = await mudfishOpenPanelBrowser();
@@ -243,6 +256,7 @@ export async function openMudfishWeb(url?: string) {
       }
       return;
     }
+    if (r && r.ok === false) await warnBrowserFailed(r.detail || r.error);
   } catch {
     /* cai no navegador do Steam */
   }

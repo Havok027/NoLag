@@ -17,6 +17,8 @@ export interface Texts {
   hLang: string;
   confBrowser: string;
   confBrowserSteam: string;
+  mfBrowserFailTitle: string;
+  mfBrowserFailBody: string;
   hConfBrowser: string;
   gamesTitle: string;
   gamesNone: string;
@@ -265,6 +267,8 @@ export const TEXTS: Record<Lang, Texts> = {
     hLang: "Idioma da interface do plugin.",
     confBrowser: "Navegador do painel Mudfish",
     confBrowserSteam: "Navegador do Steam (padrão)",
+    mfBrowserFailTitle: "Mudfish: o navegador escolhido não abriu",
+    mfBrowserFailBody: "O painel foi aberto no navegador do Steam. Confira a escolha na aba Conf.",
     hConfBrowser: "Navegador usado pelo botão \"Abrir painel do Mudfish\". Navegadores externos instalados no aparelho costumam funcionar melhor para login e configuração no Modo Jogo. Se o navegador escolhido for desinstalado ou não abrir, o plugin usa o do Steam.",
     gamesTitle: "Perfis de jogos",
     gamesNone: "Nenhum jogo salvo ainda",
@@ -511,6 +515,8 @@ export const TEXTS: Record<Lang, Texts> = {
     hLang: "Plugin interface language.",
     confBrowser: "Mudfish panel browser",
     confBrowserSteam: "Steam browser (default)",
+    mfBrowserFailTitle: "Mudfish: the chosen browser did not open",
+    mfBrowserFailBody: "The panel was opened in the Steam browser instead. Check the choice in the Conf tab.",
     hConfBrowser: "Browser used by the \"Open Mudfish panel\" button. External browsers installed on the device usually work better for login and setup in Game Mode. If the chosen browser is uninstalled or fails to open, the plugin uses the Steam one.",
     gamesTitle: "Game profiles",
     gamesNone: "No saved game yet",
@@ -757,6 +763,8 @@ export const TEXTS: Record<Lang, Texts> = {
     hLang: "Idioma de la interfaz del plugin.",
     confBrowser: "Navegador del panel Mudfish",
     confBrowserSteam: "Navegador de Steam (predeterminado)",
+    mfBrowserFailTitle: "Mudfish: el navegador elegido no se abrió",
+    mfBrowserFailBody: "El panel se abrió en el navegador de Steam. Revisa la elección en la pestaña Conf.",
     hConfBrowser: "Navegador que usa el botón \"Abrir panel de Mudfish\". Los navegadores externos instalados en el equipo suelen funcionar mejor para iniciar sesión y configurar en Modo Juego. Si el navegador elegido se desinstala o no abre, el plugin usa el de Steam.",
     gamesTitle: "Perfiles de juegos",
     gamesNone: "Aún no hay juegos guardados",

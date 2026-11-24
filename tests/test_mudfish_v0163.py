@@ -106,7 +106,8 @@ class ManagerTests(unittest.TestCase):
     def test_launch_detached_with_mock(self):
         self.run_(self.mgr.set_panel_browser("firefox"))
         with mock.patch.object(mudfish_mgr, "detect_browsers", return_value={"firefox": ["/usr/bin/firefox"]}), \
-                mock.patch("subprocess.Popen") as popen:
+                mock.patch.object(mudfish_mgr, "LAUNCH_WAIT", 0), mock.patch("subprocess.Popen") as popen:
+            popen.return_value.poll.return_value = None  # v0.16.4: ainda rodando após o prazo = sucesso
             r = self.run_(self.mgr.open_panel_browser())
         self.assertEqual(r, {"ok": True, "external": True})
         args, kw = popen.call_args
