@@ -3,6 +3,16 @@ name: Build
 on:
   push:
     branches: [main, teste]
+    paths-ignore:
+      - 'README.md'
+      - 'README.en.md'
+      - 'README.es.md'
+      - 'HISTORICO*.md'
+      - '**.jpg'
+      - '**.jpeg'
+      - '**.png'
+      - '**.gif'
+      - '**.webp'
   workflow_dispatch:
 
 permissions:
