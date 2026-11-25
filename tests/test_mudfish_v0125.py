@@ -90,9 +90,9 @@ class StartStopTests(unittest.TestCase):
         self.assertFalse(ok)
         self.assertTrue(why)
 
-    def test_connect_disconnect_use_start_stop(self):
+    def test_start_stop_use_official_paths(self):
         api = PostApi(200)
-        api.connect(); api.disconnect()
+        api.core_start(); api.core_stop()
         self.assertEqual(api.paths, ["/do/mudfish/start", "/do/mudfish/stop"])
 
     def test_status_exposes_core_running(self):

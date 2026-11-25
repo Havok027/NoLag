@@ -24,8 +24,7 @@ test("v0.12.4: botões não usam layout inline (largura do QAM)", () => {
 
 test("v0.12.4: textos novos nos 3 idiomas", () => {
   const i = read("i18n.tsx");
-  assert.strictEqual((i.match(/mfConnectManual:/g) || []).length, 4);
-  assert.ok(read("MudfishTab.tsx").includes("t.mfConnectManual"));
+  assert.strictEqual((i.match(/mfConnectManual:/g) || []).length, 0); // removido na v0.17.1 (conexão automática por jogo saiu)
 });
 
 test("v0.12.4: versão do package.json", () => {

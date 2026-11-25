@@ -51,12 +51,12 @@ def fake_install(mgr, version="5.11.0"):
 
 class PureTests(unittest.TestCase):
     def test_settings_sanitized(self):
-        d = mudfish_mgr.sanitize_settings({"keep_on": "x", "auto_on_game": 1, "auto_selection": "no", "multipath": "yes",
+        d = mudfish_mgr.sanitize_settings({"keep_on": "x", "auto_on_game": True, "auto_selection": "no", "multipath": "yes",
                                            "ping_target": "x y", "ping_before": {"avg": "z", "jitter": 1, "loss": 0},
                                            "user": "ana", "password": "s3nha", "profile": "aggressive"})
         self.assertEqual((d["user"], d["password"]), ("ana", "s3nha"))  # conta opcional guardada
         self.assertFalse(d["keep_on"])
-        self.assertFalse(d["auto_on_game"])  # só True de verdade liga
+        self.assertNotIn("auto_on_game", d)  # v0.17.1: opção removida, valor antigo é descartado
         self.assertTrue(d["auto_selection"])  # padrão ligado: só False de verdade desliga
         self.assertFalse(d["multipath"])
         self.assertEqual(d["ping_target"], core_state.DEFAULT_TARGET)
@@ -65,14 +65,13 @@ class PureTests(unittest.TestCase):
         bad = mudfish_mgr.sanitize_settings({"user": 5, "password": "a\nb"})
         self.assertEqual((bad["user"], bad["password"]), ("", ""))
         ok = mudfish_mgr.sanitize_settings({"auto_selection": False, "multipath": True, "keep_on": True,
-                                            "auto_on_game": True, "ping_after": {"avg": 20.0, "jitter": 2.5, "loss": 0}})
-        self.assertEqual((ok["auto_selection"], ok["multipath"], ok["keep_on"], ok["auto_on_game"]), (False, True, True, True))
+                                            "ping_after": {"avg": 20.0, "jitter": 2.5, "loss": 0}})
+        self.assertEqual((ok["auto_selection"], ok["multipath"], ok["keep_on"]), (False, True, True))
         self.assertEqual(ok["ping_after"]["avg"], 20.0)
 
     def test_credit_defaults_are_safe(self):
         d = mudfish_mgr.sanitize_settings(None)
         self.assertFalse(d["keep_on"])
-        self.assertFalse(d["auto_on_game"])
         self.assertFalse(d["multipath"])
         self.assertTrue(d["auto_selection"])
 
@@ -112,7 +111,7 @@ class ManagerTests(unittest.TestCase):
 
     def test_status_has_options_and_no_secrets(self):
         st = run(self.mgr.get_status())
-        self.assertEqual((st["auto_selection"], st["multipath"], st["auto_on_game"], st["keep_on"]), (True, False, False, False))
+        self.assertEqual((st["auto_selection"], st["multipath"], st["keep_on"]), (True, False, False))
         for key in ("password", "profile"):
             self.assertNotIn(key, st)  # a senha nunca sai do backend
         self.assertEqual((st["user"], st["has_password"]), ("", False))
@@ -202,31 +201,14 @@ class ManagerTests(unittest.TestCase):
         self.assertEqual(len(a), 1)  # guia oficial: mudrun-headless sem flags
         self.assertTrue(a[0].endswith("/bin/mudrun-headless"))
 
-    def test_game_on_is_off_by_default(self):
-        fake_install(self.mgr)
-        r = run(self.mgr._game_on())
-        self.assertFalse(r["ok"])
-        self.assertEqual(r["error"], "auto_off")
-        self.assertFalse(self.mgr._alive())  # nada ligou sozinho
-
-    def test_game_on_and_off_when_user_enabled_it(self):
-        fake_install(self.mgr)
-        run(self.mgr.set_option("auto_on_game", True))
-        mudfish_mgr.port_open, old = (lambda *a, **k: True), mudfish_mgr.port_open
-        try:
-            async def go():
-                on = await self.mgr._game_on()
-                keep = self.mgr.load()["keep_on"]
-                alive_on = self.mgr._alive()
-                await self.mgr._game_off()
-                return on, keep, alive_on, self.mgr._alive()
-            on, keep, alive_on, alive_off = run(go())
-        finally:
-            mudfish_mgr.port_open = old
-        self.assertTrue(on["ok"])
-        self.assertTrue(alive_on)
-        self.assertFalse(keep)  # perfil de jogo não persiste ao reiniciar
-        self.assertFalse(alive_off)
+    def test_mudfish_has_no_game_on_hook(self):
+        # v0.17.1: o Mudfish não liga por jogo; só o encerramento ao fechar o jogo continua registrado no barramento.
+        self.assertFalse(hasattr(self.mgr, "_game_on"))
+        self.assertFalse(hasattr(self.mgr, "_auto_connect"))
+        self.mgr.register()
+        self.assertFalse(core_state.bus.has("mudfish", "enable"))
+        self.assertTrue(core_state.bus.has("mudfish", "disable"))
+        core_state.bus.unregister("mudfish")
 
     def test_game_off_stops_even_if_started_by_hand(self):
         fake_install(self.mgr)
@@ -567,7 +549,7 @@ class ManagerTests(unittest.TestCase):
     def test_bus_registration_and_state(self):
         core_state.bus.unregister("mudfish")
         self.mgr.register()
-        self.assertTrue(core_state.bus.has("mudfish", "enable"))
+        self.assertFalse(core_state.bus.has("mudfish", "enable"))  # v0.17.1: não liga por jogo
         self.assertTrue(core_state.bus.has("mudfish", "disable"))
         self.assertIn("running", core_state.bus.get_state("mudfish"))
         core_state.bus.unregister("mudfish")

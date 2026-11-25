@@ -150,7 +150,7 @@ class UninstallTests(unittest.TestCase):
         run(self.mgr.uninstall())
         cfg = self.mgr.load()
         self.assertEqual((cfg["user"], cfg["password"], cfg["login_done"], cfg["keep_on"]), ("", "", False, False))
-        self.assertTrue(cfg["auto_on_game"])
+        self.assertNotIn("auto_on_game", cfg)
 
     def test_stops_every_mudfish_process(self):
         exe = os.path.join(self.tmp, "mudflow")  # só o argv[0] importa; o binário é o Python (o coreutils novo recusa nomes alheios)

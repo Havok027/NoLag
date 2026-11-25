@@ -1,6 +1,7 @@
 import { Focusable, PanelSection } from "@decky/ui";
 import { useEffect, useRef, useState } from "react";
-import { CurrentGame, GameProfile, deleteGame, getCurrentGame, getSettings, setGameModule, setSettings } from "./api";
+import { CurrentGame, GameProfile, deleteGame, getCurrentGame, getSettings, setGameModule, setGameName, setSettings } from "./api";
+import { steamGameName } from "./gameName";
 import { FaNetworkWired } from "react-icons/fa";
 import { Collapsible, Footer } from "./components";
 import { HelpToggle, TAB_KEYS, TabKey, TabNav } from "./TabNav";
@@ -54,8 +55,17 @@ export function Content() {
     let alive = true;
     const tick = () =>
       getCurrentGame()
-        .then((g) => {
-          if (alive && g) setCurrent(g);
+        .then(async (g) => {
+          if (!alive || !g) return;
+          // Nome real do Steam no lugar do nome do processo; também corrige o perfil salvo.
+          const real = g.appid ? steamGameName(g.appid) : "";
+          if (real && real !== g.name) {
+            g = { ...g, name: real };
+            setGameName(g.appid, real)
+              .then((s) => alive && setGames(s?.games ?? {}))
+              .catch(() => {});
+          }
+          setCurrent(g);
         })
         .catch(() => {});
     tick();
@@ -65,6 +75,30 @@ export function Content() {
       window.clearInterval(id);
     };
   }, [tab]);
+
+  // Perfis salvos com nome de processo (ex.: "Main"): troca pelo nome real do Steam, uma vez por jogo (só na aba Conf).
+  useEffect(() => {
+    if (tab !== "conf") return;
+    const stale = Object.entries(games).filter(([appid, g]) => {
+      const real = steamGameName(appid);
+      return real && real !== g.name;
+    });
+    if (!stale.length) return;
+    let alive = true;
+    (async () => {
+      for (const [appid] of stale) {
+        try {
+          const s = await setGameName(appid, steamGameName(appid));
+          if (alive && s) setGames(s.games ?? {});
+        } catch {
+          /* tenta de novo na próxima vez */
+        }
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [tab, games]);
 
   // L1/R1 troca de aba. Toque e botão A nas abas sempre funcionam.
   useEffect(() => {

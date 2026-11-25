@@ -514,7 +514,6 @@ export function LiveChart({ t, helpOn }: { t: Texts; helpOn: boolean }) {
         <MiniCard icon={<FaPercent size={12} />} title={t.tmLoss} rows={cmpRows(wm?.loss, om?.loss, (n) => `${+n.toFixed(1)} %`)} />
       </div>
       <div style={SMALL}>{viaMudfish ? `${t.chartSrcMudfish}\n${t.chartSrcLocal}` : t.chartSrcLocal}</div>
-      {live?.running && live.connect === "manual" && <div style={{ ...WARN_BOX, marginBottom: 10 }}>{t.mfConnectManual}</div>}
       <Help show={helpOn} text={t.hChart} />
     </>
   );

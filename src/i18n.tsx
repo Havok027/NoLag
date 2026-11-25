@@ -128,7 +128,6 @@ export interface Texts {
   mfErrArch: string;
   mfErrGeneric: string;
   onlyGameBadge: string;
-  mfConnectManual: string;
   mfUpdateTitle: string;
   mfLatestRow: string;
   mfUninstall: string;
@@ -379,7 +378,6 @@ export const TEXTS: Record<Lang, Texts> = {
     mfRttReady: "Medida",
     mfRttPending: "Medindo…",
     mfRttError: "Indisponível",
-    mfConnectManual: "Configure e equipe o item do jogo previamente no painel web do Mudfish. Caso o túnel não conecte automaticamente ao iniciar o jogo, abra o painel e clique em Conectar.",
     mfUpdateTitle: "Atualização do Mudfish",
     hMfUninstall: "Encerra todos os processos do Mudfish, desmonta e apaga /opt/mudfish e a pasta persistente e limpa logs e restos.\nPede confirmação antes. Depois, o passo 1 volta a aparecer para reinstalar a versão mais recente.",
     mfErrUninstall: "Não foi possível desinstalar",
@@ -624,7 +622,6 @@ export const TEXTS: Record<Lang, Texts> = {
     mfRttReady: "Measured",
     mfRttPending: "Measuring…",
     mfRttError: "Unavailable",
-    mfConnectManual: "Set up and equip the game item beforehand in the Mudfish web panel. If the tunnel does not connect automatically when the game starts, open the panel and click Connect.",
     mfUpdateTitle: "Mudfish update",
     hMfUninstall: "Stops every Mudfish process, unmounts and deletes /opt/mudfish and the persistent folder, and clears logs and leftovers.\nAsks for confirmation first. Afterwards step 1 shows up again to reinstall the latest version.",
     mfErrUninstall: "Could not uninstall",
@@ -869,7 +866,6 @@ export const TEXTS: Record<Lang, Texts> = {
     mfRttReady: "Medida",
     mfRttPending: "Midiendo…",
     mfRttError: "No disponible",
-    mfConnectManual: "Configura y equipa antes el ítem del juego en el panel web de Mudfish. Si el túnel no se conecta solo al iniciar el juego, abre el panel y pulsa Conectar.",
     mfUpdateTitle: "Actualización de Mudfish",
     hMfUninstall: "Cierra todos los procesos de Mudfish, desmonta y borra /opt/mudfish y la carpeta persistente, y limpia logs y restos.\nPide confirmación antes. Después vuelve a aparecer el paso 1 para reinstalar la última versión.",
     mfErrUninstall: "No se pudo desinstalar",

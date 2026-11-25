@@ -122,8 +122,6 @@ export interface MudfishStatus {
   detail?: string;
   auto_selection?: boolean;
   multipath?: boolean;
-  auto_on_game?: boolean;
-  connect?: "" | "connecting" | "connected" | "manual" | "failed";
   session?: "active" | "inactive" | "unknown";
   api_ok?: boolean;
   full_vpn_api?: boolean;
@@ -175,7 +173,7 @@ export const mudfishGetStatus = callable<[], MudfishStatus>("mudfish_get_status"
 export const mudfishInstall = callable<[], MudfishResult>("mudfish_install");
 export const mudfishUninstall = callable<[], MudfishResult & { removed?: string[] }>("mudfish_uninstall");
 export const mudfishSetEnabled = callable<[enabled: boolean], MudfishResult>("mudfish_set_enabled");
-export type MudfishOption = "auto_selection" | "multipath" | "auto_on_game" | "keep_on";
+export type MudfishOption = "auto_selection" | "multipath" | "keep_on";
 export const mudfishSetOption = callable<[key: MudfishOption, value: boolean], MudfishResult & { applied?: boolean; state?: string }>(
   "mudfish_set_option"
 );
@@ -192,7 +190,6 @@ export interface MudfishLive {
   tunnel_idle?: boolean;
   tunnel_waiting?: boolean;
   tunnel_source?: "icmp" | "api" | "";
-  connect?: "" | "connecting" | "connected" | "manual" | "failed";
   rtt?: MudfishRtt;
 }
 export const mudfishCheckUpdate = callable<[], MudfishResult & { update?: MudfishUpdate }>("mudfish_check_update");
@@ -230,4 +227,5 @@ export const mudfishGetRoute = callable<[], RouteInfo & { running: boolean }>("m
 export const mudfishTestPing = callable<[], MudfishPing>("mudfish_test_ping");
 export const getSnapshot = callable<[], Snapshot>("get_snapshot");
 export const getCurrentGame = callable<[], CurrentGame>("get_current_game");
+export const setGameName = callable<[appid: string, name: string], Settings>("set_game_name");
 export const setGameModule = callable<[appid: string, module: "wifi" | "mudfish", value: boolean], Settings>("set_game_module");

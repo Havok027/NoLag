@@ -18,7 +18,7 @@ test("v0.12.5: layout mantido (sem overflow lateral, botões em coluna)", () => 
 
 test("v0.12.5: aviso de fallback e fonte da telemetria na tela", () => {
   const m = read("MudfishTab.tsx");
-  assert.ok(m.includes('live.connect === "manual"') && m.includes("t.mfConnectManual"));
+  assert.ok(!m.includes("t.mfConnectManual")); // removido na v0.17.1
 });
 
 test("v0.12.5: versão do package.json", () => {
