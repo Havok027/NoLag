@@ -26,8 +26,8 @@ API local (127.0.0.1:8282), mapeada pelo mudfish-api.json da v0.11.3 (Mudfish 5.
     explícita de enviar o JWT do aparelho ao servidor do Mudfish, o plugin não monta o iid (o diagnóstico v5 captura a URL).
 
 Proteção de créditos (o Mudfish cobra por tráfego): o serviço nasce sempre desligado; só liga sozinho se o usuário
-ativar "keep_on" (ao reiniciar) ou "auto_on_game" (ao abrir jogo) na aba Conf, e é encerrado ao fechar qualquer
-jogo. Ligar manualmente nunca ativa essas opções. O plugin só inicia o serviço; o roteamento por jogo
+ativar "keep_on" (ao reiniciar) na aba Conf, e é encerrado ao fechar qualquer jogo (v0.17.1: não liga mais por jogo).
+Ligar manualmente nunca ativa essa opção. O plugin só inicia o serviço; o roteamento por jogo
 (split-tunneling) é configurado no painel do Mudfish e nunca como VPN total do sistema.
 """
 import asyncio
@@ -64,7 +64,7 @@ LOG_MAX = 200_000
 _VERSION = re.compile(r"^\d+\.\d+\.\d+$")
 _RELEASE_RX = re.compile(r"mudfish-(\d+\.\d+\.\d+)-linux-x86_64\.sh")
 PROC_NAMES = ("mudrun", "mudrun-headless", "mudflow", "mudfish")  # processos que a desinstalação encerra
-OPTION_KEYS = ("auto_selection", "multipath", "auto_on_game", "keep_on")
+OPTION_KEYS = ("auto_selection", "multipath", "keep_on")
 _TUNNEL_DEV = core_state.TUNNEL_DEV
 # Caminhos de LEITURA do painel (mapeados no mudfish-api.json). Os que alteram estado ficam de fora de propósito.
 READ_ENDPOINTS = ("/do/mudrun/status", "/do/status/pingstat", "/do/status/netstat", "/do/rtt/staticnodes", "/do/rtt/vnodes")
@@ -94,9 +94,6 @@ STOP_OK = (200,)
 PING_LOSS_MS = 2800      # o painel trata valores acima disso como "perda de pacotes" (envia 3000)
 PING_WINDOW = 5          # linhas recentes de /do/status/pingstat usadas na média
 PING_STALE_S = 120       # linha mais recente mais velha que isso = sem dados
-CORE_WAIT = 20           # espera (s) por core_running depois do start
-CONNECT_WAIT = 45        # espera máxima (s) pelo núcleo pronto e sessão ativa antes de tentar conectar
-CONNECT_STEP = 3.0
 CALL_PROBE_MAX = 40
 IDLE_BYTES = 4096        # tráfego do cliente nos últimos NET_WINDOW s abaixo disso = túnel ocioso (sem item/jogo ativo)
 NET_WINDOW = 10
@@ -150,13 +147,12 @@ def _ver_key(v):
 
 def sanitize_settings(raw):
     """Só guarda o que o módulo usa. Usuário e senha de versões antigas são descartados."""
-    data = {"login_done": False, "keep_on": False, "auto_on_game": False, "auto_selection": True,
+    data = {"login_done": False, "keep_on": False, "auto_selection": True,
             "user": "", "password": "", "multipath": False, "panel_browser": STEAM_BROWSER, "panel_shortcut": None, "ping_target": core_state.DEFAULT_TARGET, "ping_before": None, "ping_after": None}
     if not isinstance(raw, dict):
         return data
     data["login_done"] = raw.get("login_done") is True
     data["keep_on"] = raw.get("keep_on") is True
-    data["auto_on_game"] = raw.get("auto_on_game") is True
     data["auto_selection"] = raw.get("auto_selection") is not False  # padrão: ligado
     data["multipath"] = raw.get("multipath") is True
     data["panel_browser"] = clean_browser(raw.get("panel_browser"))
@@ -642,12 +638,6 @@ class MudfishApi:
             return False, _err(e)
         return (code in STOP_OK), ("" if code in STOP_OK else "status_%s" % code)
 
-    def connect(self):
-        return self.core_start()
-
-    def disconnect(self):
-        return self.core_stop()
-
     def logout(self):
         """Encerra a sessão do painel (GET /logout.html). True se o painel respondeu."""
         try:
@@ -759,13 +749,10 @@ class MudfishManager:
         self.api = MudfishApi()
         self.option_state = ""  # "" | applied | api_unmapped | failed
         self._check_cache = (0.0, "unknown", False)
-        self.owned = False  # ligado por perfil de jogo (não persiste ao reiniciar)
+        self.owned = False
         self.rtt = {"static": "unknown", "vnodes": "unknown", "n_static": 0, "n_vnodes": 0}
         self._rtt_at = 0.0
         self.update = {"latest": "", "checked": False}
-        self.connect_state = ""   # "" | connecting | connected | manual (precisa clicar em Conectar no painel) | failed
-        self.connect_detail = ""
-        self._connect_task = None
         self._auto_update_at = 0.0
         self._update_at = 0.0
 
@@ -871,7 +858,6 @@ class MudfishManager:
             "detail": self.detail,
             "auto_selection": cfg["auto_selection"],
             "multipath": cfg["multipath"],
-            "auto_on_game": cfg["auto_on_game"],
             "option_state": self.option_state,
             "login_done": logged,
             "session": session,
@@ -880,8 +866,6 @@ class MudfishManager:
             "core_ready": self.api.last.get("core_ready"),
             "rtt": dict(self.rtt),
             "update": self._update_view(version),
-            "connect": self.connect_state,
-            "connect_detail": self.connect_detail,
             "user": cfg["user"],
             "has_password": bool(cfg["password"]),
             "step": "install" if not version else ("login" if not logged else "activate"),
@@ -1318,7 +1302,7 @@ class MudfishManager:
         return ok, why
 
     async def set_option(self, key, value):
-        """Liga ou desliga uma opção guardada (auto_selection, multipath, auto_on_game, keep_on)."""
+        """Liga ou desliga uma opção guardada (auto_selection, multipath, keep_on)."""
         if key not in OPTION_KEYS or not isinstance(value, bool):
             return {"ok": False, "error": "bad_option"}
         cfg = self.load()
@@ -1547,7 +1531,7 @@ class MudfishManager:
         return {"ok": True, "running": running, "base": base, "tunnel": tunnel, "base_iface": base_dev,
                 "tunnel_iface": tun, "full_vpn": full_vpn, "only_game": bool(running and not full_vpn),
                 "tunnel_blocked": tunnel_blocked, "tunnel_idle": tunnel_idle, "tunnel_waiting": tunnel_waiting, "rtt": dict(self.rtt),
-                "tunnel_source": tunnel_source, "connect": self.connect_state}
+                "tunnel_source": tunnel_source}
 
     async def test_ping(self):
         """Com o Mudfish desligado guarda o 'antes'; ligado, guarda o 'depois'."""
@@ -1591,7 +1575,7 @@ class MudfishManager:
     def register(self):
         core_state.bus.register(
             "mudfish",
-            enable=self._game_on, disable=self._game_off, active=self._alive, status=self.get_status,
+            disable=self._game_off, active=self._alive, status=self.get_status,
         )
         self._publish()
 
@@ -1609,59 +1593,9 @@ class MudfishManager:
         except Exception as e:
             decky.logger.error(f"NoLag Mudfish: atualização automática falhou: {e}")
 
-    async def _auto_connect(self):
-        """Espera sessão ativa e núcleo pronto, dispara POST /do/mudfish/start e confere `core_running`.
-        Qualquer recusa (409, sessão inativa, erro) vira `manual`: a tela orienta clicar em Conectar no painel."""
-        self.connect_state, self.connect_detail = "connecting", ""
-        try:
-            deadline = time.monotonic() + CONNECT_WAIT
-            while time.monotonic() < deadline and self._alive():
-                self.recheck_session()
-                session, _ok = await self._check()
-                last = self.api.last
-                if session == "active" and last.get("core_ready") is not False and last.get("client_ready") is not False:
-                    ok, why = await asyncio.to_thread(self.api.core_start)
-                    if not ok:
-                        self.connect_state, self.connect_detail = "manual", why
-                        return
-                    end = time.monotonic() + CORE_WAIT
-                    while time.monotonic() < end and self._alive():
-                        self.recheck_session()
-                        await self._check()
-                        if self.api.last.get("core_running") is True:
-                            self.connect_state = "connected"
-                            return
-                        await asyncio.sleep(1.5)
-                    self.connect_state, self.connect_detail = "manual", "core_not_running"
-                    return
-                await asyncio.sleep(CONNECT_STEP)
-            self.connect_state, self.connect_detail = "manual", "session_or_core_not_ready"
-        except asyncio.CancelledError:
-            raise
-        except Exception as e:
-            self.connect_state, self.connect_detail = "failed", _err(e)
-
-    def _cancel_connect(self):
-        task, self._connect_task = self._connect_task, None
-        if task and not task.done():
-            task.cancel()
-        self.connect_state, self.connect_detail = "", ""
-
-    async def _game_on(self):
-        """Só liga sozinho se o usuário ativou "ao abrir jogo" na aba Conf (padrão: desligado)."""
-        if not self.load()["auto_on_game"]:
-            return {"ok": False, "error": "auto_off"}
-        await self._auto_update()
-        r = await self.start()
-        self.owned = bool(r.get("ok"))
-        if r.get("ok"):
-            self._connect_task = asyncio.ensure_future(self._auto_connect())
-        return r
-
     async def _game_off(self):
         """Ao fechar o jogo, encerra o Mudfish sempre (ligado por perfil ou à mão) para zerar o tráfego."""
         self.owned = False
-        self._cancel_connect()
         if self._alive():
             # Desconecta pela API (igual ao botão Desconectar) e depois encerra o serviço: libera a porta 8282 e zera o
             # consumo. Se a API recusar ou não responder, o encerramento do serviço garante o corte do túnel.
@@ -1690,7 +1624,6 @@ class MudfishManager:
             decky.logger.error(f"NoLag Mudfish: falha ao iniciar: {e}")
 
     async def _unload(self):
-        self._cancel_connect()
         try:
             await self._kill()
         finally:
@@ -1719,7 +1652,6 @@ class MudfishManager:
         if self.lock.locked():
             return {"ok": False, "error": "busy", "detail": ""}
         async with self.lock:
-            self._cancel_connect()
             self._set("stopping")
             removed = []
             try:
@@ -1763,7 +1695,7 @@ class MudfishManager:
             self.rtt, self._rtt_at = {"static": "unknown", "vnodes": "unknown", "n_static": 0, "n_vnodes": 0}, 0.0
             self.api.last = {}
             self.update, self._update_at = {"latest": "", "checked": False}, 0.0
-            self.connect_state, self.connect_detail, self.option_state = "", "", ""
+            self.option_state = ""
             self._check_cache = (0.0, "unknown", False)
             self.owned = False
             self._set("off")

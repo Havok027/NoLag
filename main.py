@@ -212,6 +212,7 @@ class Plugin:
         self.mudfish = MudfishManager() if MudfishManager is not None else None
         self.profiles = None
         self.history = None
+        self.game_names = {}  # appid -> nome real (vindo do Steam pelo frontend); vale mais que o nome do processo
         self.modules_task = None
 
     async def get_settings(self):
@@ -272,7 +273,7 @@ class Plugin:
         appid = await asyncio.to_thread(game_id, pids, skip)
         if not appid:
             return "", ""
-        name = _load()["games"].get(appid, {}).get("name", "")
+        name = self.game_names.get(appid) or _load()["games"].get(appid, {}).get("name", "")
         if not name or name == appid:
             try:
                 _ports, name = await asyncio.to_thread(game_ports, pids)
@@ -558,6 +559,26 @@ class Plugin:
 
     async def get_current_game(self):
         return self.profiles.current() if self.profiles is not None else {"appid": "", "name": ""}
+
+    async def set_game_name(self, appid, name):
+        """v0.17.1: o frontend lê o nome real do jogo no Steam (o backend só vê o nome do processo, ex.: "Main")."""
+        data = _load()
+        if not (isinstance(appid, str) and _APPID.match(appid) and isinstance(name, str)):
+            return data
+        clean = "".join(ch for ch in name[:40] if ch.isprintable()).strip()
+        if not clean or clean == appid:
+            return data
+        if len(self.game_names) >= MAX_GAMES * 2 and appid not in self.game_names:
+            self.game_names.clear()
+        self.game_names[appid] = clean
+        if self.profiles is not None and self.profiles.appid == appid:
+            self.profiles.name = clean
+        game = data["games"].get(appid)
+        if game is not None and game.get("name") != clean:
+            game["name"] = clean
+            data = sanitize_settings(data)
+            _save(data)
+        return data
 
     async def set_game_module(self, appid, module, value):
         """Salva se o jogo liga o Wi-Fi e/ou o Mudfish (independentes entre si)."""
