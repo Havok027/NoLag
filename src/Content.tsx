@@ -102,7 +102,7 @@ export function Content() {
       .catch(() => {});
   };
 
-  const changeGameModule = (appid: string, module: "wifi" | "mudfish", value: boolean) => {
+  const changeGameModule = (appid: string, module: "wifi", value: boolean) => {
     setGameModule(appid, module, value)
       .then((s) => setGames(s?.games ?? {}))
       .catch(() => {});

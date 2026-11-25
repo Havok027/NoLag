@@ -19,7 +19,7 @@ interface Props {
   toggleSection: (key: string, value: boolean) => void;
   games: Record<string, GameProfile>;
   current: CurrentGame;
-  onGameModule: (appid: string, module: "wifi" | "mudfish", value: boolean) => void;
+  onGameModule: (appid: string, module: "wifi", value: boolean) => void;
   onDropGame: (appid: string) => void;
 }
 
@@ -100,16 +100,6 @@ export function ConfTab(p: Props) {
       <MfWarning t={t} helpOn={helpOn} />
       <PanelSectionRow>
         <ToggleField
-          label={t.confAutoGame}
-          description={t.confAutoGameDesc}
-          checked={status?.auto_on_game === true}
-          disabled={busy || !status}
-          onChange={(v) => run(() => mudfishSetOption("auto_on_game", v), t.mfOptSaved)}
-        />
-      </PanelSectionRow>
-      <Help show={helpOn} text={t.hConfAutoGame} />
-      <PanelSectionRow>
-        <ToggleField
           label={t.confKeepOn}
           description={t.confKeepOnDesc}
           checked={status?.keep_on === true}
@@ -146,14 +136,6 @@ export function ConfTab(p: Props) {
                 description={t.gameModulesDesc}
                 checked={g.wifi === true}
                 onChange={(v) => p.onGameModule(appid, "wifi", v)}
-              />
-            </PanelSectionRow>
-            <PanelSectionRow>
-              <ToggleField
-                label={t.gameMudfish}
-                description={t.gameModulesDesc}
-                checked={g.mudfish === true}
-                onChange={(v) => p.onGameModule(appid, "mudfish", v)}
               />
             </PanelSectionRow>
             <PanelSectionRow>

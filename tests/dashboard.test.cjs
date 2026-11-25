@@ -51,13 +51,13 @@ test("gráfico ao vivo reaproveita o LineChart e compara Com/Sem Mudfish (v0.15.
   assert.ok(mud.includes("lines={lines}"), "duas linhas");
 });
 
-test("aba Conf tem ativação ao abrir jogo e manter ligado, ambas opcionais, jogos, idioma e diagnóstico", () => {
+test("aba Conf tem manter ligado (opcional), jogos só com Wi-Fi, idioma e diagnóstico", () => {
   const src = read("ConfTab.tsx");
-  for (const s of ['"auto_on_game"', '"keep_on"', "t.confAutoGame", "t.confKeepOn", "DropdownItem", "onGameModule",
-    "t.confDiagTitle", "mudfishProbeApi", "t.gameWifi", "t.gameMudfish"]) {
+  for (const s of ['"keep_on"', "t.confKeepOn", "DropdownItem", "onGameModule",
+    "t.confDiagTitle", "mudfishProbeApi", "t.gameWifi"]) {
     assert.ok(src.includes(s), s);
   }
-  assert.ok(src.includes("hConfAutoGame") && src.includes("hConfKeepOn") && src.includes("hConfDiag"));
+  assert.ok(src.includes("hConfKeepOn") && src.includes("hConfDiag"));
 });
 
 test("seções recolhíveis salvam o estado e o backend conhece as novas", () => {

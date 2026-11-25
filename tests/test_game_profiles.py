@@ -76,6 +76,15 @@ class GameProfileTests(unittest.TestCase):
         self.assertTrue(w.active)
         self.assertFalse(m.active)
 
+    def test_old_mudfish_profile_flag_is_ignored(self):
+        # v0.17.0: o Mudfish nunca liga por jogo; perfis antigos com mudfish=True continuam válidos, mas não ligam nada.
+        w, m = Fake(), Fake()
+        gp, seq = setup(w, m, {"10": {"wifi": True, "mudfish": True}})
+        seq["cur"] = ("10", "Jogo")
+        run(gp.tick())
+        self.assertEqual((w.log, m.log), (["on"], []))
+        self.assertFalse(m.active)
+
     def test_wifi_is_never_turned_off_by_games_or_mudfish(self):
         # Isolamento: fechar o jogo ou encerrar o Mudfish nunca desfaz o Wi-Fi Optimizer.
         w, m = Fake(), Fake(active=True)

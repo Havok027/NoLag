@@ -176,9 +176,6 @@ export interface Texts {
   mfTipFull: string;
   mfTipDiff: string;
   hMfWarn: string;
-  confAutoGame: string;
-  confAutoGameDesc: string;
-  hConfAutoGame: string;
   confKeepOn: string;
   confKeepOnDesc: string;
   hConfKeepOn: string;
@@ -241,7 +238,6 @@ export interface Texts {
   mfToastFail: string;
   hMfNet: string;
   gameWifi: string;
-  gameMudfish: string;
   gameModulesDesc: string;
   gameCurrent: string;
   gameAddCurrent: string;
@@ -427,9 +423,6 @@ export const TEXTS: Record<Lang, Texts> = {
     mfTipFull: "Full VPN: use quando o jogo não tem item para a região desejada (ex.: servidor no Brasil, mas sem rota brasileira no Mudfish). Ative o Full VPN no painel web apontando para o nó mais próximo do servidor (ex.: São Paulo).",
     mfTipDiff: "Diferença: o item roteia só o tráfego daquele jogo (gasta menos dados). O Full VPN roteia toda a conexão do sistema: vale para jogos sem suporte direto, desde que não haja downloads em segundo plano.",
     hMfWarn: "O Mudfish cobra por tráfego.\nLigado só enquanto joga e com roteamento por jogo, gasta pouco.\nDownloads e VPN total gastam seus créditos rápido.",
-    confAutoGame: "Ativar ao abrir jogo",
-    confAutoGameDesc: "Liga o Mudfish sozinho nos jogos marcados. Desligado por padrão",
-    hConfAutoGame: "Desligado, o Mudfish nunca liga sozinho.\nLigado, abre só nos jogos marcados com a chave Mudfish e é encerrado ao fechar qualquer jogo.\nGasta créditos enquanto o jogo estiver aberto.",
     confKeepOn: "Manter ligado ao reiniciar",
     confKeepOnDesc: "Religa o Mudfish quando o Decky reinicia. Desligado por padrão",
     hConfKeepOn: "Cuidado: ligado, o Mudfish volta a gastar créditos mesmo sem jogo aberto.\nPrefira deixar desligado.",
@@ -492,11 +485,10 @@ export const TEXTS: Record<Lang, Texts> = {
     mfToastFail: "Mudfish: não deu certo",
     hMfNet: "Compare o ping com o Mudfish desligado e ligado para ver se a rota ajuda.",
     gameWifi: "Wi-Fi",
-    gameMudfish: "Mudfish",
-    gameModulesDesc: "Wi-Fi: otimiza ao abrir e segue otimizado ao sair. Mudfish: só liga com a opção da Conf e sempre encerra ao sair",
+    gameModulesDesc: "Wi-Fi: otimiza ao abrir e segue otimizado ao sair.",
     gameCurrent: "Jogo aberto",
     gameAddCurrent: "Salvar jogo aberto",
-    hGameModules: "Cada jogo salvo pode otimizar o Wi-Fi e ligar o Mudfish ao abrir.\nO Wi-Fi nunca é desfeito ao fechar o jogo; o Mudfish sempre é encerrado.",
+    hGameModules: "Cada jogo salvo pode otimizar o Wi-Fi ao abrir.\nO Wi-Fi nunca é desfeito ao fechar o jogo. O Mudfish é ligado à mão e sempre encerrado ao fechar qualquer jogo.",
     connTitle: "Conexão",
     connWifi: "Wi-Fi",
     connMudfish: "Mudfish",
@@ -676,9 +668,6 @@ export const TEXTS: Record<Lang, Texts> = {
     mfTipFull: "Full VPN: use it when the game has no item for the region you want (e.g. a Brazil server but no Brazilian route in Mudfish). Turn on Full VPN in the web panel pointing at the node closest to the server (e.g. São Paulo).",
     mfTipDiff: "Difference: the item routes only that game's traffic (uses less data). Full VPN routes the whole system connection: good for games without direct support, as long as nothing downloads in the background.",
     hMfWarn: "Mudfish bills by traffic.\nOn only while you play and with per-game routing, it costs little.\nDownloads and full VPN burn credits fast.",
-    confAutoGame: "Turn on when a game opens",
-    confAutoGameDesc: "Turns Mudfish on by itself in the marked games. Off by default",
-    hConfAutoGame: "Off, Mudfish never turns on by itself.\nOn, it opens only in games marked with the Mudfish switch and is stopped when any game closes.\nIt uses credits while the game is open.",
     confKeepOn: "Keep on after restart",
     confKeepOnDesc: "Turns Mudfish back on when Decky restarts. Off by default",
     hConfKeepOn: "Careful: when on, Mudfish uses credits again even with no game open.\nPrefer leaving it off.",
@@ -741,11 +730,10 @@ export const TEXTS: Record<Lang, Texts> = {
     mfToastFail: "Mudfish: it did not work",
     hMfNet: "Compare the ping with Mudfish off and on to see if the route helps.",
     gameWifi: "Wi-Fi",
-    gameMudfish: "Mudfish",
-    gameModulesDesc: "Wi-Fi: tunes on open and stays tuned after closing. Mudfish: turns on only with the Conf option and always stops on exit",
+    gameModulesDesc: "Wi-Fi: tunes on open and stays tuned after closing.",
     gameCurrent: "Open game",
     gameAddCurrent: "Save open game",
-    hGameModules: "Each saved game can tune Wi-Fi and turn on Mudfish when it opens.\nWi-Fi is never undone when the game closes; Mudfish is always stopped.",
+    hGameModules: "Each saved game can tune Wi-Fi when it opens.\nWi-Fi is never undone when the game closes. Mudfish is turned on by hand and always stopped when any game closes.",
     connTitle: "Connection",
     connWifi: "Wi-Fi",
     connMudfish: "Mudfish",
@@ -925,9 +913,6 @@ export const TEXTS: Record<Lang, Texts> = {
     mfTipFull: "Full VPN: úsalo cuando el juego no tiene ítem para la región que quieres (ej.: servidor en Brasil, pero sin ruta brasileña en Mudfish). Activa Full VPN en el panel web apuntando al nodo más cercano al servidor (ej.: São Paulo).",
     mfTipDiff: "Diferencia: el ítem enruta solo el tráfico de ese juego (gasta menos datos). Full VPN enruta toda la conexión del sistema: sirve para juegos sin soporte directo, siempre que no haya descargas en segundo plano.",
     hMfWarn: "Mudfish cobra por tráfico.\nActivo solo mientras juegas y con enrutamiento por juego, gasta poco.\nLas descargas y la VPN total gastan créditos rápido.",
-    confAutoGame: "Activar al abrir un juego",
-    confAutoGameDesc: "Activa Mudfish solo en los juegos marcados. Desactivado por defecto",
-    hConfAutoGame: "Apagado, Mudfish nunca se activa solo.\nActivo, se abre solo en los juegos marcados con el interruptor Mudfish y se detiene al cerrar cualquier juego.\nGasta créditos mientras el juego está abierto.",
     confKeepOn: "Mantener activo al reiniciar",
     confKeepOnDesc: "Reactiva Mudfish cuando Decky se reinicia. Desactivado por defecto",
     hConfKeepOn: "Cuidado: activo, Mudfish vuelve a gastar créditos aun sin juego abierto.\nMejor déjalo apagado.",
@@ -990,11 +975,10 @@ export const TEXTS: Record<Lang, Texts> = {
     mfToastFail: "Mudfish: no funcionó",
     hMfNet: "Compara el ping con Mudfish apagado y activado para ver si la ruta ayuda.",
     gameWifi: "Wi-Fi",
-    gameMudfish: "Mudfish",
-    gameModulesDesc: "Wi-Fi: optimiza al abrir y sigue optimizado al salir. Mudfish: solo se activa con la opción de Conf y siempre se detiene al salir",
+    gameModulesDesc: "Wi-Fi: optimiza al abrir y sigue optimizado al salir.",
     gameCurrent: "Juego abierto",
     gameAddCurrent: "Guardar juego abierto",
-    hGameModules: "Cada juego guardado puede optimizar el Wi-Fi y activar Mudfish al abrirse.\nEl Wi-Fi nunca se deshace al cerrar el juego; Mudfish siempre se detiene.",
+    hGameModules: "Cada juego guardado puede optimizar el Wi-Fi al abrirse.\nEl Wi-Fi nunca se deshace al cerrar el juego. Mudfish se activa a mano y siempre se detiene al cerrar cualquier juego.",
     connTitle: "Conexión",
     connWifi: "Wi-Fi",
     connMudfish: "Mudfish",
