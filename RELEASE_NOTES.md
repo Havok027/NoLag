@@ -1,5 +1,5 @@
-## v0.16.8
+## v0.16.9
 
-- **Botão Reiniciar no histórico em tela cheia:** apaga as medições salvas (memória e `history.json`) e recomeça os gráficos de ping, jitter e perda a partir do momento atual. A gravação continua normalmente a cada 10 s.
-- A faixa "Melhor conexão (30 min)" do Painel usa o mesmo histórico, então também recomeça (volta a "aguardando dados" até haver medidas suficientes).
-- Texto novo (`histReset`) nos 3 idiomas; nenhum `.py` novo na raiz; nenhuma mudança no `build.yml`.
+- **Ligar o Mudfish já abre o painel:** ao ligar o serviço pelo botão do Painel ou pela chave da aba Mudfish, o plugin abre o painel (127.0.0.1:8282) no navegador escolhido na Conf, assim que a porta responde. Antes o painel só terminava de iniciar depois de aberto à mão. O navegador do Steam continua sendo o padrão.
+- Só abre ao ligar com sucesso: desligar, falha ao ligar e a ativação automática ao abrir um jogo não abrem navegador.
+- Nenhum texto novo; nenhum `.py` novo na raiz; nenhuma mudança no `build.yml`.
