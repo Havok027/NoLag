@@ -1,69 +1,77 @@
-# NoLag
+# 🎮 NoLag — Plugin de Decky Loader (SteamOS / Bazzite)
 
-[Português](README.md) | [English](README.en.md) | **Español**
+Facilitador de acceso, monitoreo de red y automatización para **SteamOS**, **Steam Deck**, **Legion Go** y handhelds compatibles con **Decky Loader**.
 
-Plugin de Decky Loader (Steam Deck, Legion Go y similares con SteamOS o Bazzite) que ayuda a reducir la latencia y estabilizar la red. Dos módulos independientes: **Wi-Fi** (ajustes de la red local) y **Mudfish** (instalación y servicio, con acceso rápido a su panel web).
+El plugin tiene **dos módulos independientes**, para mantener el control simple, predecible y seguro:
 
-## Cómo usa NoLag a Mudfish
+- 📶 **Wi-Fi:** ajustes locales de red (basados en *WiFi Optimizer*), aislados y persistentes. No se deshacen al cerrar juegos, reiniciar la consola ni apagar Mudfish.
+- 🌐 **Mudfish:** gestiona el servicio headless (puerto `127.0.0.1:8282`), con telemetría en tiempo real, historial de 30 minutos, comparación *Sin Mudfish vs. Con Mudfish*, destaque de mejor conexión y selector de navegador para la interfaz web.
 
-NoLag **no configura rutas**. Se ocupa de lo básico y deja el resto al panel web del propio Mudfish (`http://127.0.0.1:8282`):
+Idiomas: 🇧🇷 Portugués · 🇺🇸 Inglés · 🇪🇸 Español.
 
-- **El plugin hace:** instala Mudfish en una carpeta persistente, enciende y apaga el servicio, muestra el ping actual y abre el panel con un toque.
-- **El panel de Mudfish hace:** login, ítems/juegos, región, selección de nodo, Multi-Path y todas las rutas.
+---
 
-El panel web no se muestra bien dentro del QAM en el Modo Juego, por eso **Abrir panel de Mudfish** lo abre en el navegador de Steam.
+## 🔗 Servicio de terceros (Mudfish)
 
-## Pestañas
+- **Mudfish** es un servicio de terceros y requiere tu propia cuenta y créditos/plan.
+- Sitio oficial: [mudfish.net](https://mudfish.net/) · Descargas: [mudfish.net/releases](https://mudfish.net/releases/)
+- Login, ítems de juego, región, nodos y **Full VPN** se configuran en el panel nativo: `http://127.0.0.1:8282`.
 
-- **Panel:** ping actual en anillo y gráfico, con jitter y pérdida de paquetes. Con Mudfish encendido y el túnel respondiendo, la medida viene del túnel; si no, de la conexión normal (sin gastar créditos). Después: botón de **Mudfish** (verde cuando está activo), **Abrir panel de Mudfish**, aviso de créditos, tabla Conexión y botón **Optimizar Wi-Fi**.
-- **Wi-Fi:** acciones rápidas, optimizaciones, streaming y ajustes avanzados (abajo).
-- **Mudfish:** estado en 3 pasos (instalar, entrar en el panel, servicio encendido), interruptor del servicio, **Abrir panel de Mudfish**, guía de primer uso, aviso de créditos, actualización del núcleo (sin campos de login: el login se hace solo en el panel web) y opciones avanzadas (puerto, ruta actual, objetivo del ping, reinstalar, rehacer login, logs).
-- **Conf:** mantener encendido al reiniciar (apagado por defecto), perfiles por juego con interruptor de Wi-Fi, idioma (PT, EN, ES) y diagnóstico.
+> ⚠️ **Aviso sobre la versión `5.xx`:** por ahora, el plugin puede instalar o mostrar la base `5.xx` del núcleo en algunos escenarios. **Al actualizar el plugin/núcleo, el funcionamiento es normal.**
 
-## Mudfish: primer uso (una sola vez)
+---
 
-1. Enciende Mudfish y toca **Abrir panel de Mudfish**. Inicia sesión.
-2. En el panel, añade el juego y elige la región (**Auto / South America**), la selección de nodo y el modo (**Basic** o **Multi-Path**).
-3. Vuelve al juego.
+## 🧩 Qué hace cada sección
 
-Este registro se hace una sola vez y queda guardado en la nube de la cuenta de Mudfish. NoLag no cambia estas opciones: después solo enciende y apaga el servicio, a mano (al encenderlo también abre el panel en el navegador elegido).
+### 📊 Panel
+Anillo de ping actual, comparación *Sin Mudfish* vs. *Con Mudfish*, mini-tarjetas de **Jitter** y **Pérdida de paquetes** (✓ en el menor valor), franja **Mejor conexión (30 min)** y botón de expansión para el historial en pantalla completa.
 
-## Mudfish: protección de créditos
+### 📶 Wi-Fi
+Organizado en *Acciones rápidas*, *Optimizaciones*, *Streaming* y *Avanzado*. Estabiliza la conexión local sin depender de Mudfish.
 
-Mudfish cobra por tráfico. Por eso NoLag **siempre arranca con Mudfish apagado**, al encender la consola y al abrir un juego: solo se enciende cuando tú lo pides. Al cerrar cualquier juego, Mudfish se cierra al instante. Encenderlo a mano nunca activa la opción de mantener encendido.
+### 🌐 Mudfish
+- Estado en 3 pasos; instalar, actualizar o **desinstalar** el núcleo (con confirmación).
+- Abre el panel web y trae el botón de ayuda (`?`): usa **Ítem de Juego** cuando hay un servidor dedicado en la región deseada, y **Full VPN** cuando no hay ítem/ruta para esa región (ej.: dirigir a São Paulo).
 
-- **Nunca descargues nada con Mudfish encendido** (juegos, actualizaciones, archivos): el tráfico se cobra.
-- Prefiere el **ítem del juego** en el panel de Mudfish. **Full VPN** está permitido (para juegos sin ítem en tu región, apúntalo al nodo más cercano, ej.: São Paulo), pero enruta todo el tráfico del sistema: mantén las descargas en segundo plano desactivadas. El botón `?` de la pestaña Mudfish explica cuándo usar cada uno.
-- **Multi-Path** (configurado en el panel) mejora la estabilidad y el jitter, pero gasta más créditos.
+### ⚙️ Conf
+Idioma, perfiles por juego (Wi-Fi), "Mantener encendido al reiniciar" y el **selector de navegador** del panel (navegador de Steam o navegadores instalados detectados en el sistema).
 
-## Detalles técnicos de Mudfish
+---
 
-- La instalación sigue la guía oficial de SteamOS (instalador con `sh`, servicio `mudrun-headless` sin flags) en una carpeta persistente enlazada en `/opt/mudfish`, y muestra el motivo exacto cuando algo falla.
-- El plugin solo **lee** la API local (estado, sesión, telemetría) y usa las rutas oficiales de inicio y parada. Detecta solo si ya iniciaste sesión en el panel.
-- **Versión dinámica:** la versión instalada sale siempre de la página oficial de versiones (si no responde, una instalación nueva usa el fallback 6.6.4). La pestaña Mudfish muestra la versión instalada y la última detectada.
-- **Desinstalar Mudfish:** botón en la pestaña Mudfish, con confirmación. Cierra los procesos de Mudfish, borra `/opt/mudfish`, la carpeta persistente, logs y restos, y limpia el login y "Mantener encendido" guardados en el plugin. Tu cuenta en la nube de Mudfish no se ve afectada.
-- **Actualización del núcleo:** NoLag consulta la página oficial de versiones (como máximo cada 6 horas) y avisa cuando hay un núcleo nuevo. **Actualizar** lo descarga, cambia el binario y reinicia el servicio si estaba encendido. No se instala nada sin tu toque.
+## 🛡️ Protección de créditos
 
-## Wi-Fi (módulo independiente)
+- 💰 Mudfish **siempre inicia apagado** y se **cierra automáticamente al salir de cualquier juego**, evitando gasto de créditos fuera de la partida.
+- 🚀 Al encender Mudfish, el panel se abre en el navegador elegido (el panel solo termina de iniciar una vez abierto).
+- ⏸️ Con **Full VPN** activo, mantén pausadas las descargas en segundo plano.
 
-Pestaña **Wi-Fi**: ajustes de la red local que funcionan con Mudfish encendido o apagado. Orden en pantalla: acciones rápidas, optimizaciones, streaming y avanzado.
+---
 
-- **Acciones rápidas:** **Aplicar optimizaciones seguras** activa todo de una vez; **Restaurar predeterminado** desactiva los ajustes de red y mantiene **Corregir al despertar** activado.
-- **Optimizaciones:** desactivar el ahorro de energía, corregir al despertar, buffers de red mayores y cola CAKE.
-- **Streaming:** modo streaming (activa los ajustes solo durante un stream) y corrección de streams colgados.
-- **Avanzado:** IPv6, bloqueo al punto de acceso, banda preferida y DNS.
-- Los ajustes **nunca** se deshacen al cerrar un juego, encender la consola o apagar Mudfish: solo el botón (o la pestaña Wi-Fi) los restaura. Sobreviven a la suspensión, la reconexión y las actualizaciones del sistema (SteamOS y Bazzite). Al desinstalar el plugin, todo se deshace.
-- No envía nada a internet. Si el WiFi Optimizer original está instalado, apaga uno de los dos.
-- Módulo derivado de WiFi Optimizer 0.25.0 (Arcada Labs, BSD 3-Clause): ver `THIRD_PARTY_NOTICES.md`.
+## 📸 Capturas de pantalla
 
-## Idiomas
+### Panel en Modo Juego (QAM)
+Mejor conexión de los últimos 30 minutos, anillo de ping, gráfico comparativo y mini-tarjetas de Jitter y Pérdida:
 
-Português, English y Español (Conf > Idioma).
+![Panel de NoLag en Modo Juego](215011.jpg)
 
-## Desarrollo
+### Historial en pantalla completa (últimos 30 minutos)
+Ping, Jitter y Pérdida de paquetes, *Sin Mudfish* vs. *Con Mudfish*:
 
-```
-pnpm install
-pnpm test
-pnpm build
-```
+![Historial de 30 minutos en pantalla completa](215015.jpg)
+
+![Detalle del historial comparativo](215013.jpg)
+
+---
+
+## 💬 Opinión personal de uso
+
+En mi caso, aunque el plugin no siempre muestre una mejora enorme en el número bruto de ping, el gráfico deja claro que **ya no tengo variaciones bruscas de conexión**. Mi problema era una inestabilidad de red que aparecía de vez en cuando y causaba micro-tirones — e irónicamente justo en los momentos críticos de la partida, como muestran los huecos y oscilaciones del gráfico. Con el uso continuo y la ruta estabilizada, **ya no tengo esos problemas**.
+
+---
+
+## 🗺️ Roadmap
+
+- ✅ Dos módulos independientes (Wi-Fi y Mudfish), en PT, EN y ES.
+- ✅ Comparación *Sin vs. Con Mudfish*, mejor conexión e historial interactivo de 30 minutos.
+- ✅ Full VPN con guía bajo demanda (`?`), desinstalación limpia y selector de navegador mediante acceso directo en Modo Juego.
+- 🚧 Refinar el inicio en pantalla completa/resolución y el diseño de control de navegación web en navegadores externos.
+- 🔮 Nuevos ajustes en el historial (ventana configurable, controles extra) y compatibilidad continua con SteamOS.
