@@ -18,7 +18,7 @@ The web panel does not render well inside the QAM in Game Mode, so **Open Mudfis
 - **Dash:** current ping as a ring and chart, with jitter and packet loss. With Mudfish on and the tunnel answering, the reading comes from the tunnel; otherwise from the normal connection (no credits used). Then: the **Mudfish** button (green when active), **Open Mudfish panel**, the credits warning, the Connection table and the **Optimize Wi-Fi** button.
 - **Wi-Fi:** quick actions, optimizations, streaming and advanced tweaks (below).
 - **Mudfish:** status in 3 steps (install, log in on the panel, service on), service switch, **Open Mudfish panel**, first-use guide, credits warning, core update (no login fields: you log in only on the web panel) and advanced options (port, current route, ping target, reinstall, redo login, logs).
-- **Conf:** enable on game launch (off by default), keep on after restart (off by default), per-game profiles with Wi-Fi and Mudfish switches, language (PT, EN, ES) and diagnostics.
+- **Conf:** keep on after restart (off by default), per-game profiles with a Wi-Fi switch, language (PT, EN, ES) and diagnostics.
 
 ## Mudfish: first use (once)
 
@@ -26,11 +26,11 @@ The web panel does not render well inside the QAM in Game Mode, so **Open Mudfis
 2. In the panel, add the game and pick the region (**Auto / South America**), node selection and mode (**Basic** or **Multi-Path**).
 3. Go back to the game.
 
-This setup is done once and saved in your Mudfish account's cloud. NoLag does not change these options: afterwards it only turns the service on and off (by hand or, if you enable it in Conf, when a game opens and closes).
+This setup is done once and saved in your Mudfish account's cloud. NoLag does not change these options: afterwards it only turns the service on and off, by hand (turning it on also opens the panel in your chosen browser).
 
 ## Mudfish: credit protection
 
-Mudfish bills per traffic. So NoLag **always starts with Mudfish off**, at boot and when a game opens, unless you enable the option in Conf. When any game closes, Mudfish is stopped right away. Turning it on by hand never enables keep-on.
+Mudfish bills per traffic. So NoLag **always starts with Mudfish off**, at boot and when a game opens: it only turns on when you tell it to. When any game closes, Mudfish is stopped right away. Turning it on by hand never enables keep-on.
 
 - **Never download anything with Mudfish on** (games, updates, files): the traffic is billed.
 - Prefer the **game item** in the Mudfish panel. **Full VPN** is allowed (for games with no item for your region, point it at the closest node, e.g. São Paulo), but it routes all system traffic: keep background downloads off. The `?` button in the Mudfish tab explains when to use each.

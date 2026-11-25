@@ -1,5 +1,6 @@
-## v0.16.9
+## v0.17.0
 
-- **Ligar o Mudfish já abre o painel:** ao ligar o serviço pelo botão do Painel ou pela chave da aba Mudfish, o plugin abre o painel (127.0.0.1:8282) no navegador escolhido na Conf, assim que a porta responde. Antes o painel só terminava de iniciar depois de aberto à mão. O navegador do Steam continua sendo o padrão.
-- Só abre ao ligar com sucesso: desligar, falha ao ligar e a ativação automática ao abrir um jogo não abrem navegador.
-- Nenhum texto novo; nenhum `.py` novo na raiz; nenhuma mudança no `build.yml`.
+- **Mudfish removido dos perfis por jogo:** como o painel só termina de iniciar depois de aberto no navegador, ligar o Mudfish sozinho ao abrir um jogo não servia mais. Na aba Conf saíram a chave "Mudfish" de cada jogo e a opção "Ativar ao abrir jogo". Os perfis por jogo agora têm só a chave de Wi-Fi.
+- O Mudfish passa a ligar somente à mão (Painel ou aba Mudfish, já abrindo o painel no navegador escolhido). Continua sendo encerrado ao fechar qualquer jogo, para proteger os créditos.
+- Perfis salvos antes, com a chave Mudfish ligada, continuam válidos: a chave é ignorada. A opção "Manter ligado ao reiniciar" não mudou.
+- Textos de ajuda e READMEs atualizados nos 3 idiomas; nenhum `.py` novo na raiz; nenhuma mudança no `build.yml`.

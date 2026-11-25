@@ -18,7 +18,7 @@ El panel web no se muestra bien dentro del QAM en el Modo Juego, por eso **Abrir
 - **Panel:** ping actual en anillo y gráfico, con jitter y pérdida de paquetes. Con Mudfish encendido y el túnel respondiendo, la medida viene del túnel; si no, de la conexión normal (sin gastar créditos). Después: botón de **Mudfish** (verde cuando está activo), **Abrir panel de Mudfish**, aviso de créditos, tabla Conexión y botón **Optimizar Wi-Fi**.
 - **Wi-Fi:** acciones rápidas, optimizaciones, streaming y ajustes avanzados (abajo).
 - **Mudfish:** estado en 3 pasos (instalar, entrar en el panel, servicio encendido), interruptor del servicio, **Abrir panel de Mudfish**, guía de primer uso, aviso de créditos, actualización del núcleo (sin campos de login: el login se hace solo en el panel web) y opciones avanzadas (puerto, ruta actual, objetivo del ping, reinstalar, rehacer login, logs).
-- **Conf:** activar al abrir un juego (apagado por defecto), mantener encendido al reiniciar (apagado por defecto), perfiles por juego con interruptores de Wi-Fi y Mudfish, idioma (PT, EN, ES) y diagnóstico.
+- **Conf:** mantener encendido al reiniciar (apagado por defecto), perfiles por juego con interruptor de Wi-Fi, idioma (PT, EN, ES) y diagnóstico.
 
 ## Mudfish: primer uso (una sola vez)
 
@@ -26,11 +26,11 @@ El panel web no se muestra bien dentro del QAM en el Modo Juego, por eso **Abrir
 2. En el panel, añade el juego y elige la región (**Auto / South America**), la selección de nodo y el modo (**Basic** o **Multi-Path**).
 3. Vuelve al juego.
 
-Este registro se hace una sola vez y queda guardado en la nube de la cuenta de Mudfish. NoLag no cambia estas opciones: después solo enciende y apaga el servicio (a mano o, si lo activas en Conf, al abrir y cerrar el juego).
+Este registro se hace una sola vez y queda guardado en la nube de la cuenta de Mudfish. NoLag no cambia estas opciones: después solo enciende y apaga el servicio, a mano (al encenderlo también abre el panel en el navegador elegido).
 
 ## Mudfish: protección de créditos
 
-Mudfish cobra por tráfico. Por eso NoLag **siempre arranca con Mudfish apagado**, al encender la consola y al abrir un juego, salvo que actives la opción en Conf. Al cerrar cualquier juego, Mudfish se cierra al instante. Encenderlo a mano nunca activa la opción de mantener encendido.
+Mudfish cobra por tráfico. Por eso NoLag **siempre arranca con Mudfish apagado**, al encender la consola y al abrir un juego: solo se enciende cuando tú lo pides. Al cerrar cualquier juego, Mudfish se cierra al instante. Encenderlo a mano nunca activa la opción de mantener encendido.
 
 - **Nunca descargues nada con Mudfish encendido** (juegos, actualizaciones, archivos): el tráfico se cobra.
 - Prefiere el **ítem del juego** en el panel de Mudfish. **Full VPN** está permitido (para juegos sin ítem en tu región, apúntalo al nodo más cercano, ej.: São Paulo), pero enruta todo el tráfico del sistema: mantén las descargas en segundo plano desactivadas. El botón `?` de la pestaña Mudfish explica cuándo usar cada uno.

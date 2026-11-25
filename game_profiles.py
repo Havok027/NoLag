@@ -1,7 +1,7 @@
-"""Perfis por jogo: ao abrir um jogo salvo, liga Wi-Fi e/ou Mudfish; ao sair, desfaz o que ligou.
+"""Perfis por jogo: ao abrir um jogo salvo, otimiza o Wi-Fi (o Mudfish nunca liga por aqui desde a v0.17.0; perfis antigos
+com a chave \"mudfish\" continuam válidos e são ignorados).
 
-Proteção de créditos: o Mudfish só liga aqui se a opção "ao abrir jogo" (aba Conf) estiver ativa, e é
-encerrado ao fechar QUALQUER jogo detectado, mesmo que tenha sido ligado à mão.
+Proteção de créditos: o Mudfish é encerrado ao fechar QUALQUER jogo detectado, mesmo que tenha sido ligado à mão.
 
 Isolamento: ao sair do jogo só o daemon do Mudfish é encerrado. O Wi-Fi Optimizer nunca é desligado aqui.
 
@@ -14,7 +14,7 @@ import decky
 
 import core_state
 
-MODULES = ("wifi", "mudfish")
+MODULES = ("wifi",)  # v0.17.0: o Mudfish não liga mais por jogo (o painel só termina de iniciar depois de aberto no navegador)
 INTERVAL = 5
 
 
