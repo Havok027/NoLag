@@ -1,10 +1,10 @@
 import { Focusable, PanelSectionRow } from "@decky/ui";
 import { useRef } from "react";
 import type { CSSProperties } from "react";
-import { wifiReset, wifiOptimizeSafe, mudfishSetEnabled } from "./api";
+import { wifiReset, wifiOptimizeSafe } from "./api";
 import { Card, Help, PanelButton } from "./components";
 import type { Texts } from "./i18n";
-import { openMudfishWeb, useMudfish } from "./MudfishTab";
+import { openMudfishWeb, toggleMudfish, useMudfish } from "./MudfishTab";
 import { activeCount, useWifi } from "./WifiTab";
 
 const DASH = "—";
@@ -74,7 +74,7 @@ export function MudfishButton({ t, helpOn }: { t: Texts; helpOn: boolean }) {
         label={label}
         active={running}
         disabled={busy || working || !status || (!ready && !running)}
-        onPress={() => run(() => mudfishSetEnabled(!running), running ? t.mfOff : t.mfOn)}
+        onPress={() => toggleMudfish(run, t, !running)}
       />
       {(ready || running) && (
         <PanelSectionRow>

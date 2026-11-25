@@ -32,7 +32,7 @@ test("Painel: gráfico no topo, botão do Mudfish, status e botão Otimizar Wi-F
 test("os dois controles do Painel são botões de ação com estado ativo/inativo", () => {
   const src = read("DashControls.tsx");
   assert.ok(src.includes("export function ActionButton") && src.includes("aria-pressed") && src.includes("active"));
-  assert.ok(src.includes("mudfishSetEnabled") && src.includes("wifiOptimizeSafe") && src.includes("wifiReset"));
+  assert.ok(src.includes("toggleMudfish") && src.includes("wifiOptimizeSafe") && src.includes("wifiReset"));
   assert.ok(!src.includes("ToggleField"));
   for (const k of ["btnMfOn", "btnMfOff", "btnWifiOn", "btnWifiOff"]) assert.ok(src.includes("t." + k), k);
 });

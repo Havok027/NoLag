@@ -145,8 +145,8 @@ export function useMudfish(t: Texts) {
     };
   }, []);
 
-  const run = async (job: () => Promise<MudfishResult>, okText?: string) => {
-    if (busy) return;
+  const run = async (job: () => Promise<MudfishResult>, okText?: string): Promise<boolean> => {
+    if (busy) return false;
     setBusy(true);
     let ok = false;
     let msg = t.mfErrGeneric;
@@ -165,9 +165,17 @@ export function useMudfish(t: Texts) {
     }
     await refresh();
     if (alive.current) setBusy(false);
+    return ok;
   };
 
   return { available, loadError, status, busy, note, run, refresh };
+}
+
+/** v0.16.9: liga ou desliga o serviço. Ao LIGAR com sucesso (a porta 8282 já respondeu), abre o painel no navegador escolhido:
+ * o painel só termina de iniciar quando é aberto. Ao desligar, não abre nada. */
+export async function toggleMudfish(run: (job: () => Promise<MudfishResult>, okText?: string) => Promise<boolean>, t: Texts, enable: boolean) {
+  const ok = await run(() => mudfishSetEnabled(enable), enable ? t.mfOn : t.mfOff);
+  if (ok && enable) await openMudfishWeb();
 }
 
 /** Tabela de métricas da conexão no Painel, sob demanda e a cada poucos segundos. */
@@ -645,7 +653,7 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
             description={t.mfToggleDesc}
             checked={!!status?.running}
             disabled={busy || working || !installed}
-            onChange={(v) => run(() => mudfishSetEnabled(v), v ? t.mfOn : t.mfOff)}
+            onChange={(v) => toggleMudfish(run, t, v)}
           />
         </PanelSectionRow>
       )}
