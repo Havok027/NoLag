@@ -1,6 +1,7 @@
-## v0.17.1
+## v0.17.2
 
-- **Nome do jogo corrigido:** a aba Conf mostrava o nome do processo (ex.: "Main") em vez do jogo. Agora o plugin lê o título real no Steam (ex.: Hunt: Showdown) para o "Jogo aberto" e para os perfis salvos, e corrige sozinho perfis antigos que ficaram com o nome do processo. Se o Steam não informar o título, continua o nome anterior.
-- **Limpeza do código do Mudfish por jogo:** removidos o ligar ao abrir jogo, a conexão automática e a opção interna `auto_on_game` (backend, tipos e o aviso "Conectar no painel"), sem uso desde a v0.17.0. O Mudfish continua sendo encerrado ao fechar qualquer jogo, e "Manter ligado ao reiniciar" não mudou.
-- Configurações antigas com `auto_on_game` são lidas normalmente: o valor é descartado.
+- **Atualização do Mudfish corrigida:** a última versão agora vem da página oficial de download (`mudfish.net/download`), que sempre traz a versão atual. A página `mudfish.net/releases/` é só o arquivo de versões antigas e fica como reserva.
+- **Download pelo link oficial:** o instalador é baixado do link da página de download; se falhar, tenta o endereço do arquivo de versões (urllib e depois curl em cada um). O erro mostra o motivo de cada tentativa.
+- **Você decide:** o plugin não atualiza mais sozinho ao iniciar; só consulta e avisa. Com versão nova, o Painel e a aba Mudfish mostram o aviso e o botão "Atualizar para X", que pede confirmação antes de baixar e instalar. Se o serviço estiver ligado, ele é religado no final.
+- Textos novos nos 3 idiomas (`mfUpdateConfirm`, `mfUpdateConfirmOk`).
 - Nenhum `.py` novo na raiz; nenhuma mudança no `build.yml`.

@@ -52,7 +52,8 @@ import core_state
 
 PORT = 8282
 WEBUI_URL = "http://127.0.0.1:%d" % PORT
-RELEASES_URL = "https://mudfish.net/releases/"
+RELEASES_URL = "https://mudfish.net/releases/"  # arquivo de versões ANTIGAS (reserva)
+DOWNLOAD_URL = "https://mudfish.net/download"  # página oficial: traz a versão mais recente e o link de download
 FALLBACK_VERSION = "6.6.4"  # só para instalação nova quando mudfish.net/releases/ não responde
 INSTALLER = "mudfish-%s-linux-x86_64.sh"
 MOUNT_POINT = "/opt/mudfish"
@@ -355,6 +356,13 @@ def installer_url(version):
     if not isinstance(version, str) or not _VERSION.match(version):
         raise ValueError("versão inválida: %r" % (version,))
     return RELEASES_URL + INSTALLER % version
+
+
+def installer_urls(version):
+    """Endereços para baixar o instalador, em ordem: link oficial da página de download e, de reserva, o arquivo de versões."""
+    installer_url(version)  # valida a versão (levanta ValueError se for inválida)
+    name = INSTALLER % version
+    return [DOWNLOAD_URL + "?filename=" + name, RELEASES_URL + name]
 
 
 def mounted(mount_point, text=None):
@@ -753,7 +761,6 @@ class MudfishManager:
         self.rtt = {"static": "unknown", "vnodes": "unknown", "n_static": 0, "n_vnodes": 0}
         self._rtt_at = 0.0
         self.update = {"latest": "", "checked": False}
-        self._auto_update_at = 0.0
         self._update_at = 0.0
 
     # ---------- arquivos ----------
@@ -999,16 +1006,23 @@ class MudfishManager:
     def _fetch_latest(self):
         return self._fetch_latest_strict() or FALLBACK_VERSION
 
+    @staticmethod
+    def _read_page(url):
+        req = urllib.request.Request(url, headers={"User-Agent": "NoLag"})
+        with urllib.request.urlopen(req, timeout=15) as r:  # noqa: S310 - URL fixa
+            return r.read(2_000_000).decode("utf-8", "ignore")
+
     def _fetch_latest_strict(self):
-        """Última versão publicada em mudfish.net/releases, ou '' se a consulta falhar (sem cair na versão fixa)."""
-        try:
-            req = urllib.request.Request(RELEASES_URL, headers={"User-Agent": "NoLag"})
-            with urllib.request.urlopen(req, timeout=15) as r:  # noqa: S310 - URL fixa
-                html = r.read(2_000_000).decode("utf-8", "ignore")
-            versions = parse_release_versions(html)
-            return versions[-1] if versions else ""
-        except Exception:
-            return ""
+        """Última versão do instalador Linux: página oficial de download primeiro, arquivo de versões como reserva.
+        Devolve '' se as duas falharem (sem cair na versão fixa)."""
+        for url in (DOWNLOAD_URL, RELEASES_URL):
+            try:
+                versions = parse_release_versions(self._read_page(url))
+            except Exception:
+                continue
+            if versions:
+                return versions[-1]
+        return ""
 
     def _check_installer(self, tmp):
         """Confere o arquivo baixado; devolve o motivo se não for o instalador, senão ''."""
@@ -1024,21 +1038,26 @@ class MudfishManager:
         return ""
 
     def _download(self, version, dest):
-        """Baixa com urllib. Levanta ValueError com o motivo exato se falhar."""
-        url = installer_url(version)
-        req = urllib.request.Request(url, headers={"User-Agent": "NoLag"})
-        tmp = dest + ".part"
-        try:
-            with urllib.request.urlopen(req, timeout=60) as r, open(tmp, "wb") as f:  # noqa: S310 - URL fixa
-                shutil.copyfileobj(r, f)
-        except Exception as e:
-            self._rm(tmp)
-            raise ValueError("%s (%s)" % (_err(e), url))
-        bad = self._check_installer(tmp)
-        if bad:
-            self._rm(tmp)
-            raise ValueError(bad)
-        os.replace(tmp, dest)
+        """Baixa com urllib, tentando cada endereço de `installer_urls`. Levanta ValueError com o motivo exato se todos falharem."""
+        errors = []
+        for url in installer_urls(version):
+            req = urllib.request.Request(url, headers={"User-Agent": "NoLag"})
+            tmp = dest + ".part"
+            try:
+                with urllib.request.urlopen(req, timeout=60) as r, open(tmp, "wb") as f:  # noqa: S310 - URL fixa
+                    shutil.copyfileobj(r, f)
+            except Exception as e:
+                self._rm(tmp)
+                errors.append("%s (%s)" % (_err(e), url))
+                continue
+            bad = self._check_installer(tmp)
+            if bad:
+                self._rm(tmp)
+                errors.append("%s (%s)" % (bad, url))
+                continue
+            os.replace(tmp, dest)
+            return
+        raise ValueError(" | ".join(errors))
 
     @staticmethod
     def _rm(path):
@@ -1048,21 +1067,25 @@ class MudfishManager:
             pass
 
     async def _download_curl(self, version, dest):
-        """Plano B: curl do sistema (certificados do SteamOS). Devolve o motivo ou ''."""
+        """Plano B: curl do sistema (certificados do SteamOS), em cada endereço de `installer_urls`. Devolve o motivo ou ''."""
         if not shutil.which("curl"):
             return "curl não encontrado"
-        url = installer_url(version)
-        tmp = dest + ".part"
-        rc, out = await self.run(["curl", "-fsSL", "--retry", "2", "--connect-timeout", "15", "-o", tmp, url], 180)
-        if rc != 0:
-            self._rm(tmp)
-            return "curl código %s: %s" % (rc, _tail(out, 200))
-        bad = self._check_installer(tmp)
-        if bad:
-            self._rm(tmp)
-            return bad
-        os.replace(tmp, dest)
-        return ""
+        errors = []
+        for url in installer_urls(version):
+            tmp = dest + ".part"
+            rc, out = await self.run(["curl", "-fsSL", "--retry", "2", "--connect-timeout", "15", "-o", tmp, url], 180)
+            if rc != 0:
+                self._rm(tmp)
+                errors.append("curl código %s: %s (%s)" % (rc, _tail(out, 200), url))
+                continue
+            bad = self._check_installer(tmp)
+            if bad:
+                self._rm(tmp)
+                errors.append("%s (%s)" % (bad, url))
+                continue
+            os.replace(tmp, dest)
+            return ""
+        return " | ".join(errors)
 
     async def _fetch_installer(self, version, dest):
         """Baixa o instalador (urllib, depois curl). Devolve '' se deu certo, senão o motivo."""
@@ -1579,19 +1602,13 @@ class MudfishManager:
         )
         self._publish()
 
-    async def _auto_update(self):
-        """Atualiza o núcleo sozinho (serviço desligado), no máximo uma tentativa a cada UPDATE_TTL. Nunca derruba falha."""
+    async def _check_update_boot(self):
+        """Só consulta a versão nova (cache de 6 h) para a tela avisar. NUNCA baixa nem instala: quem decide é o usuário."""
         try:
-            if self._alive() or not self.installed()[0]:
-                return
-            if self._auto_update_at and time.monotonic() - self._auto_update_at < UPDATE_TTL:
-                return
-            self._auto_update_at = time.monotonic()
-            res = await self.update_core()
-            if res.get("updated"):
-                decky.logger.info("NoLag Mudfish: núcleo atualizado para v%s" % res.get("version"))
+            if self.installed()[0]:
+                await self.check_update()
         except Exception as e:
-            decky.logger.error(f"NoLag Mudfish: atualização automática falhou: {e}")
+            decky.logger.error(f"NoLag Mudfish: consulta de versão falhou: {e}")
 
     async def _game_off(self):
         """Ao fechar o jogo, encerra o Mudfish sempre (ligado por perfil ou à mão) para zerar o tráfego."""
@@ -1613,7 +1630,7 @@ class MudfishManager:
                 ok, why = await self._ensure_mount()
                 if not ok:
                     decky.logger.error(f"NoLag Mudfish: montagem no boot falhou: {why}")
-            await self._auto_update()
+            await self._check_update_boot()
             if self.load()["keep_on"]:
                 if not self._alive():
                     await self.start()
