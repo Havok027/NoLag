@@ -192,7 +192,7 @@ export interface MudfishLive {
   tunnel_source?: "icmp" | "api" | "";
   rtt?: MudfishRtt;
 }
-export const mudfishCheckUpdate = callable<[], MudfishResult & { update?: MudfishUpdate }>("mudfish_check_update");
+export const mudfishCheckUpdate = callable<[force?: boolean], MudfishResult & { update?: MudfishUpdate }>("mudfish_check_update");
 export const mudfishUpdate = callable<[], MudfishResult & { updated?: boolean; version?: string }>("mudfish_update");
 export const mudfishGetLive = callable<[], MudfishLive>("mudfish_get_live");
 export const mudfishResetSession = callable<[], MudfishResult & { logged_out?: boolean }>("mudfish_reset_session");

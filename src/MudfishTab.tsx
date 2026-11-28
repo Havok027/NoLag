@@ -551,6 +551,7 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
   const [target, setTarget] = useState("");
   const [route, setRoute] = useState<RouteInfo | null>(null);
   const [tipOpen, setTipOpen] = useState(false);
+  const [checking, setChecking] = useState(false);
   const [logs, setLogs] = useState<{ service: string; install: string } | null>(null);
   const timer = useRef<number | undefined>(undefined);
   const filled = useRef(false);
@@ -622,6 +623,33 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
     mudfishGetLogs()
       .then((r) => setLogs({ service: r?.service ?? "", install: r?.install ?? "" }))
       .catch(() => setLogs({ service: "", install: "" }));
+
+  // v0.17.3: verificação manual (ignora o cache de 6 h). Mostra o resultado num aviso; se houver versão nova, o botão de atualizar aparece.
+  const checkNow = async () => {
+    if (checking || busy) return;
+    setChecking(true);
+    let body = t.mfErrUpdateCheck;
+    try {
+      const r = await mudfishCheckUpdate(true);
+      if (r?.ok) {
+        const u = r.update;
+        body = u?.available
+          ? t.mfUpdateAvail.replace("{v}", u.latest).replace("{c}", u.installed)
+          : t.mfUpToDate.replace("{c}", u?.installed || "");
+      } else {
+        body = mudfishErrorFull(t, r?.error || "update_check_failed", r?.detail);
+      }
+    } catch {
+      /* mantém o texto de falha */
+    }
+    try {
+      toaster.toast({ title: t.mfUpdateTitle, body, duration: 6000 });
+    } catch {
+      /* sem aviso na tela */
+    }
+    await refresh();
+    setChecking(false);
+  };
 
   const askUninstall = () =>
     showModal(
@@ -719,6 +747,13 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
             </ButtonItem>
           </PanelSectionRow>
         </>
+      )}
+      {installed && (
+        <PanelSectionRow>
+          <ButtonItem layout="below" disabled={busy || working || checking} onClick={checkNow}>
+            {checking ? t.mfChecking : t.mfCheckBtn}
+          </ButtonItem>
+        </PanelSectionRow>
       )}
 
       {/* 6. Desinstalar (com confirmação) */}

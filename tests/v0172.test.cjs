@@ -28,8 +28,8 @@ test("v0.17.2: textos de confirmação nos 3 idiomas", () => {
 });
 
 test("v0.17.2: versão válida e notas só da versão atual", () => {
-  assert.strictEqual(JSON.parse(readRoot("package.json")).version, "0.17.2");
+  assert.match(JSON.parse(readRoot("package.json")).version, /^\d+\.\d+\.\d+$/);
   const n = readRoot("RELEASE_NOTES.md");
   assert.strictEqual((n.match(/^## v/gm) || []).length, 1);
-  assert.ok(n.startsWith("## v0.17.2"));
+  assert.ok(/^## v\d+\.\d+\.\d+/.test(n));
 });
