@@ -4,7 +4,7 @@ import type { CSSProperties } from "react";
 import { wifiReset, wifiOptimizeSafe } from "./api";
 import { Card, Help, PanelButton } from "./components";
 import type { Texts } from "./i18n";
-import { openMudfishWeb, toggleMudfish, useMudfish } from "./MudfishTab";
+import { askMudfishUpdate, openMudfishWeb, toggleMudfish, useMudfish } from "./MudfishTab";
 import { activeCount, useWifi } from "./WifiTab";
 
 const DASH = "—";
@@ -85,6 +85,15 @@ export function MudfishButton({ t, helpOn }: { t: Texts; helpOn: boolean }) {
         <div style={{ fontSize: 11, color: "#ffd84a", textAlign: "center", margin: "-4px 0 10px", whiteSpace: "pre-line" }}>
           {t.mfUpdateAvail.replace("{v}", status.update.latest).replace("{c}", status.update.installed)}
         </div>
+      )}
+      {status?.update?.available && (
+        <PanelSectionRow>
+          <PanelButton
+            label={t.mfUpdateBtn.replace("{v}", status.update.latest)}
+            disabled={busy || working}
+            onPress={() => askMudfishUpdate(run, t, status.update!.latest, status.update!.installed)}
+          />
+        </PanelSectionRow>
       )}
       <div style={{ height: 10 }} />
       <Help show={helpOn} text={t.hDashBtns} />

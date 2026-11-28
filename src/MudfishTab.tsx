@@ -178,6 +178,21 @@ export async function toggleMudfish(run: (job: () => Promise<MudfishResult>, okT
   if (ok && enable) await openMudfishWeb();
 }
 
+/** v0.17.2: pergunta antes de atualizar o núcleo do Mudfish; o backend só é chamado no OK. */
+export function askMudfishUpdate(run: (job: () => Promise<MudfishResult>, okText?: string) => Promise<boolean>, t: Texts, latest: string, installed: string) {
+  showModal(
+    <ConfirmModal
+      strTitle={t.mfUpdateTitle}
+      strDescription={t.mfUpdateConfirm.replace("{v}", latest).replace("{c}", installed)}
+      strOKButtonText={t.mfUpdateConfirmOk}
+      strCancelButtonText={t.mfCancel}
+      onOK={() => {
+        run(() => mudfishUpdate(), t.mfUpdateOk);
+      }}
+    />
+  );
+}
+
 /** Tabela de métricas da conexão no Painel, sob demanda e a cada poucos segundos. */
 export function ConnCard({ t, helpOn }: { t: Texts; helpOn: boolean }) {
   const [snap, setSnap] = useState<Snapshot | null>(null);
@@ -699,7 +714,7 @@ export function MudfishTab({ t, helpOn, isCollapsed, toggleSection }: Props) {
             <div>{t.mfUpdateAvail.replace("{v}", status.update.latest).replace("{c}", status.update.installed)}</div>
           </div>
           <PanelSectionRow>
-            <ButtonItem layout="below" disabled={busy || working} onClick={() => run(() => mudfishUpdate(), t.mfUpdateOk)}>
+            <ButtonItem layout="below" disabled={busy || working} onClick={() => askMudfishUpdate(run, t, status.update.latest, status.update.installed)}>
               {t.mfUpdateBtn.replace("{v}", status.update.latest)}
             </ButtonItem>
           </PanelSectionRow>

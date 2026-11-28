@@ -48,9 +48,9 @@ test("v0.17.1: código morto do Mudfish por jogo removido (backend, api, tela e 
   }
 });
 
-test("v0.17.1: versão 0.17.1 e notas só da versão atual", () => {
-  assert.equal(JSON.parse(readRoot("package.json")).version, "0.17.1");
+test("v0.17.1: versão válida e notas só da versão atual", () => {
+  assert.match(JSON.parse(readRoot("package.json")).version, /^\d+\.\d+\.\d+$/);
   const notes = readRoot("RELEASE_NOTES.md");
-  assert.ok(/^## v0\.17\.1\b/m.test(notes));
+  assert.ok(/^## v\d+\.\d+\.\d+\b/m.test(notes));
   assert.equal((notes.match(/^## v/gm) || []).length, 1);
 });

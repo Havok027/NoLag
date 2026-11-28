@@ -142,6 +142,8 @@ export interface Texts {
   mfUpdateAvail: string;
   mfUpdateBtn: string;
   mfUpdateOk: string;
+  mfUpdateConfirm: string;
+  mfUpdateConfirmOk: string;
   mfErrUpdateCheck: string;
   mfRttRow: string;
   mfRttReady: string;
@@ -392,6 +394,8 @@ export const TEXTS: Record<Lang, Texts> = {
     mfUpdateAvail: "Nova versão do núcleo disponível: {v} (instalada: {c})",
     mfUpdateBtn: "Atualizar para {v}",
     mfUpdateOk: "Mudfish atualizado",
+    mfUpdateConfirm: "Quer atualizar o Mudfish de {c} para {v}? O instalador oficial é baixado do site do Mudfish. Se o serviço estiver ligado, ele é desligado durante a atualização e religado no final. Pode levar alguns minutos.",
+    mfUpdateConfirmOk: "Atualizar",
     mfErrUpdateCheck: "Não foi possível consultar a versão mais recente",
     btnMfOn: "Mudfish ATIVO · toque para desligar",
     btnMfOff: "Ligar Mudfish",
@@ -636,6 +640,8 @@ export const TEXTS: Record<Lang, Texts> = {
     mfUpdateAvail: "New core version available: {v} (installed: {c})",
     mfUpdateBtn: "Update to {v}",
     mfUpdateOk: "Mudfish updated",
+    mfUpdateConfirm: "Update Mudfish from {c} to {v}? The official installer is downloaded from the Mudfish website. If the service is on, it is turned off during the update and turned back on at the end. It may take a few minutes.",
+    mfUpdateConfirmOk: "Update",
     mfErrUpdateCheck: "Could not check the latest version",
     btnMfOn: "Mudfish ON · tap to turn off",
     btnMfOff: "Turn on Mudfish",
@@ -880,6 +886,8 @@ export const TEXTS: Record<Lang, Texts> = {
     mfUpdateAvail: "Nueva versión del núcleo disponible: {v} (instalada: {c})",
     mfUpdateBtn: "Actualizar a {v}",
     mfUpdateOk: "Mudfish actualizado",
+    mfUpdateConfirm: "¿Actualizar Mudfish de {c} a {v}? El instalador oficial se descarga del sitio de Mudfish. Si el servicio está encendido, se apaga durante la actualización y se vuelve a encender al final. Puede tardar unos minutos.",
+    mfUpdateConfirmOk: "Actualizar",
     mfErrUpdateCheck: "No se pudo consultar la versión más reciente",
     btnMfOn: "Mudfish ACTIVO · toca para apagar",
     btnMfOff: "Activar Mudfish",
