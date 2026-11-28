@@ -52,8 +52,10 @@ import core_state
 
 PORT = 8282
 WEBUI_URL = "http://127.0.0.1:%d" % PORT
-RELEASES_URL = "https://mudfish.net/releases/"  # arquivo de versões ANTIGAS (reserva)
-DOWNLOAD_URL = "https://mudfish.net/download"  # página oficial: traz a versão mais recente e o link de download
+RELEASES_URL = "https://mudfish.net/releases/"  # lista todos os instaladores (fonte principal de versão e de download)
+DOWNLOAD_URL = "https://mudfish.net/download"  # página oficial de download (reserva)
+LATEST_SOURCES = (RELEASES_URL, DOWNLOAD_URL)  # ordem de consulta da última versão
+PAGE_MAX = 8_000_000  # bytes lidos de cada página (a lista de releases é longa)
 FALLBACK_VERSION = "6.6.4"  # só para instalação nova quando mudfish.net/releases/ não responde
 INSTALLER = "mudfish-%s-linux-x86_64.sh"
 MOUNT_POINT = "/opt/mudfish"
@@ -359,10 +361,10 @@ def installer_url(version):
 
 
 def installer_urls(version):
-    """Endereços para baixar o instalador, em ordem: link oficial da página de download e, de reserva, o arquivo de versões."""
+    """Endereços para baixar o instalador, em ordem: arquivo da lista de releases e, de reserva, o link da página de download."""
     installer_url(version)  # valida a versão (levanta ValueError se for inválida)
     name = INSTALLER % version
-    return [DOWNLOAD_URL + "?filename=" + name, RELEASES_URL + name]
+    return [RELEASES_URL + name, DOWNLOAD_URL + "?filename=" + name]
 
 
 def mounted(mount_point, text=None):
@@ -762,6 +764,7 @@ class MudfishManager:
         self._rtt_at = 0.0
         self.update = {"latest": "", "checked": False}
         self._update_at = 0.0
+        self.latest_error = ""
 
     # ---------- arquivos ----------
     @property
@@ -1010,18 +1013,30 @@ class MudfishManager:
     def _read_page(url):
         req = urllib.request.Request(url, headers={"User-Agent": "NoLag"})
         with urllib.request.urlopen(req, timeout=15) as r:  # noqa: S310 - URL fixa
-            return r.read(2_000_000).decode("utf-8", "ignore")
+            return r.read(PAGE_MAX).decode("utf-8", "ignore")
+
+    def _scan_source(self, url):
+        """Lê uma página e devolve (maior versão, ''). Se falhar, devolve ('', motivo exato)."""
+        try:
+            html = self._read_page(url)
+        except Exception as e:
+            return "", "%s: %s" % (url, _err(e))
+        versions = parse_release_versions(html)
+        if versions:
+            return versions[-1], ""
+        return "", "%s: %d caracteres lidos, nenhum %s" % (url, len(html), INSTALLER % "X.Y.Z")
 
     def _fetch_latest_strict(self):
-        """Última versão do instalador Linux: página oficial de download primeiro, arquivo de versões como reserva.
-        Devolve '' se as duas falharem (sem cair na versão fixa)."""
-        for url in (DOWNLOAD_URL, RELEASES_URL):
-            try:
-                versions = parse_release_versions(self._read_page(url))
-            except Exception:
-                continue
-            if versions:
-                return versions[-1]
+        """Última versão do instalador Linux: lista de releases primeiro, página de download como reserva.
+        Devolve '' se as duas falharem (sem cair na versão fixa); o motivo fica em `latest_error`."""
+        reasons = []
+        for url in LATEST_SOURCES:
+            version, why = self._scan_source(url)
+            if version:
+                self.latest_error = ""
+                return version
+            reasons.append(why)
+        self.latest_error = " | ".join(reasons)
         return ""
 
     def _check_installer(self, tmp):
@@ -1117,7 +1132,10 @@ class MudfishManager:
         if version and (force or not self.update["checked"] or time.monotonic() - self._update_at >= UPDATE_TTL):
             latest = await asyncio.to_thread(self._fetch_latest_strict)
             if not latest:
-                return {"ok": False, "error": "update_check_failed", "update": self._update_view(version)}
+                why = getattr(self, "latest_error", "")
+                if why:
+                    self._log_install("consulta de versão falhou: %s" % why)
+                return {"ok": False, "error": "update_check_failed", "detail": why[:DETAIL_MAX * 2], "update": self._update_view(version)}
             self.update, self._update_at = {"latest": latest, "checked": True}, time.monotonic()
         return {"ok": True, "error": "", "update": self._update_view(version)}
 
