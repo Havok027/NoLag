@@ -1,7 +1,6 @@
-## v0.17.2
+## v0.17.3
 
-- **Atualização do Mudfish corrigida:** a última versão agora vem da página oficial de download (`mudfish.net/download`), que sempre traz a versão atual. A página `mudfish.net/releases/` é só o arquivo de versões antigas e fica como reserva.
-- **Download pelo link oficial:** o instalador é baixado do link da página de download; se falhar, tenta o endereço do arquivo de versões (urllib e depois curl em cada um). O erro mostra o motivo de cada tentativa.
-- **Você decide:** o plugin não atualiza mais sozinho ao iniciar; só consulta e avisa. Com versão nova, o Painel e a aba Mudfish mostram o aviso e o botão "Atualizar para X", que pede confirmação antes de baixar e instalar. Se o serviço estiver ligado, ele é religado no final.
-- Textos novos nos 3 idiomas (`mfUpdateConfirm`, `mfUpdateConfirmOk`).
+- **Botão "Verificar atualização"** na aba Mudfish (com o Mudfish instalado): consulta a versão mais recente na hora, sem esperar o cache de 6 horas. Mostra um aviso "já está na versão mais recente (X)" ou o aviso de versão nova com o botão de atualizar (que continua pedindo confirmação). Se a consulta falhar, mostra o motivo.
+- Textos novos nos 3 idiomas (`mfCheckBtn`, `mfChecking`, `mfUpToDate`).
+- `mudfish_check_update` aceita `force` (a consulta automática continua usando o cache).
 - Nenhum `.py` novo na raiz; nenhuma mudança no `build.yml`.
