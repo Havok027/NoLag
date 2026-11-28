@@ -1,4 +1,4 @@
-"""v0.17.2: versão lida da página oficial de download, download pelo link oficial e sem atualização silenciosa."""
+"""v0.17.2 (ordem invertida na v0.17.4): versão lida da lista de releases com a página de download de reserva, e sem atualização silenciosa."""
 import io
 import os
 import sys
@@ -14,7 +14,7 @@ import mudfish_mgr  # noqa: E402
 DOWNLOAD_PAGE = """<a href="https://mudfish.net/download?filename=mudfish-6.7.1-x86_64-win2k-setup.exe">win</a>
 <a href="https://mudfish.net/download?filename=mudfish-6.7.1-linux-x86_64.sh">Linux</a>
 <a href="https://mudfish.net/download?filename=mudfish-6.7.1-linux-x86_64.sh">SteamOS</a>"""
-OLD_ARCHIVE = '<a href="mudfish-6.6.4-linux-x86_64.sh">a</a> <a href="mudfish-5.11.0-linux-x86_64.sh">b</a>'
+RELEASES_PAGE = '<a href="mudfish-6.6.4-linux-x86_64.sh">a</a> <a href="mudfish-6.7.1-linux-x86_64.sh">b</a> <a href="mudfish-5.11.0-linux-x86_64.sh">c</a> <a href="mudfish-6.7.1-universal.dmg">mac</a>'
 
 
 class _Resp(io.BytesIO):
@@ -26,30 +26,31 @@ class _Resp(io.BytesIO):
 
 
 class LatestVersionTests(unittest.TestCase):
-    def test_official_download_page_wins_over_old_archive(self):
+    def test_releases_list_is_the_main_source(self):
         mgr = make(tempfile.mkdtemp())
         seen = []
 
         def fake_open(req, timeout=0):
             seen.append(req.full_url)
-            return _Resp((DOWNLOAD_PAGE if req.full_url == mudfish_mgr.DOWNLOAD_URL else OLD_ARCHIVE).encode())
+            return _Resp(RELEASES_PAGE.encode())
 
         with mock.patch.object(mudfish_mgr.urllib.request, "urlopen", fake_open):
             self.assertEqual(mgr._fetch_latest_strict(), "6.7.1")
-        self.assertEqual(seen, [mudfish_mgr.DOWNLOAD_URL])
+        self.assertEqual(seen, [mudfish_mgr.RELEASES_URL])
+        self.assertEqual(mgr.latest_error, "")
 
-    def test_archive_is_used_when_download_page_fails_or_has_no_installer(self):
+    def test_download_page_is_used_when_releases_fails_or_has_no_installer(self):
         mgr = make(tempfile.mkdtemp())
 
         def fake_open(req, timeout=0):
-            if req.full_url == mudfish_mgr.DOWNLOAD_URL:
+            if req.full_url == mudfish_mgr.RELEASES_URL:
                 return _Resp(b"<html>sem links</html>")
-            return _Resp(OLD_ARCHIVE.encode())
+            return _Resp(DOWNLOAD_PAGE.encode())
 
         with mock.patch.object(mudfish_mgr.urllib.request, "urlopen", fake_open):
-            self.assertEqual(mgr._fetch_latest_strict(), "6.6.4")
+            self.assertEqual(mgr._fetch_latest_strict(), "6.7.1")
 
-    def test_both_sources_down_returns_empty(self):
+    def test_both_sources_down_returns_empty_and_keeps_the_reason(self):
         mgr = make(tempfile.mkdtemp())
 
         def boom(*a, **k):
@@ -57,17 +58,35 @@ class LatestVersionTests(unittest.TestCase):
 
         with mock.patch.object(mudfish_mgr.urllib.request, "urlopen", boom):
             self.assertEqual(mgr._fetch_latest_strict(), "")
+        self.assertIn(mudfish_mgr.RELEASES_URL, mgr.latest_error)
+        self.assertIn(mudfish_mgr.DOWNLOAD_URL, mgr.latest_error)
+
+    def test_failed_check_returns_the_reason_to_the_screen(self):
+        mgr = make(tempfile.mkdtemp())
+        mgr.installed = lambda: ("6.6.4", "/x")
+
+        def boom(*a, **k):
+            raise OSError("sem rede")
+
+        with mock.patch.object(mudfish_mgr.urllib.request, "urlopen", boom):
+            r = run(mgr.check_update(force=True))
+        self.assertFalse(r["ok"])
+        self.assertEqual(r["error"], "update_check_failed")
+        self.assertIn("sem rede", r["detail"])
+
+    def test_long_listing_is_read_past_the_old_2mb_limit(self):
+        self.assertGreaterEqual(mudfish_mgr.PAGE_MAX, 8_000_000)
 
 
 class DownloadUrlTests(unittest.TestCase):
-    def test_official_link_first_archive_second(self):
+    def test_releases_file_first_download_link_second(self):
         self.assertEqual(mudfish_mgr.installer_urls("6.7.1"), [
-            "https://mudfish.net/download?filename=mudfish-6.7.1-linux-x86_64.sh",
-            "https://mudfish.net/releases/mudfish-6.7.1-linux-x86_64.sh"])
+            "https://mudfish.net/releases/mudfish-6.7.1-linux-x86_64.sh",
+            "https://mudfish.net/download?filename=mudfish-6.7.1-linux-x86_64.sh"])
         with self.assertRaises(ValueError):
             mudfish_mgr.installer_urls("6.7")
 
-    def test_falls_back_to_archive_when_official_link_is_not_an_installer(self):
+    def test_falls_back_to_download_link_when_releases_file_is_not_an_installer(self):
         mgr = make(tempfile.mkdtemp())
         dest = os.path.join(tempfile.mkdtemp(), "x.sh")
         seen = []
@@ -75,7 +94,7 @@ class DownloadUrlTests(unittest.TestCase):
 
         def fake_open(req, timeout=0):
             seen.append(req.full_url)
-            return _Resp(b"<html>erro</html>" if "download?filename" in req.full_url else good)
+            return _Resp(good if "download?filename" in req.full_url else b"<html>erro</html>")
 
         with mock.patch.object(mudfish_mgr.urllib.request, "urlopen", fake_open):
             mgr._download("6.7.1", dest)
@@ -91,8 +110,8 @@ class DownloadUrlTests(unittest.TestCase):
         with mock.patch.object(mudfish_mgr.urllib.request, "urlopen", boom):
             with self.assertRaises(ValueError) as cm:
                 mgr._download("6.7.1", os.path.join(tempfile.mkdtemp(), "x.sh"))
-        self.assertIn("download?filename=", str(cm.exception))
         self.assertIn("/releases/", str(cm.exception))
+        self.assertIn("download?filename=", str(cm.exception))
 
 
 class NoSilentUpdateTests(unittest.TestCase):

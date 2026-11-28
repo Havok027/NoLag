@@ -58,7 +58,7 @@ class DynamicUrlTests(unittest.TestCase):
         with mock.patch.object(mudfish_mgr.urllib.request, "urlopen", fake_open):
             self.assertEqual(mgr._fetch_latest_strict(), "10.0.1")
             self.assertEqual(mgr._fetch_latest(), "10.0.1")
-        self.assertEqual(seen[0], mudfish_mgr.DOWNLOAD_URL)  # v0.17.2: a página oficial de download vem primeiro
+        self.assertEqual(seen[0], mudfish_mgr.RELEASES_URL)  # v0.17.4: a lista de releases é a fonte principal
 
     def test_failed_lookup_uses_safe_fallback_not_5_11_0(self):
         mgr = make(tempfile.mkdtemp())
@@ -96,9 +96,9 @@ class DynamicUrlTests(unittest.TestCase):
         with mock.patch.object(mudfish_mgr.urllib.request, "urlopen", fake_open):
             with self.assertRaises(ValueError):
                 mgr._download("7.0.0", os.path.join(tempfile.mkdtemp(), "x.sh"))
-        # v0.17.2: link oficial de download primeiro, arquivo de versões como reserva
-        self.assertEqual(seen, ["https://mudfish.net/download?filename=mudfish-7.0.0-linux-x86_64.sh",
-                                "https://mudfish.net/releases/mudfish-7.0.0-linux-x86_64.sh"])
+        # v0.17.4: arquivo da lista de releases primeiro, link da página de download como reserva
+        self.assertEqual(seen, ["https://mudfish.net/releases/mudfish-7.0.0-linux-x86_64.sh",
+                                "https://mudfish.net/download?filename=mudfish-7.0.0-linux-x86_64.sh"])
 
     def test_status_shows_installed_and_latest_versions(self):
         mgr = make(tempfile.mkdtemp())
